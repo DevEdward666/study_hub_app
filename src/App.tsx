@@ -1,89 +1,80 @@
-import { Authenticated, Unauthenticated, useQuery } from "convex/react";
-import { api } from "../convex/_generated/api";
-import { SignInForm } from "./SignInForm";
-import { SignOutButton } from "./SignOutButton";
-import { Toaster } from "sonner";
-import { StudyHub } from "./components/StudyHub";
-import { AdminDashboard } from "./components/AdminDashboard";
-import { useState } from "react";
+// src/App.tsx
+import React from 'react';
+import { IonApp, IonRouterOutlet, setupIonicReact } from '@ionic/react';
+import { IonReactRouter } from '@ionic/react-router';
+import { Route, Redirect } from 'react-router-dom';
+import { QueryProvider } from './providers/QueryProvier';
 
-export default function App() {
-  const [currentView, setCurrentView] = useState<"hub" | "admin">("hub");
-  const isAdmin = useQuery(api.admin.isAdmin);
+/* Core CSS required for Ionic components to work properly */
+import '@ionic/react/css/core.css';
 
-  return (
-    <div className="min-h-screen flex flex-col bg-gray-50">
-      <header className="sticky top-0 z-10 bg-white/80 backdrop-blur-sm h-16 flex justify-between items-center border-b shadow-sm px-4">
-        <div className="flex items-center gap-4">
-          <h2 className="text-xl font-semibold text-primary">Study Hub</h2>
-          <Authenticated>
-            {isAdmin && (
-              <div className="flex gap-2">
-                <button
-                  onClick={() => setCurrentView("hub")}
-                  className={`px-3 py-1 rounded text-sm ${
-                    currentView === "hub"
-                      ? "bg-primary text-white"
-                      : "bg-gray-200 text-gray-700 hover:bg-gray-300"
-                  }`}
-                >
-                  Study Hub
-                </button>
-                <button
-                  onClick={() => setCurrentView("admin")}
-                  className={`px-3 py-1 rounded text-sm ${
-                    currentView === "admin"
-                      ? "bg-primary text-white"
-                      : "bg-gray-200 text-gray-700 hover:bg-gray-300"
-                  }`}
-                >
-                  Admin
-                </button>
-              </div>
-            )}
-          </Authenticated>
-        </div>
-        <SignOutButton />
-      </header>
-      <main className="flex-1 p-4">
-        <Content currentView={currentView} />
-      </main>
-      <Toaster />
-    </div>
-  );
-}
+/* Basic CSS for apps built with Ionic */
+import '@ionic/react/css/normalize.css';
+import '@ionic/react/css/structure.css';
+import '@ionic/react/css/typography.css';
 
-function Content({ currentView }: { currentView: "hub" | "admin" }) {
-  const loggedInUser = useQuery(api.auth.loggedInUser);
-  const isAdmin = useQuery(api.admin.isAdmin);
+/* Optional CSS utils that can be commented out */
+import '@ionic/react/css/padding.css';
+import '@ionic/react/css/float-elements.css';
+import '@ionic/react/css/text-alignment.css';
+import '@ionic/react/css/text-transformation.css';
+import '@ionic/react/css/flex-utils.css';
+import '@ionic/react/css/display.css';
 
-  if (loggedInUser === undefined) {
-    return (
-      <div className="flex justify-center items-center min-h-[400px]">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
-      </div>
-    );
-  }
+/* Theme variables */
+// import './theme/variables.css';
+// import './theme/global.css';
 
-  return (
-    <div className="max-w-6xl mx-auto">
-      <Unauthenticated>
-        <div className="max-w-md mx-auto">
-          <div className="text-center mb-8">
-            <h1 className="text-4xl font-bold text-primary mb-4">Study Hub</h1>
-            <p className="text-xl text-secondary">Sign in to book study tables</p>
-          </div>
-          <SignInForm />
-        </div>
-      </Unauthenticated>
+/* Pages */
+import Login from './pages/auth/Login';
+import Register from './pages/auth/Register';
+import Dashboard from './pages/dashboard/Dashboard';
+import TableScanner from './pages/dashboard/TableScanner';
+// import TableDetails from './pages/dashboard/TableDetails';
+// import Credits from './pages/credits/Credits';
+// import PremiseAccess from './pages/premise/PremiseAccess';
+// import Profile from './pages/profile/Profile';
+// import History from './pages/history/History';
 
-      <Authenticated>
-        {currentView === "admin" && isAdmin ? (
-          <AdminDashboard />
-        ) : (
-          <StudyHub />
-        )}
-      </Authenticated>
-    </div>
-  );
-}
+/* Components */
+import { AuthGuard } from './components/guards/AuthGuard';
+import { TabsLayout } from './components/Layout/TabsLayout';
+setupIonicReact();
+
+const App: React.FC = () => (
+  <IonApp>
+      <IonReactRouter>
+        <IonRouterOutlet>
+          {/* Public Routes */}
+          <Route exact path="/login" component={Login} />
+          <Route exact path="/register" component={Register} />
+          
+          {/* Protected Routes with Tabs */}
+          <Route path="/app">
+            <AuthGuard>
+              <TabsLayout>
+                <Route exact path="/app/dashboard" component={Dashboard} />
+                <Route exact path="/app/scanner" component={TableScanner} />
+                {/* <Route exact path="/app/table/:id" component={TableDetails} />
+                <Route exact path="/app/credits" component={Credits} />
+                <Route exact path="/app/premise" component={PremiseAccess} />
+                <Route exact path="/app/history" component={History} />
+                <Route exact path="/app/profile" component={Profile} /> */}
+                <Route exact path="/app">
+                  <Redirect to="/app/dashboard" />
+                </Route>
+              </TabsLayout>
+            </AuthGuard>
+          </Route>
+          
+          {/* Default redirect */}
+          <Route exact path="/">
+            <Redirect to="/app/dashboard" />
+          </Route>
+        </IonRouterOutlet>
+      </IonReactRouter>
+  </IonApp>
+);
+
+export default App;
+

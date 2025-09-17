@@ -1,0 +1,50 @@
+.loading-spinner {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 16px;
+}
+
+.loading-spinner--small {
+  gap: 8px;
+}
+
+.loading-spinner--small ion-spinner {
+  width: 20px;
+  height: 20px;
+}
+
+.loading-spinner--medium {
+  gap: 16px;
+}
+
+.loading-spinner--medium ion-spinner {
+  width: 32px;
+  height: 32px;
+}
+
+.loading-spinner--large {
+  gap: 24px;
+  height: 200px;
+}
+
+.loading-spinner--large ion-spinner {
+  width: 48px;
+  height: 48px;
+}
+
+.loading-spinner__message {
+  color: var(--ion-color-medium);
+  margin: 0;
+  font-size: 14px;
+  font-weight: 500;
+}
+
+.loading-spinner--small .loading-spinner__message {
+  font-size: 12px;
+}
+
+.loading-spinner--large .loading-spinner__message {
+  font-size: 16px;
+}

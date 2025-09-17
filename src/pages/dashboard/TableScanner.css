@@ -1,0 +1,197 @@
+.scanner-content {
+  --background: var(--ion-color-dark);
+}
+
+.scanner-container {
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  padding: 20px;
+}
+
+.scanner-idle {
+  width: 100%;
+  max-width: 400px;
+}
+
+.scanner-card {
+  background: white;
+  border-radius: 16px;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
+}
+
+.scanner-idle-content {
+  text-align: center;
+  padding: 20px 0;
+}
+
+.scanner-icon {
+  font-size: 80px;
+  color: var(--ion-color-primary);
+  margin-bottom: 20px;
+}
+
+.scanner-idle-content h2 {
+  font-size: 24px;
+  font-weight: 600;
+  margin: 0 0 12px 0;
+  color: var(--ion-color-dark);
+}
+
+.scanner-idle-content p {
+  font-size: 16px;
+  color: var(--ion-color-medium);
+  margin: 0 0 32px 0;
+  line-height: 1.5;
+}
+
+.scan-button {
+  --border-radius: 12px;
+  height: 56px;
+  font-weight: 600;
+  font-size: 16px;
+}
+
+.scanner-active {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  z-index: 9999;
+}
+
+.scanner-overlay {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  background: transparent;
+}
+
+.scanner-frame {
+  position: relative;
+  width: 250px;
+  height: 250px;
+  margin-bottom: 40px;
+}
+
+.scanner-corners {
+  position: relative;
+  width: 100%;
+  height: 100%;
+}
+
+.corner {
+  position: absolute;
+  width: 30px;
+  height: 30px;
+  border: 3px solid var(--ion-color-light);
+}
+
+.corner.top-left {
+  top: 0;
+  left: 0;
+  border-right: none;
+  border-bottom: none;
+  border-top-left-radius: 8px;
+}
+
+.corner.top-right {
+  top: 0;
+  right: 0;
+  border-left: none;
+  border-bottom: none;
+  border-top-right-radius: 8px;
+}
+
+.corner.bottom-left {
+  bottom: 0;
+  left: 0;
+  border-right: none;
+  border-top: none;
+  border-bottom-left-radius: 8px;
+}
+
+.corner.bottom-right {
+  bottom: 0;
+  right: 0;
+  border-left: none;
+  border-top: none;
+  border-bottom-right-radius: 8px;
+}
+
+.scanner-instructions {
+  margin-bottom: 40px;
+  text-align: center;
+}
+
+.scanner-instructions h3 {
+  font-size: 18px;
+  font-weight: 500;
+  margin: 0;
+  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
+}
+
+.stop-scan-button {
+  position: absolute;
+  top: 60px;
+  right: 20px;
+  --border-radius: 50%;
+  width: 48px;
+  height: 48px;
+  --background: rgba(0, 0, 0, 0.5);
+}
+
+.stop-scan-button ion-icon {
+  font-size: 24px;
+}
+
+.permission-card {
+  background: white;
+  border-radius: 16px;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+}
+
+.permission-content {
+  text-align: center;
+  padding: 20px 0;
+}
+
+.permission-icon {
+  font-size: 64px;
+  color: var(--ion-color-warning);
+  margin-bottom: 20px;
+}
+
+.permission-content h2 {
+  font-size: 20px;
+  font-weight: 600;
+  margin: 0 0 12px 0;
+  color: var(--ion-color-dark);
+}
+
+.permission-content p {
+  font-size: 14px;
+  color: var(--ion-color-medium);
+  margin: 0 0 24px 0;
+  line-height: 1.5;
+}
+
+/* Scanner active body class */
+body.scanner-active {
+  background: transparent !important;
+}
+
+body.scanner-active ion-app {
+  background: transparent !important;
+}
+
+body.scanner-active .scanner-content {
+  --background: transparent !important;
+}
