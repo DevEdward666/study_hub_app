@@ -2,7 +2,7 @@ import React from 'react';
 import { useUsersManagement, useTransactionsManagement } from '../../hooks/AdminDataHooks';
 import { LoadingSpinner } from '../../components/common/LoadingSpinner';
 
-export const Dashboard: React.FC = () => {
+ const Dashboard: React.FC = () => {
   const { users, isLoading: usersLoading } = useUsersManagement();
   const { transactions, isLoading: transactionsLoading } = useTransactionsManagement();
 
@@ -97,3 +97,4 @@ export const Dashboard: React.FC = () => {
     </div>
   );
 };
+export default Dashboard;

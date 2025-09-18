@@ -3,7 +3,7 @@ import { useTransactionsManagement } from '../hooks/AdminDataHooks';
 import { LoadingSpinner } from '../components/common/LoadingSpinner';
 import { ErrorMessage } from '../components/common/ErrorMessage';
 
-export const TransactionsManagement: React.FC = () => {
+ const TransactionsManagement: React.FC = () => {
   const { transactions, isLoading, error, approve, reject, refetch } = useTransactionsManagement();
 
   const handleApprove = async (transactionId: string) => {
@@ -102,3 +102,4 @@ export const TransactionsManagement: React.FC = () => {
     </div>
   );
 };
+export default TransactionsManagement;

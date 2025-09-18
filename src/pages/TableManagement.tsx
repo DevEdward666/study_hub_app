@@ -2,8 +2,9 @@ import React, { useState } from 'react';
 import { useTablesManagement } from '../hooks/AdminDataHooks';
 import { LoadingSpinner } from '../components/common/LoadingSpinner';
 import { ErrorMessage } from '../components/common/ErrorMessage';
+import { de } from 'zod/v4/locales';
 
-export const TablesManagement: React.FC = () => {
+ const TablesManagement: React.FC = () => {
   const { tables, isLoading, error, createTable, refetch } = useTablesManagement();
   const [showCreateForm, setShowCreateForm] = useState(false);
   const [formData, setFormData] = useState({
@@ -198,3 +199,4 @@ export const TablesManagement: React.FC = () => {
     </div>
   );
 };
+export default TablesManagement;
