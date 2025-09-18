@@ -8,7 +8,7 @@ export const usePremise = () => {
   const accessQuery = useQuery({
     queryKey: ['premise', 'access'],
     queryFn: premiseService.checkPremiseAccess,
-    refetchInterval: 1000 * 60, // Refetch every minute to check expiration
+    refetchInterval: 1000 * 60,
   });
 
   const activateAccessMutation = useMutation({

@@ -10,7 +10,7 @@
 }
 
 .dashboard-header ion-toolbar {
-  --background:  #667eea;
+  --background: #667eea;
   --color: white;
 }
 
@@ -33,14 +33,14 @@
 
 /* Hero Section */
 .hero-section {
-  background:  #667eea;
+  background: #667eea;
   padding: 40px 24px 60px 24px;
   position: relative;
   overflow: hidden;
 }
 
 .hero-section::before {
-  content: '';
+  content: "";
   position: absolute;
   top: -50%;
   right: -20%;
@@ -52,7 +52,7 @@
 }
 
 .hero-section::after {
-  content: '';
+  content: "";
   position: absolute;
   bottom: -30%;
   left: -10%;
@@ -119,7 +119,7 @@
 .stat-label {
   font-size: 13px;
   font-weight: 500;
-  color: rgb(255, 255, 255);
+  color: rgb(17, 16, 16);
   text-transform: uppercase;
   letter-spacing: 0.5px;
 }
@@ -275,7 +275,7 @@
 }
 
 .stat-card::before {
-  content: '';
+  content: "";
   position: absolute;
   top: 0;
   left: 0;
@@ -358,7 +358,7 @@
 
 /* Actions Section */
 .actions-section {
-  padding:0 16px 100px 16px;
+  padding: 0 16px 100px 16px;
 }
 
 .action-cards {
@@ -378,7 +378,7 @@
 }
 
 .action-card::before {
-  content: '';
+  content: "";
   position: absolute;
   top: 0;
   left: 0;
@@ -389,7 +389,7 @@
 }
 
 .primary-action::before {
-  background:  #667eea;
+  background: #667eea;
 }
 
 .secondary-action::before {
@@ -435,19 +435,19 @@
 }
 
 .primary-action .action-icon-wrapper {
-  background:  #667eea;
+  background: white;
 }
 
 .secondary-action .action-icon-wrapper {
-  background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+  background: white
 }
 
 .tertiary-action .action-icon-wrapper {
-  background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+  background: white
 }
 
 .quaternary-action .action-icon-wrapper {
-  background: linear-gradient(135deg, #43e97b 0%, #38f9d7 100%);
+  background: white
 }
 
 .action-icon {
@@ -475,40 +475,41 @@
   .hero-stats {
     gap: 24px;
   }
-  
+
   .stat-number {
     font-size: 24px;
   }
-  
+
   .session-card-header {
     flex-direction: column;
     align-items: flex-start;
     gap: 16px;
   }
-  
+
   .session-metrics {
     flex-direction: column;
     gap: 16px;
   }
-  
+
   .action-cards {
-    grid-template-columns: 1fr;
+    grid-template-columns: 1fr 1fr;
     gap: 16px;
   }
-  
+
   .action-content {
     flex-direction: row;
     text-align: left;
     align-items: center;
   }
-  
+
   .action-text {
     flex: 1;
+    text-align: center;
   }
 }
 
 /* Dark mode support */
-@media (prefers-color-scheme: dark) {
+/* @media (prefers-color-scheme: dark) {
   .dashboard-content {
     --background: #0f172a;
   }
@@ -542,11 +543,15 @@
   .action-text p {
     color: #94a3b8;
   }
-}
+} */
 
 .active-session {
   border-left: 4px solid var(--ion-color-success);
-  background: linear-gradient(135deg, var(--ion-color-success-tint) 0%, white 100%);
+  background: linear-gradient(
+    135deg,
+    var(--ion-color-success-tint) 0%,
+    white 100%
+  );
 }
 
 .session-card-title {
@@ -596,7 +601,9 @@
   border-radius: 12px;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
   cursor: pointer;
-  transition: transform 0.2s ease, box-shadow 0.2s ease;
+  transition:
+    transform 0.2s ease,
+    box-shadow 0.2s ease;
 }
 
 .stat-card:hover {
@@ -605,11 +612,19 @@
 }
 
 .credits-card {
-  background: linear-gradient(135deg, var(--ion-color-primary-tint) 0%, white 100%);
+  background: linear-gradient(
+    135deg,
+    var(--ion-color-primary-tint) 0%,
+    white 100%
+  );
 }
 
 .premise-card {
-  background: linear-gradient(135deg, var(--ion-color-tertiary-tint) 0%, white 100%);
+  background: linear-gradient(
+    135deg,
+    var(--ion-color-tertiary-tint) 0%,
+    white 100%
+  );
 }
 
 .stat-content {
@@ -660,7 +675,9 @@
   border-radius: 12px;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
   cursor: pointer;
-  transition: transform 0.2s ease, box-shadow 0.2s ease;
+  transition:
+    transform 0.2s ease,
+    box-shadow 0.2s ease;
 }
 
 .action-card:hover {

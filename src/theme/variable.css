@@ -86,7 +86,7 @@ http://ionicframework.com/docs/theming/ */
 }
 
 /* Dark Mode */
-@media (prefers-color-scheme: dark) {
+/* @media (prefers-color-scheme: dark) {
   :root {
     --ion-color-primary: #4c8dff;
     --ion-color-primary-rgb: 76, 141, 255;
@@ -221,7 +221,7 @@ http://ionicframework.com/docs/theming/ */
 
     --ion-card-background: #1e1e1e;
   }
-}
+} */
 
 /* src/theme/global.css */
 /* Global App Styles */

@@ -1,29 +1,34 @@
-import React, { useState } from 'react';
-import { useUsersManagement } from '../hooks/AdminDataHooks';
-import { LoadingSpinner } from '../components/common/LoadingSpinner';
-import { ErrorMessage } from '../components/common/ErrorMessage';
-import '../Admin/styles/admin.css'
- const UsersManagement: React.FC = () => {
-  const { users, isLoading, error, toggleAdmin, refetch } = useUsersManagement();
-  const [searchTerm, setSearchTerm] = useState('');
-  const [filterType, setFilterType] = useState<'all' | 'admin' | 'user'>('all');
+import React, { useState } from "react";
+import { useUsersManagement } from "../hooks/AdminDataHooks";
+import { LoadingSpinner } from "../components/common/LoadingSpinner";
+import { ErrorMessage } from "../components/common/ErrorMessage";
+import "../Admin/styles/admin.css";
+import { useAdminStatus } from "@/hooks/AdminHooks";
+const UsersManagement: React.FC = () => {
+  const { users, isLoading, error, toggleAdmin, refetch } =
+    useUsersManagement();
+  const { refetch: refetchAdminStatus, isAdmin } = useAdminStatus();
+  const [searchTerm, setSearchTerm] = useState("");
+  const [filterType, setFilterType] = useState<"all" | "admin" | "user">("all");
 
   const handleToggleAdmin = async (userId: string) => {
     try {
       await toggleAdmin.mutateAsync(userId);
     } catch (error) {
-      console.error('Failed to toggle admin status:', error);
+      console.error("Failed to toggle admin status:", error);
     }
   };
 
-  const filteredUsers = users.filter(user => {
-    const matchesSearch = user.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         user.email.toLowerCase().includes(searchTerm.toLowerCase());
-    
-    const matchesFilter = filterType === 'all' || 
-                         (filterType === 'admin' && user.isAdmin) ||
-                         (filterType === 'user' && !user.isAdmin);
-    
+  const filteredUsers = users.filter((user) => {
+    const matchesSearch =
+      user.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      user.email.toLowerCase().includes(searchTerm.toLowerCase());
+
+    const matchesFilter =
+      filterType === "all" ||
+      (filterType === "admin" && isAdmin) ||
+      (filterType === "user" && !isAdmin);
+
     return matchesSearch && matchesFilter;
   });
 
@@ -32,6 +37,7 @@ import '../Admin/styles/admin.css'
   }
 
   if (error) {
+    console.log(error);
     return <ErrorMessage message="Failed to load users" onRetry={refetch} />;
   }
 
@@ -53,25 +59,25 @@ import '../Admin/styles/admin.css'
             className="search-input"
           />
         </div>
-        
+
         <div className="filter-buttons">
           <button
-            className={`filter-btn ${filterType === 'all' ? 'active' : ''}`}
-            onClick={() => setFilterType('all')}
+            className={`filter-btn ${filterType === "all" ? "active" : ""}`}
+            onClick={() => setFilterType("all")}
           >
             All Users ({users.length})
           </button>
           <button
-            className={`filter-btn ${filterType === 'admin' ? 'active' : ''}`}
-            onClick={() => setFilterType('admin')}
+            className={`filter-btn ${filterType === "admin" ? "active" : ""}`}
+            onClick={() => setFilterType("admin")}
           >
-            Admins ({users.filter(u => u.isAdmin).length})
+            Admins ({users.filter((u) => u.isAdmin).length})
           </button>
           <button
-            className={`filter-btn ${filterType === 'user' ? 'active' : ''}`}
-            onClick={() => setFilterType('user')}
+            className={`filter-btn ${filterType === "user" ? "active" : ""}`}
+            onClick={() => setFilterType("user")}
           >
-            Users ({users.filter(u => !u.isAdmin).length})
+            Users ({users.filter((u) => !u.isAdmin).length})
           </button>
         </div>
       </div>
@@ -80,34 +86,32 @@ import '../Admin/styles/admin.css'
       <div className="users-table">
         <div className="table-header">
           <div className="col-user">User</div>
+          <div className="col-email">Email</div>
           <div className="col-credits">Credits</div>
           <div className="col-status">Status</div>
           <div className="col-session">Session</div>
           <div className="col-joined">Joined</div>
-          <div className="col-actions">Actions</div>
+          <div className="col-actions">Action</div>
+
+          {/* <div className="col-actions">Actions</div> */}
         </div>
 
         <div className="table-body">
           {filteredUsers.map((user) => (
             <div key={user.id} className="table-row">
               <div className="col-user">
-                <div className="user-cell">
-                  <div className="user-avatar">
-                    {user.name?.charAt(0).toUpperCase() || 'U'}
-                  </div>
-                  <div className="user-info">
-                    <strong>{user.name || 'Unknown'}</strong>
-                    <span>{user.email}</span>
-                  </div>
-                </div>
+                <span className="user">{user.name || "Unknown"}</span>
+              </div>
+              <div className="col-email">
+                <span className="user">{user.email}</span>
               </div>
               <div className="col-credits">
                 <span className="credits">{user.credits}</span>
               </div>
               <div className="col-status">
-                {user.isAdmin ? (
+                {isAdmin ? (
                   <span className="status-badge admin">
-                    <span className="badge-icon">👑</span>
+                    <span className="badge-icon"></span>
                     Admin
                   </span>
                 ) : (
@@ -135,28 +139,16 @@ import '../Admin/styles/admin.css'
                   {new Date(user.createdAt).toLocaleDateString()}
                 </span>
               </div>
-              <div className="col-actions">
+              <div className="col-action">
                 <button
-                  className={`btn ${user.isAdmin ? 'btn-warning' : 'btn-primary'}`}
+                  className={`btn ${isAdmin ? "btn-warning" : "btn-primary"}`}
                   onClick={() => handleToggleAdmin(user.id)}
                   disabled={toggleAdmin.isPending}
                 >
                   {toggleAdmin.isPending ? (
                     <span className="btn-loading">...</span>
                   ) : (
-                    <>
-                      {user.isAdmin ? (
-                        <>
-                          <span className="btn-icon">👤</span>
-                          Remove Admin
-                        </>
-                      ) : (
-                        <>
-                          <span className="btn-icon">👑</span>
-                          Make Admin
-                        </>
-                      )}
-                    </>
+                    <>{isAdmin ? <>Remove Admin</> : <>Make Admin</>}</>
                   )}
                 </button>
               </div>

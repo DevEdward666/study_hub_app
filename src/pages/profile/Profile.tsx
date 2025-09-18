@@ -1,5 +1,5 @@
 // src/pages/profile/Profile.tsx
-import React, { useState } from 'react';
+import React, { useState } from "react";
 import {
   IonContent,
   IonPage,
@@ -24,7 +24,7 @@ import {
   IonToggle,
   IonBadge,
   RefresherEventDetail,
-} from '@ionic/react';
+} from "@ionic/react";
 import {
   personOutline,
   mailOutline,
@@ -35,22 +35,23 @@ import {
   closeOutline,
   shieldCheckmarkOutline,
   pencilOutline,
-} from 'ionicons/icons';
-import { useAuth } from '../../hooks/AuthHooks';
-import { useUser } from '../../hooks/UserHooks';
-import { LoadingSpinner } from '../../components/common/LoadingSpinner';
-import './Profile.css';
+} from "ionicons/icons";
+import { useAuth } from "../../hooks/AuthHooks";
+import { useUser } from "../../hooks/UserHooks";
+import { LoadingSpinner } from "../../components/common/LoadingSpinner";
+import "./Profile.css";
+import { useHistory } from "react-router-dom";
 
 const Profile: React.FC = () => {
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
-  const [editName, setEditName] = useState('');
+  const [editName, setEditName] = useState("");
   const [showToast, setShowToast] = useState(false);
-  const [toastMessage, setToastMessage] = useState('');
-  const [toastColor, setToastColor] = useState<'success' | 'danger'>('success');
+  const [toastMessage, setToastMessage] = useState("");
+  const [toastColor, setToastColor] = useState<"success" | "danger">("success");
 
   const { user, signOut, refetchUser } = useAuth();
   const { credits, sessions, refetchCredits } = useUser();
-
+  const history = useHistory();
   React.useEffect(() => {
     if (user?.name) {
       setEditName(user.name);
@@ -58,57 +59,59 @@ const Profile: React.FC = () => {
   }, [user?.name]);
 
   const handleRefresh = async (event: CustomEvent<RefresherEventDetail>) => {
-    await Promise.all([
-      refetchUser(),
-      refetchCredits(),
-    ]);
+    await Promise.all([refetchUser(), refetchCredits()]);
     event.detail.complete();
   };
 
   const handleSignOut = async () => {
     try {
       await signOut.mutateAsync();
+      history.push("/login");
     } catch (error) {
-      console.error('Sign out error:', error);
+      console.error("Sign out error:", error);
     }
   };
 
   const handleSaveProfile = async () => {
     // Note: This would require an API endpoint to update user profile
     // For now, we'll just show a success message
-    setToastMessage('Profile updated successfully!');
-    setToastColor('success');
+    setToastMessage("Profile updated successfully!");
+    setToastColor("success");
     setShowToast(true);
     setIsEditModalOpen(false);
   };
 
   const getInitials = (name?: string): string => {
-    if (!name) return 'U';
+    if (!name) return "U";
     return name
-      .split(' ')
-      .map(word => word.charAt(0).toUpperCase())
-      .join('')
+      .split(" ")
+      .map((word) => word.charAt(0).toUpperCase())
+      .join("")
       .substring(0, 2);
   };
 
   const formatJoinDate = (dateString: string): string => {
-    return new Date(dateString).toLocaleDateString('en-US', {
-      year: 'numeric',
-      month: 'long',
-      day: 'numeric'
+    return new Date(dateString).toLocaleDateString("en-US", {
+      year: "numeric",
+      month: "long",
+      day: "numeric",
     });
   };
 
   const getActivityStats = () => {
-    const completedSessions = sessions?.filter(s => s.status === 'Completed').length || 0;
-    const totalCreditsUsed = sessions?.reduce((sum, s) => sum + s.creditsUsed, 0) || 0;
-    const totalHours = sessions?.reduce((sum, s) => {
-      if (s.endTime && s.startTime) {
-        const duration = new Date(s.endTime).getTime() - new Date(s.startTime).getTime();
-        return sum + (duration / (1000 * 60 * 60)); // Convert to hours
-      }
-      return sum;
-    }, 0) || 0;
+    const completedSessions =
+      sessions?.filter((s) => s.status === "Completed").length || 0;
+    const totalCreditsUsed =
+      sessions?.reduce((sum, s) => sum + s.creditsUsed, 0) || 0;
+    const totalHours =
+      sessions?.reduce((sum, s) => {
+        if (s.endTime && s.startTime) {
+          const duration =
+            new Date(s.endTime).getTime() - new Date(s.startTime).getTime();
+          return sum + duration / (1000 * 60 * 60); // Convert to hours
+        }
+        return sum;
+      }, 0) || 0;
 
     return {
       completedSessions,
@@ -141,7 +144,7 @@ const Profile: React.FC = () => {
           <IonTitle>Profile</IonTitle>
         </IonToolbar>
       </IonHeader>
-      
+
       <IonContent fullscreen className="profile-content">
         <IonRefresher slot="fixed" onIonRefresh={handleRefresh}>
           <IonRefresherContent />
@@ -162,9 +165,9 @@ const Profile: React.FC = () => {
                       </div>
                     )}
                   </IonAvatar>
-                  
+
                   <div className="profile-basic-info">
-                    <h2>{user.name || 'User'}</h2>
+                    <h2>{user.name || "User"}</h2>
                     <p>{user.email}</p>
                     {user.emailVerified && (
                       <IonBadge color="success" className="verified-badge">
@@ -174,7 +177,7 @@ const Profile: React.FC = () => {
                     )}
                   </div>
                 </div>
-                
+
                 <IonButton
                   fill="outline"
                   size="small"
@@ -205,10 +208,14 @@ const Profile: React.FC = () => {
                     <p>{user.email}</p>
                   </IonLabel>
                   {user.emailVerified && (
-                    <IonIcon icon={shieldCheckmarkOutline} slot="end" color="success" />
+                    <IonIcon
+                      icon={shieldCheckmarkOutline}
+                      slot="end"
+                      color="success"
+                    />
                   )}
                 </IonItem>
-                
+
                 <IonItem className="info-item">
                   <IonIcon icon={calendarOutline} slot="start" />
                   <IonLabel>
@@ -264,7 +271,7 @@ const Profile: React.FC = () => {
                   </IonLabel>
                   <IonToggle slot="end" checked={true} />
                 </IonItem>
-                
+
                 <IonItem>
                   <IonLabel>
                     <h3>Session Reminders</h3>
@@ -272,7 +279,7 @@ const Profile: React.FC = () => {
                   </IonLabel>
                   <IonToggle slot="end" checked={true} />
                 </IonItem>
-                
+
                 <IonItem>
                   <IonLabel>
                     <h3>Credit Alerts</h3>
@@ -295,13 +302,16 @@ const Profile: React.FC = () => {
               className="sign-out-button"
             >
               <IonIcon icon={logOutOutline} slot="start" />
-              {signOut.isPending ? 'Signing out...' : 'Sign Out'}
+              {signOut.isPending ? "Signing out..." : "Sign Out"}
             </IonButton>
           </div>
         </div>
 
         {/* Edit Profile Modal */}
-        <IonModal isOpen={isEditModalOpen} onDidDismiss={() => setIsEditModalOpen(false)}>
+        <IonModal
+          isOpen={isEditModalOpen}
+          onDidDismiss={() => setIsEditModalOpen(false)}
+        >
           <IonHeader>
             <IonToolbar>
               <IonTitle>Edit Profile</IonTitle>
@@ -314,7 +324,7 @@ const Profile: React.FC = () => {
               </IonButton>
             </IonToolbar>
           </IonHeader>
-          
+
           <IonContent className="edit-modal-content">
             <div className="edit-form">
               <IonCard>
@@ -333,7 +343,7 @@ const Profile: React.FC = () => {
                       Change Photo
                     </IonButton>
                   </div>
-                  
+
                   <div className="edit-fields">
                     <IonItem>
                       <IonLabel position="stacked">Full Name</IonLabel>
@@ -343,17 +353,13 @@ const Profile: React.FC = () => {
                         onIonInput={(e) => setEditName(e.detail.value!)}
                       />
                     </IonItem>
-                    
+
                     <IonItem>
                       <IonLabel position="stacked">Email</IonLabel>
-                      <IonInput
-                        value={user.email}
-                        readonly
-                        disabled
-                      />
+                      <IonInput value={user.email} readonly disabled />
                     </IonItem>
                   </div>
-                  
+
                   <div className="edit-actions">
                     <IonButton
                       expand="block"

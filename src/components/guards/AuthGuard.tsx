@@ -1,8 +1,8 @@
-import React from 'react';
-import { Redirect  } from 'react-router-dom';
-import { IonSpinner } from '@ionic/react';
-import { useAuth } from '../../hooks/AuthHooks';
-import './AuthGuard.css';
+import React from "react";
+import { Redirect } from "react-router-dom";
+import { IonSpinner } from "@ionic/react";
+import { useAuth } from "../../hooks/AuthHooks";
+import "./AuthGuard.css";
 
 interface AuthGuardProps {
   children: React.ReactNode;
@@ -10,7 +10,7 @@ interface AuthGuardProps {
 
 export const AuthGuard: React.FC<AuthGuardProps> = ({ children }) => {
   const { isAuthenticated, isLoading } = useAuth();
- 
+
   if (isLoading) {
     return (
       <div className="auth-guard-loading">
@@ -21,7 +21,8 @@ export const AuthGuard: React.FC<AuthGuardProps> = ({ children }) => {
   }
 
   if (!isAuthenticated) {
-    return <Redirect to="/login" />;
+    const isAdminPath = window.location.pathname.includes("/admin");
+    return <Redirect to={isAdminPath ? "/admin/login" : "/login"} />;
   }
 
   return <>{children}</>;

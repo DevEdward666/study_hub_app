@@ -95,20 +95,20 @@ const Dashboard: React.FC = () => {
 
   const stats = getActivityStats();
 
-  if (isLoadingActiveSession || isLoadingCredits || isLoadingAccess) {
-    return (
-      <IonPage>
-        <IonHeader>
-          <IonToolbar>
-            <IonTitle>Dashboard</IonTitle>
-          </IonToolbar>
-        </IonHeader>
-        <IonContent>
-          <LoadingSpinner message="Loading dashboard..." />
-        </IonContent>
-      </IonPage>
-    );
-  }
+  // if (isLoadingActiveSession || isLoadingCredits || isLoadingAccess) {
+  //   return (
+  //     <IonPage>
+  //       <IonHeader>
+  //         <IonToolbar>
+  //           <IonTitle>Dashboard</IonTitle>
+  //         </IonToolbar>
+  //       </IonHeader>
+  //       <IonContent>
+  //         <LoadingSpinner message="Loading dashboard..." />
+  //       </IonContent>
+  //     </IonPage>
+  //   );
+  // }
 
   return (
     <IonPage>

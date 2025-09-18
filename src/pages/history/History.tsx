@@ -1,5 +1,5 @@
 // src/pages/history/History.tsx
-import React, { useState } from 'react';
+import React, { useState } from "react";
 import {
   IonContent,
   IonPage,
@@ -19,7 +19,7 @@ import {
   IonInfiniteScrollContent,
   RefresherEventDetail,
   InfiniteScrollCustomEvent,
-} from '@ionic/react';
+} from "@ionic/react";
 import {
   timeOutline,
   cardOutline,
@@ -29,17 +29,17 @@ import {
   locationOutline,
   playOutline,
   stopOutline,
-} from 'ionicons/icons';
-import { useUser } from '../../hooks/UserHooks';
-import { LoadingSpinner } from '../../components/common/LoadingSpinner';
-import { ErrorMessage } from '../../components/common/ErrorMessage';
-import { SessionWithTable, CreditTransaction } from '../../schema/user.schema';
-import './History.css';
+} from "ionicons/icons";
+import { useUser } from "../../hooks/UserHooks";
+import { LoadingSpinner } from "../../components/common/LoadingSpinner";
+import { ErrorMessage } from "../../components/common/ErrorMessage";
+import { SessionWithTable, CreditTransaction } from "../../schema/user.schema";
+import "./History.css";
 
-type FilterType = 'all' | 'sessions' | 'transactions';
+type FilterType = "all" | "sessions" | "transactions";
 
 const History: React.FC = () => {
-  const [selectedFilter, setSelectedFilter] = useState<FilterType>('all');
+  const [selectedFilter, setSelectedFilter] = useState<FilterType>("all");
   const [displayCount, setDisplayCount] = useState(10);
 
   const {
@@ -52,27 +52,24 @@ const History: React.FC = () => {
   } = useUser();
 
   const handleRefresh = async (event: CustomEvent<RefresherEventDetail>) => {
-    await Promise.all([
-      refetchSessions(),
-      refetchTransactions(),
-    ]);
+    await Promise.all([refetchSessions(), refetchTransactions()]);
     event.detail.complete();
   };
 
   const handleInfiniteScroll = async (ev: InfiniteScrollCustomEvent) => {
-    setDisplayCount(prev => prev + 10);
+    setDisplayCount((prev) => prev + 10);
     setTimeout(() => ev.target.complete(), 500);
   };
 
   const formatDuration = (startTime: string, endTime?: string): string => {
-    if (!endTime) return 'Ongoing';
-    
+    if (!endTime) return "Ongoing";
+
     const start = new Date(startTime).getTime();
     const end = new Date(endTime).getTime();
     const durationMs = end - start;
     const hours = Math.floor(durationMs / (1000 * 60 * 60));
     const minutes = Math.floor((durationMs % (1000 * 60 * 60)) / (1000 * 60));
-    
+
     if (hours > 0) {
       return `${hours}h ${minutes}m`;
     }
@@ -81,27 +78,27 @@ const History: React.FC = () => {
 
   const getStatusColor = (status: string) => {
     switch (status.toLowerCase()) {
-      case 'approved':
-        return 'success';
-      case 'rejected':
-        return 'danger';
-      case 'completed':
-        return 'success';
-      case 'active':
-        return 'warning';
+      case "approved":
+        return "success";
+      case "rejected":
+        return "danger";
+      case "completed":
+        return "success";
+      case "active":
+        return "warning";
       default:
-        return 'warning';
+        return "warning";
     }
   };
 
   const getStatusIcon = (status: string) => {
     switch (status.toLowerCase()) {
-      case 'approved':
-      case 'completed':
+      case "approved":
+      case "completed":
         return checkmarkCircleOutline;
-      case 'rejected':
+      case "rejected":
         return closeCircleOutline;
-      case 'active':
+      case "active":
         return playOutline;
       default:
         return hourglass;
@@ -110,25 +107,25 @@ const History: React.FC = () => {
 
   const getFilteredAndSortedData = () => {
     let combinedData: Array<{
-      type: 'session' | 'transaction';
+      type: "session" | "transaction";
       data: SessionWithTable | CreditTransaction;
       timestamp: number;
     }> = [];
 
-    if (selectedFilter === 'all' || selectedFilter === 'sessions') {
+    if (selectedFilter === "all" || selectedFilter === "sessions") {
       sessions?.forEach((session) => {
         combinedData.push({
-          type: 'session',
+          type: "session",
           data: session,
           timestamp: new Date(session.startTime).getTime(),
         });
       });
     }
 
-    if (selectedFilter === 'all' || selectedFilter === 'transactions') {
+    if (selectedFilter === "all" || selectedFilter === "transactions") {
       transactions?.forEach((transaction) => {
         combinedData.push({
-          type: 'transaction',
+          type: "transaction",
           data: transaction,
           timestamp: new Date(transaction.createdAt).getTime(),
         });
@@ -137,12 +134,15 @@ const History: React.FC = () => {
 
     // Sort by timestamp (newest first)
     combinedData.sort((a, b) => b.timestamp - a.timestamp);
-    
+
     return combinedData.slice(0, displayCount);
   };
 
   const renderSessionItem = (session: SessionWithTable) => (
-    <IonCard key={session.id} className={`history-item session-item ${session.status.toLowerCase()}`}>
+    <IonCard
+      key={session.id}
+      className={`history-item session-item ${session.status.toLowerCase()}`}
+    >
       <IonCardContent>
         <div className="item-content">
           <div className="item-header">
@@ -150,12 +150,15 @@ const History: React.FC = () => {
               <IonIcon icon={timeOutline} className="item-icon" />
               <h3>Table {session.table.tableNumber}</h3>
             </div>
-            <IonBadge color={getStatusColor(session.status)} className="item-badge">
+            <IonBadge
+              color={getStatusColor(session.status)}
+              className="item-badge"
+            >
               <IonIcon icon={getStatusIcon(session.status)} />
               {session.status}
             </IonBadge>
           </div>
-          
+
           <div className="item-details">
             <div className="item-detail">
               <span className="detail-label">
@@ -164,25 +167,29 @@ const History: React.FC = () => {
               </span>
               <span className="detail-value">{session.table.location}</span>
             </div>
-            
+
             <div className="item-detail">
               <span className="detail-label">Duration</span>
               <span className="detail-value duration">
                 {formatDuration(session.startTime, session.endTime!)}
               </span>
             </div>
-            
+
             <div className="item-detail">
               <span className="detail-label">Credits Used</span>
-              <span className="detail-value credits">{session.creditsUsed}</span>
+              <span className="detail-value credits">
+                {session.creditsUsed}
+              </span>
             </div>
-            
+
             <div className="item-detail">
               <span className="detail-label">Rate</span>
-              <span className="detail-value">{session.table.hourlyRate} credits/hour</span>
+              <span className="detail-value">
+                {session.table.hourlyRate} credits/hour
+              </span>
             </div>
           </div>
-          
+
           <div className="item-timestamp">
             Started: {new Date(session.startTime).toLocaleString()}
             {session.endTime && (
@@ -198,7 +205,10 @@ const History: React.FC = () => {
   );
 
   const renderTransactionItem = (transaction: CreditTransaction) => (
-    <IonCard key={transaction.id} className={`history-item transaction-item ${transaction.status.toLowerCase()}`}>
+    <IonCard
+      key={transaction.id}
+      className={`history-item transaction-item ${transaction.status.toLowerCase()}`}
+    >
       <IonCardContent>
         <div className="item-content">
           <div className="item-header">
@@ -206,34 +216,41 @@ const History: React.FC = () => {
               <IonIcon icon={cardOutline} className="item-icon" />
               <h3>Credit Purchase</h3>
             </div>
-            <IonBadge color={getStatusColor(transaction.status)} className="item-badge">
+            <IonBadge
+              color={getStatusColor(transaction.status)}
+              className="item-badge"
+            >
               <IonIcon icon={getStatusIcon(transaction.status)} />
               {transaction.status}
             </IonBadge>
           </div>
-          
+
           <div className="item-details">
             <div className="item-detail">
               <span className="detail-label">Amount</span>
-              <span className="detail-value credits">{transaction.amount} credits</span>
+              <span className="detail-value credits">
+                {transaction.amount} credits
+              </span>
             </div>
-            
             <div className="item-detail">
               <span className="detail-label">Cost</span>
-              <span className="detail-value cost">${transaction.cost.toFixed(2)}</span>
+              <span className="detail-value cost">
+                ${transaction.cost.toFixed(2)}
+              </span>
             </div>
-            
+          </div>
+          <div className="item-details">
             <div className="item-detail">
               <span className="detail-label">Payment Method</span>
               <span className="detail-value">
-                {transaction.paymentMethod.replace('_', ' ').toUpperCase()}
+                {transaction.paymentMethod.replace("_", " ").toUpperCase()}
               </span>
             </div>
-            
+
             {transaction.approvedAt && (
               <div className="item-detail">
                 <span className="detail-label">
-                  {transaction.status === 'Approved' ? 'Approved' : 'Processed'}
+                  {transaction.status === "Approved" ? "Approved" : "Processed"}
                 </span>
                 <span className="detail-value">
                   {new Date(transaction.approvedAt).toLocaleDateString()}
@@ -241,7 +258,7 @@ const History: React.FC = () => {
               </div>
             )}
           </div>
-          
+
           <div className="item-timestamp">
             Submitted: {new Date(transaction.createdAt).toLocaleString()}
           </div>
@@ -275,7 +292,7 @@ const History: React.FC = () => {
           <IonTitle>History</IonTitle>
         </IonToolbar>
       </IonHeader>
-      
+
       <IonContent fullscreen className="history-content">
         <IonRefresher slot="fixed" onIonRefresh={handleRefresh}>
           <IonRefresherContent />
@@ -286,7 +303,9 @@ const History: React.FC = () => {
           <div className="filter-tabs">
             <IonSegment
               value={selectedFilter}
-              onIonChange={(e) => setSelectedFilter(e.detail.value as FilterType)}
+              onIonChange={(e) =>
+                setSelectedFilter(e.detail.value as FilterType)
+              }
             >
               <IonSegmentButton value="all">
                 <IonLabel>All</IonLabel>
@@ -303,31 +322,41 @@ const History: React.FC = () => {
           {/* History Content */}
           {filteredData.length === 0 ? (
             <div className="empty-history">
-              <IonIcon 
-                icon={selectedFilter === 'sessions' ? timeOutline : 
-                      selectedFilter === 'transactions' ? cardOutline : 
-                      timeOutline} 
-                className="empty-icon" 
+              <IonIcon
+                icon={
+                  selectedFilter === "sessions"
+                    ? timeOutline
+                    : selectedFilter === "transactions"
+                      ? cardOutline
+                      : timeOutline
+                }
+                className="empty-icon"
               />
-              <h3>No {selectedFilter === 'all' ? 'activity' : selectedFilter} yet</h3>
+              <h3>
+                No {selectedFilter === "all" ? "activity" : selectedFilter} yet
+              </h3>
               <p>
-                {selectedFilter === 'sessions' && 'Your study sessions will appear here once you start using tables.'}
-                {selectedFilter === 'transactions' && 'Your credit purchase history will be shown here.'}
-                {selectedFilter === 'all' && 'Your activity history will appear here as you use the app.'}
+                {selectedFilter === "sessions" &&
+                  "Your study sessions will appear here once you start using tables."}
+                {selectedFilter === "transactions" &&
+                  "Your credit purchase history will be shown here."}
+                {selectedFilter === "all" &&
+                  "Your activity history will appear here as you use the app."}
               </p>
             </div>
           ) : (
             <div className="history-section">
               <div className="history-list">
-                {filteredData.map((item, index) => (
-                  item.type === 'session' 
+                {filteredData.map((item, index) =>
+                  item.type === "session"
                     ? renderSessionItem(item.data as SessionWithTable)
                     : renderTransactionItem(item.data as CreditTransaction)
-                ))}
+                )}
               </div>
-              
+
               {/* Show loading indicator if there's more data to load */}
-              {displayCount < (sessions?.length || 0) + (transactions?.length || 0) && (
+              {displayCount <
+                (sessions?.length || 0) + (transactions?.length || 0) && (
                 <div className="loading-more">
                   <LoadingSpinner size="small" message="Loading more..." />
                 </div>
@@ -338,7 +367,10 @@ const History: React.FC = () => {
           <IonInfiniteScroll
             onIonInfinite={handleInfiniteScroll}
             threshold="100px"
-            disabled={displayCount >= (sessions?.length || 0) + (transactions?.length || 0)}
+            disabled={
+              displayCount >=
+              (sessions?.length || 0) + (transactions?.length || 0)
+            }
           >
             <IonInfiniteScrollContent
               loadingText="Loading more history..."

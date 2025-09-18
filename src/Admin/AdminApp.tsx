@@ -8,12 +8,12 @@ import {
 import { QueryProvider } from "../providers/QueryProvier";
 import { AdminAuthGuard } from "../components/AdminAuthGuard";
 import { AdminLayout } from "../components/AdminLayout";
-import { AdminLogin } from "../pages/AdminLogin";
+import { AdminLogin } from "../Admin/AdminLogin";
 import Dashboard from "../pages/dashboard/Dashboard";
-import { UsersManagement } from "../pages/UserManagement";
-import { TransactionsManagement } from "../pages/TransactionManagement";
-import { TablesManagement } from "../pages/TablesManagement";
-import { PremiseManagement } from "../pages/PremiseManagement";
+import UsersManagement from "../pages/UserManagement";
+import TransactionsManagement from "../pages/TransactionManagement";
+import TablesManagement from "../pages/TableManagement";
+import { PremiseManagement } from "../Admin/PremiseManagement";
 import "./styles/admin.css";
 
 const AdminApp: React.FC = () => {
