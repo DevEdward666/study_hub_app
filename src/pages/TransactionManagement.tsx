@@ -1,17 +1,16 @@
-import React from "react";
-import { useTransactionsManagement } from "../hooks/AdminDataHooks";
-import { LoadingSpinner } from "../components/common/LoadingSpinner";
-import { ErrorMessage } from "../components/common/ErrorMessage";
+import React from 'react';
+import { useTransactionsManagement } from '../hooks/AdminDataHooks';
+import { LoadingSpinner } from '../components/common/LoadingSpinner';
+import { ErrorMessage } from '../components/common/ErrorMessage';
 
 export const TransactionsManagement: React.FC = () => {
-  const { transactions, isLoading, error, approve, reject, refetch } =
-    useTransactionsManagement();
+  const { transactions, isLoading, error, approve, reject, refetch } = useTransactionsManagement();
 
   const handleApprove = async (transactionId: string) => {
     try {
       await approve.mutateAsync(transactionId);
     } catch (error) {
-      console.error("Failed to approve transaction:", error);
+      console.error('Failed to approve transaction:', error);
     }
   };
 
@@ -19,7 +18,7 @@ export const TransactionsManagement: React.FC = () => {
     try {
       await reject.mutateAsync(transactionId);
     } catch (error) {
-      console.error("Failed to reject transaction:", error);
+      console.error('Failed to reject transaction:', error);
     }
   };
 
@@ -28,9 +27,7 @@ export const TransactionsManagement: React.FC = () => {
   }
 
   if (error) {
-    return (
-      <ErrorMessage message="Failed to load transactions" onRetry={refetch} />
-    );
+    return <ErrorMessage message="Failed to load transactions" onRetry={refetch} />;
   }
 
   return (
@@ -73,7 +70,7 @@ export const TransactionsManagement: React.FC = () => {
                 </div>
                 <div className="col-method">
                   <span className="method">
-                    {transaction.paymentMethod.replace("_", " ").toUpperCase()}
+                    {transaction.paymentMethod.replace('_', ' ').toUpperCase()}
                   </span>
                 </div>
                 <div className="col-date">

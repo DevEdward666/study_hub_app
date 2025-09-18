@@ -1,26 +1,37 @@
-import React from "react";
-import { useUsersManagement } from "../hooks/AdminDataHooks";
-import { LoadingSpinner } from "../components/common/LoadingSpinner";
-import { ErrorMessage } from "../components/common/ErrorMessage";
+import React, { useState } from 'react';
+import { useUsersManagement } from '../hooks/AdminDataHooks';
+import { LoadingSpinner } from '../components/common/LoadingSpinner';
+import { ErrorMessage } from '../components/common/ErrorMessage';
 
 export const UsersManagement: React.FC = () => {
-  const { users, isLoading, error, toggleAdmin, refetch } =
-    useUsersManagement();
+  const { users, isLoading, error, toggleAdmin, refetch } = useUsersManagement();
+  const [searchTerm, setSearchTerm] = useState('');
+  const [filterType, setFilterType] = useState<'all' | 'admin' | 'user'>('all');
 
   const handleToggleAdmin = async (userId: string) => {
     try {
       await toggleAdmin.mutateAsync(userId);
     } catch (error) {
-      console.error("Failed to toggle admin status:", error);
+      console.error('Failed to toggle admin status:', error);
     }
   };
+
+  const filteredUsers = users.filter(user => {
+    const matchesSearch = user.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                         user.email.toLowerCase().includes(searchTerm.toLowerCase());
+    
+    const matchesFilter = filterType === 'all' || 
+                         (filterType === 'admin' && user.isAdmin) ||
+                         (filterType === 'user' && !user.isAdmin);
+    
+    return matchesSearch && matchesFilter;
+  });
 
   if (isLoading) {
     return <LoadingSpinner message="Loading users..." />;
   }
 
   if (error) {
-    console.log(error)
     return <ErrorMessage message="Failed to load users" onRetry={refetch} />;
   }
 
@@ -31,22 +42,63 @@ export const UsersManagement: React.FC = () => {
         <p>Manage users and admin permissions</p>
       </div>
 
+      {/* Search and Filter */}
+      <div className="controls-section">
+        <div className="search-bar">
+          <input
+            type="text"
+            placeholder="Search users by name or email..."
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+            className="search-input"
+          />
+        </div>
+        
+        <div className="filter-buttons">
+          <button
+            className={`filter-btn ${filterType === 'all' ? 'active' : ''}`}
+            onClick={() => setFilterType('all')}
+          >
+            All Users ({users.length})
+          </button>
+          <button
+            className={`filter-btn ${filterType === 'admin' ? 'active' : ''}`}
+            onClick={() => setFilterType('admin')}
+          >
+            Admins ({users.filter(u => u.isAdmin).length})
+          </button>
+          <button
+            className={`filter-btn ${filterType === 'user' ? 'active' : ''}`}
+            onClick={() => setFilterType('user')}
+          >
+            Users ({users.filter(u => !u.isAdmin).length})
+          </button>
+        </div>
+      </div>
+
+      {/* Users Table */}
       <div className="users-table">
         <div className="table-header">
           <div className="col-user">User</div>
           <div className="col-credits">Credits</div>
           <div className="col-status">Status</div>
           <div className="col-session">Session</div>
+          <div className="col-joined">Joined</div>
           <div className="col-actions">Actions</div>
         </div>
 
         <div className="table-body">
-          {users.map((user) => (
+          {filteredUsers.map((user) => (
             <div key={user.id} className="table-row">
               <div className="col-user">
                 <div className="user-cell">
-                  <strong>{user.name}</strong>
-                  <span>{user.email}</span>
+                  <div className="user-avatar">
+                    {user.name?.charAt(0).toUpperCase() || 'U'}
+                  </div>
+                  <div className="user-info">
+                    <strong>{user.name || 'Unknown'}</strong>
+                    <span>{user.email}</span>
+                  </div>
                 </div>
               </div>
               <div className="col-credits">
@@ -54,31 +106,71 @@ export const UsersManagement: React.FC = () => {
               </div>
               <div className="col-status">
                 {user.isAdmin ? (
-                  <span className="status-badge admin">Admin</span>
+                  <span className="status-badge admin">
+                    <span className="badge-icon">👑</span>
+                    Admin
+                  </span>
                 ) : (
-                  <span className="status-badge user">User</span>
+                  <span className="status-badge user">
+                    <span className="badge-icon">👤</span>
+                    User
+                  </span>
                 )}
               </div>
               <div className="col-session">
                 {user.hasActiveSession ? (
-                  <span className="session-badge active">Active</span>
+                  <span className="session-badge active">
+                    <span className="session-dot active"></span>
+                    Active
+                  </span>
                 ) : (
-                  <span className="session-badge inactive">Inactive</span>
+                  <span className="session-badge inactive">
+                    <span className="session-dot inactive"></span>
+                    Inactive
+                  </span>
                 )}
+              </div>
+              <div className="col-joined">
+                <span className="joined-date">
+                  {new Date(user.createdAt).toLocaleDateString()}
+                </span>
               </div>
               <div className="col-actions">
                 <button
-                  className={`btn ${user.isAdmin ? "btn-warning" : "btn-primary"}`}
+                  className={`btn ${user.isAdmin ? 'btn-warning' : 'btn-primary'}`}
                   onClick={() => handleToggleAdmin(user.id)}
                   disabled={toggleAdmin.isPending}
                 >
-                  {user.isAdmin ? "Remove Admin" : "Make Admin"}
+                  {toggleAdmin.isPending ? (
+                    <span className="btn-loading">...</span>
+                  ) : (
+                    <>
+                      {user.isAdmin ? (
+                        <>
+                          <span className="btn-icon">👤</span>
+                          Remove Admin
+                        </>
+                      ) : (
+                        <>
+                          <span className="btn-icon">👑</span>
+                          Make Admin
+                        </>
+                      )}
+                    </>
+                  )}
                 </button>
               </div>
             </div>
           ))}
         </div>
       </div>
+
+      {filteredUsers.length === 0 && (
+        <div className="empty-state">
+          <h3>No users found</h3>
+          <p>Try adjusting your search or filter criteria</p>
+        </div>
+      )}
     </div>
   );
 };

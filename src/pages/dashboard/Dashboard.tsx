@@ -1,220 +1,99 @@
 import React from 'react';
-import {
-  IonContent,
-  IonPage,
-  IonHeader,
-  IonToolbar,
-  IonTitle,
-  IonCard,
-  IonCardContent,
-  IonCardHeader,
-  IonCardTitle,
-  IonButton,
-  IonIcon,
-  IonBadge,
-  IonRefresher,
-  IonRefresherContent,
-  IonGrid,
-  IonRow,
-  IonCol,
-  RefresherEventDetail,
-} from '@ionic/react';
-import {
-  qrCodeOutline,
-  cardOutline,
-  businessOutline,
-  timeOutline,
-  stopOutline,
-} from 'ionicons/icons';
-import { useHistory } from 'react-router-dom';
-import { useAuth } from '../../hooks/AuthHooks';
-import { useTables } from '../../hooks/TableHooks';
-import { useUser } from '../../hooks/UserHooks';
-import { usePremise } from '../../hooks/PremiseHooks';
+import { useUsersManagement, useTransactionsManagement } from '../../hooks/AdminDataHooks';
 import { LoadingSpinner } from '../../components/common/LoadingSpinner';
-import { ErrorMessage } from '../../components/common/ErrorMessage';
-import './Dashboard.css';
 
-const Dashboard: React.FC = () => {
-  const history = useHistory();
-  const { user } = useAuth();
-  const { activeSession, endSession, isLoadingActiveSession } = useTables();
-  const { credits, isLoadingCredits, refetchCredits } = useUser();
-  const { access, isLoadingAccess, refetchAccess } = usePremise();
+export const Dashboard: React.FC = () => {
+  const { users, isLoading: usersLoading } = useUsersManagement();
+  const { transactions, isLoading: transactionsLoading } = useTransactionsManagement();
 
-  const handleRefresh = async (event: CustomEvent<RefresherEventDetail>) => {
-    await Promise.all([
-      refetchCredits(),
-      refetchAccess(),
-    ]);
-    event.detail.complete();
+  const stats = {
+    totalUsers: users.length,
+    totalCredits: users.reduce((sum, user) => sum + user.credits, 0),
+    pendingTransactions: transactions.length,
+    activeUsers: users.filter(user => user.hasActiveSession).length,
   };
 
-  const handleEndSession = async () => {
-    if (activeSession) {
-      try {
-        await endSession.mutateAsync(activeSession.id);
-      } catch (error) {
-        console.error('Error ending session:', error);
-      }
-    }
-  };
-
-  const formatTimeRemaining = (milliseconds: number): string => {
-    const hours = Math.floor(milliseconds / (1000 * 60 * 60));
-    const minutes = Math.floor((milliseconds % (1000 * 60 * 60)) / (1000 * 60));
-    return `${hours}h ${minutes}m`;
-  };
-
-  const getGreeting = (): string => {
-    const hour = new Date().getHours();
-    if (hour < 12) return 'Good morning';
-    if (hour < 18) return 'Good afternoon';
-    return 'Good evening';
-  };
-
-  if (isLoadingActiveSession || isLoadingCredits || isLoadingAccess) {
-    return (
-      <IonPage>
-        <IonHeader>
-          <IonToolbar>
-            <IonTitle>Dashboard</IonTitle>
-          </IonToolbar>
-        </IonHeader>
-        <IonContent>
-          <LoadingSpinner message="Loading dashboard..." />
-        </IonContent>
-      </IonPage>
-    );
+  if (usersLoading || transactionsLoading) {
+    return <LoadingSpinner message="Loading dashboard..." />;
   }
 
   return (
-    <IonPage>
-      <IonHeader>
-        <IonToolbar>
-          <IonTitle>Dashboard</IonTitle>
-        </IonToolbar>
-      </IonHeader>
-      
-      <IonContent fullscreen className="dashboard-content">
-        <IonRefresher slot="fixed" onIonRefresh={handleRefresh}>
-          <IonRefresherContent />
-        </IonRefresher>
+    <div className="admin-dashboard">
+      <div className="dashboard-header">
+        <h1>Dashboard Overview</h1>
+        <p>Welcome to the StudyHub admin panel</p>
+      </div>
 
-        <div className="dashboard-container">
-          {/* Welcome Section */}
-          <div className="welcome-section">
-            <h1>{getGreeting()}, {user?.name || 'User'}!</h1>
-            <p>Welcome to your StudyHub dashboard</p>
-          </div>
-
-          {/* Active Session Card */}
-          {activeSession && (
-            <IonCard className="session-card active-session">
-              <IonCardHeader>
-                <IonCardTitle className="session-card-title">
-                  <IonIcon icon={timeOutline} />
-                  Active Session
-                </IonCardTitle>
-              </IonCardHeader>
-              <IonCardContent>
-                <div className="session-details">
-                  <div className="session-info">
-                    <h3>Table {activeSession.table.tableNumber}</h3>
-                    <p>{activeSession.table.location}</p>
-                    <div className="session-stats">
-                      <span>Started: {new Date(activeSession.startTime).toLocaleTimeString()}</span>
-                      <span>Credits used: {activeSession.creditsUsed}</span>
-                    </div>
-                  </div>
-                  <IonButton
-                    fill="clear"
-                    color="danger"
-                    onClick={handleEndSession}
-                    disabled={endSession.isPending}
-                  >
-                    <IonIcon icon={stopOutline} slot="start" />
-                    End Session
-                  </IonButton>
-                </div>
-              </IonCardContent>
-            </IonCard>
-          )}
-
-          {/* Quick Stats Grid */}
-          <IonGrid className="stats-grid">
-            <IonRow>
-              <IonCol size="6">
-                <IonCard className="stat-card credits-card" button onClick={() => history.push('/app/credits')}>
-                  <IonCardContent>
-                    <div className="stat-content">
-                      <IonIcon icon={cardOutline} className="stat-icon" />
-                      <div className="stat-info">
-                        <h3>{credits?.balance || 0}</h3>
-                        <p>Credits</p>
-                      </div>
-                    </div>
-                  </IonCardContent>
-                </IonCard>
-              </IonCol>
-              
-              <IonCol size="6">
-                <IonCard className="stat-card premise-card" button onClick={() => history.push('/app/premise')}>
-                  <IonCardContent>
-                    <div className="stat-content">
-                      <IonIcon icon={businessOutline} className="stat-icon" />
-                      <div className="stat-info">
-                        {access ? (
-                          <>
-                            <IonBadge color="success">Active</IonBadge>
-                            <p>{formatTimeRemaining(access.timeRemaining)}</p>
-                          </>
-                        ) : (
-                          <>
-                            <IonBadge color="medium">Inactive</IonBadge>
-                            <p>Premise Access</p>
-                          </>
-                        )}
-                      </div>
-                    </div>
-                  </IonCardContent>
-                </IonCard>
-              </IonCol>
-            </IonRow>
-          </IonGrid>
-
-          {/* Quick Actions */}
-          <div className="quick-actions">
-            <h2>Quick Actions</h2>
-            
-            <IonCard className="action-card" button onClick={() => history.push('/app/scanner')}>
-              <IonCardContent>
-                <div className="action-content">
-                  <IonIcon icon={qrCodeOutline} className="action-icon" />
-                  <div className="action-info">
-                    <h3>Scan Table QR</h3>
-                    <p>Start a new study session</p>
-                  </div>
-                </div>
-              </IonCardContent>
-            </IonCard>
-
-            <IonCard className="action-card" button onClick={() => history.push('/app/history')}>
-              <IonCardContent>
-                <div className="action-content">
-                  <IonIcon icon={timeOutline} className="action-icon" />
-                  <div className="action-info">
-                    <h3>View History</h3>
-                    <p>See your past sessions</p>
-                  </div>
-                </div>
-              </IonCardContent>
-            </IonCard>
+      <div className="stats-grid">
+        <div className="stat-card">
+          <div className="stat-icon">👥</div>
+          <div className="stat-content">
+            <h3>{stats.totalUsers}</h3>
+            <p>Total Users</p>
           </div>
         </div>
-      </IonContent>
-    </IonPage>
+
+        <div className="stat-card">
+          <div className="stat-icon">🪙</div>
+          <div className="stat-content">
+            <h3>{stats.totalCredits}</h3>
+            <p>Total Credits</p>
+          </div>
+        </div>
+
+        <div className="stat-card">
+          <div className="stat-icon">⏳</div>
+          <div className="stat-content">
+            <h3>{stats.pendingTransactions}</h3>
+            <p>Pending Transactions</p>
+          </div>
+        </div>
+
+        <div className="stat-card">
+          <div className="stat-icon">🔄</div>
+          <div className="stat-content">
+            <h3>{stats.activeUsers}</h3>
+            <p>Active Sessions</p>
+          </div>
+        </div>
+      </div>
+
+      <div className="dashboard-sections">
+        <div className="section">
+          <h2>Recent Users</h2>
+          <div className="users-preview">
+            {users.slice(0, 5).map((user) => (
+              <div key={user.id} className="user-preview-item">
+                <div className="user-info">
+                  <strong>{user.name}</strong>
+                  <span>{user.email}</span>
+                </div>
+                <div className="user-stats">
+                  <span className="credits">{user.credits} credits</span>
+                  {user.isAdmin && <span className="admin-badge">Admin</span>}
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        <div className="section">
+          <h2>Pending Transactions</h2>
+          <div className="transactions-preview">
+            {transactions.slice(0, 5).map((transaction) => (
+              <div key={transaction.id} className="transaction-preview-item">
+                <div className="transaction-info">
+                  <strong>{transaction.user.name}</strong>
+                  <span>{transaction.amount} credits - ${transaction.cost}</span>
+                </div>
+                <span className="transaction-date">
+                  {new Date(transaction.createdAt).toLocaleDateString()}
+                </span>
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
+    </div>
   );
 };
-
-export default Dashboard;
