@@ -36,7 +36,7 @@ import { useUser } from "../../hooks/UserHooks";
 import { LoadingSpinner } from "../../components/common/LoadingSpinner";
 import { ErrorMessage } from "../../components/common/ErrorMessage";
 import { PurchaseCreditsRequestSchema } from "../../schema/user.schema";
-import "./Credits.css";
+import "./credits.css";
 
 const Credits: React.FC = () => {
   const [isModalOpen, setIsModalOpen] = useState(false);
