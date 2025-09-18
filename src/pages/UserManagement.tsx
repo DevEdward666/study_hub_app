@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { useUsersManagement } from '../hooks/AdminDataHooks';
 import { LoadingSpinner } from '../components/common/LoadingSpinner';
 import { ErrorMessage } from '../components/common/ErrorMessage';
-
+import '../Admin/styles/admin.css'
  const UsersManagement: React.FC = () => {
   const { users, isLoading, error, toggleAdmin, refetch } = useUsersManagement();
   const [searchTerm, setSearchTerm] = useState('');

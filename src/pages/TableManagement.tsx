@@ -2,8 +2,8 @@ import React, { useState } from 'react';
 import { useTablesManagement } from '../hooks/AdminDataHooks';
 import { LoadingSpinner } from '../components/common/LoadingSpinner';
 import { ErrorMessage } from '../components/common/ErrorMessage';
-import { de } from 'zod/v4/locales';
-
+import '../Admin/styles/admin.css'
+import QRCode from "react-qr-code";
  const TablesManagement: React.FC = () => {
   const { tables, isLoading, error, createTable, refetch } = useTablesManagement();
   const [showCreateForm, setShowCreateForm] = useState(false);
@@ -52,7 +52,9 @@ import { de } from 'zod/v4/locales';
   if (error) {
     return <ErrorMessage message="Failed to load tables" onRetry={refetch} />;
   }
+const handleViewQR = () => {
 
+}
   return (
     <div className="tables-management">
       <div className="page-header">
@@ -177,13 +179,16 @@ import { de } from 'zod/v4/locales';
               </div>
               
               <div className="table-detail">
-                <span className="detail-label">🔗 QR Code:</span>
-                <span className="detail-value qr-code">{table.qrCode.substring(0, 20)}...</span>
+                <span className="detail-label">
+                    <span className="detail-qr">
+                  🔗 QR Code: <QRCode value={table.qrCode}/>
+                  </span>
+                  </span>
               </div>
             </div>
             
             <div className="table-card-footer">
-              <button className="btn btn-outline">View QR Code</button>
+              {/* <button className="btn btn-outline" >View QR Code</button> */}
               <button className="btn btn-outline">Edit Table</button>
             </div>
           </div>

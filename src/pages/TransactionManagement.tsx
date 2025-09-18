@@ -2,7 +2,7 @@ import React from 'react';
 import { useTransactionsManagement } from '../hooks/AdminDataHooks';
 import { LoadingSpinner } from '../components/common/LoadingSpinner';
 import { ErrorMessage } from '../components/common/ErrorMessage';
-
+import '../Admin/styles/admin.css'
  const TransactionsManagement: React.FC = () => {
   const { transactions, isLoading, error, approve, reject, refetch } = useTransactionsManagement();
 
