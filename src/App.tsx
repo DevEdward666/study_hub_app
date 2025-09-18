@@ -22,7 +22,7 @@ import '@ionic/react/css/flex-utils.css';
 import '@ionic/react/css/display.css';
 
 /* Theme variables */
-// import './theme/variables.css';
+import './theme/variable.css';
 // import './theme/global.css';
 
 /* Pages */
@@ -30,15 +30,18 @@ import Login from './pages/auth/Login';
 import Register from './pages/auth/Register';
 import Dashboard from './pages/dashboard/Dashboard';
 import TableScanner from './pages/dashboard/TableScanner';
-// import TableDetails from './pages/dashboard/TableDetails';
-// import Credits from './pages/credits/Credits';
-// import PremiseAccess from './pages/premise/PremiseAccess';
-// import Profile from './pages/profile/Profile';
-// import History from './pages/history/History';
+import TableDetails from './pages/tables/TableDetails';
+import Credits from './pages/credits/credits';
+import PremiseAccess from './pages/premise/PremiseAccess';
+import Profile from './pages/profile/Profile';
+import History from './pages/history/History';
 
 /* Components */
 import { AuthGuard } from './components/guards/AuthGuard';
 import { TabsLayout } from './components/Layout/TabsLayout';
+import { TablesManagement } from './pages/TableManagement';
+import { TransactionsManagement } from './pages/TransactionManagement';
+import { UsersManagement } from './pages/UserManagement';
 setupIonicReact();
 
 const App: React.FC = () => (
@@ -55,11 +58,16 @@ const App: React.FC = () => (
               <TabsLayout>
                 <Route exact path="/app/dashboard" component={Dashboard} />
                 <Route exact path="/app/scanner" component={TableScanner} />
-                {/* <Route exact path="/app/table/:id" component={TableDetails} />
+                <Route exact path="/app/table/:id" component={TableDetails} />
                 <Route exact path="/app/credits" component={Credits} />
                 <Route exact path="/app/premise" component={PremiseAccess} />
                 <Route exact path="/app/history" component={History} />
-                <Route exact path="/app/profile" component={Profile} /> */}
+                <Route exact path="/app/profile" component={Profile} /> 
+
+                <Route exact path="/app/admin/tables" component={TablesManagement} /> 
+                <Route exact path="/app/admin/transactions" component={TransactionsManagement} /> 
+                <Route exact path="/app/admin/users" component={UsersManagement} /> 
+
                 <Route exact path="/app">
                   <Redirect to="/app/dashboard" />
                 </Route>

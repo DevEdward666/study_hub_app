@@ -20,6 +20,7 @@ export const UsersManagement: React.FC = () => {
   }
 
   if (error) {
+    console.log(error)
     return <ErrorMessage message="Failed to load users" onRetry={refetch} />;
   }
 

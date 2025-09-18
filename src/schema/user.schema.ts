@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import { TableSessionSchema, StudyTableSchema } from './table.schema';
 
 export const UserCreditsSchema = z.object({
   id: z.string(),
@@ -31,6 +32,11 @@ export const PurchaseCreditsRequestSchema = z.object({
   transactionId: z.string(),
 });
 
+export const SessionWithTableSchema = TableSessionSchema.extend({
+  table: StudyTableSchema,
+});
+
 export type UserCredits = z.infer<typeof UserCreditsSchema>;
 export type CreditTransaction = z.infer<typeof CreditTransactionSchema>;
 export type PurchaseCreditsRequest = z.infer<typeof PurchaseCreditsRequestSchema>;
+export type SessionWithTable = z.infer<typeof SessionWithTableSchema>;

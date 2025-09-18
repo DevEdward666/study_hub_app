@@ -16,9 +16,9 @@ export const UserSchema = z.object({
   email: z.string(),
   name: z.string().nullable(),
   image: z.string().nullable(),
-  emailVerified: z.boolean(),
+  emailVerified: z.boolean().nullable(),
   createdAt: z.string(),
-  updatedAt: z.string(),
+  updatedAt: z.string().nullable(),
 });
 
 export const AuthResponseSchema = z.object({

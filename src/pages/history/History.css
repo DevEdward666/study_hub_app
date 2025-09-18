@@ -1,0 +1,206 @@
+.history-content {
+  --background: var(--ion-color-light-tint);
+}
+
+.history-container {
+  padding: 16px;
+}
+
+/* Filter Tabs */
+.filter-tabs {
+  margin-bottom: 20px;
+}
+
+.filter-tabs ion-segment {
+  background: white;
+  border-radius: 12px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+}
+
+.filter-tabs ion-segment-button {
+  --indicator-color: var(--ion-color-primary);
+  --color: var(--ion-color-medium);
+  --color-checked: var(--ion-color-primary);
+  font-weight: 600;
+}
+
+/* History Lists */
+.history-section {
+  margin-bottom: 24px;
+}
+
+.section-title {
+  font-size: 20px;
+  font-weight: 600;
+  margin: 0 0 16px 8px;
+  color: var(--ion-color-dark);
+}
+
+.history-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+/* History Items */
+.history-item {
+  border-radius: 12px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+  margin: 0;
+  overflow: hidden;
+}
+
+.session-item {
+  border-left: 4px solid var(--ion-color-success);
+}
+
+.session-item.active {
+  border-left-color: var(--ion-color-warning);
+  background: linear-gradient(135deg, var(--ion-color-warning-tint) 0%, white 100%);
+}
+
+.transaction-item {
+  border-left: 4px solid var(--ion-color-secondary);
+}
+
+.transaction-item.approved {
+  border-left-color: var(--ion-color-success);
+}
+
+.transaction-item.rejected {
+  border-left-color: var(--ion-color-danger);
+}
+
+.transaction-item.pending {
+  border-left-color: var(--ion-color-warning);
+}
+
+/* Item Content */
+.item-content {
+  padding: 4px 0;
+}
+
+.item-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 8px;
+}
+
+.item-title {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.item-title h3 {
+  font-size: 18px;
+  font-weight: 600;
+  margin: 0;
+  color: var(--ion-color-dark);
+}
+
+.item-icon {
+  font-size: 20px;
+  color: var(--ion-color-primary);
+}
+
+.item-badge {
+  font-size: 11px;
+  font-weight: 600;
+  padding: 4px 8px;
+}
+
+.item-details {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  margin-bottom: 8px;
+}
+
+.item-detail {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 14px;
+}
+
+.detail-label {
+  color: var(--ion-color-medium);
+  font-weight: 500;
+}
+
+.detail-value {
+  color: var(--ion-color-dark);
+  font-weight: 600;
+}
+
+.detail-value.credits {
+  color: var(--ion-color-primary);
+}
+
+.detail-value.duration {
+  color: var(--ion-color-success);
+}
+
+.detail-value.cost {
+  color: var(--ion-color-secondary);
+}
+
+.item-timestamp {
+  font-size: 12px;
+  color: var(--ion-color-medium);
+  text-align: right;
+  margin-top: 8px;
+}
+
+/* Empty State */
+.empty-history {
+  text-align: center;
+  padding: 60px 20px;
+}
+
+.empty-icon {
+  font-size: 64px;
+  color: var(--ion-color-medium);
+  margin-bottom: 16px;
+}
+
+.empty-history h3 {
+  font-size: 20px;
+  font-weight: 600;
+  margin: 0 0 8px 0;
+  color: var(--ion-color-dark);
+}
+
+.empty-history p {
+  font-size: 16px;
+  color: var(--ion-color-medium);
+  margin: 0;
+  line-height: 1.5;
+}
+
+/* Loading States */
+.loading-more {
+  text-align: center;
+  padding: 20px;
+}
+
+/* Responsive */
+@media (max-width: 480px) {
+  .item-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 8px;
+  }
+  
+  .item-details {
+    font-size: 13px;
+  }
+  
+  .item-detail {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 2px;
+  }
+}
