@@ -1,5 +1,5 @@
 // src/pages/premise/PremiseAccess.tsx
-import React, { useState } from 'react';
+import React, { useState } from "react";
 import {
   IonContent,
   IonPage,
@@ -18,7 +18,7 @@ import {
   IonBadge,
   IonProgressBar,
   RefresherEventDetail,
-} from '@ionic/react';
+} from "@ionic/react";
 import {
   businessOutline,
   qrCodeOutline,
@@ -26,16 +26,19 @@ import {
   checkmarkCircleOutline,
   alertCircleOutline,
   refreshOutline,
-} from 'ionicons/icons';
-import { usePremise } from '../../hooks/PremiseHooks';
-import { useQRScanner } from '../../hooks/QrScannerHooks';
-import { LoadingSpinner } from '../../components/common/LoadingSpinner';
-import './PremiseAccess.css';
+} from "ionicons/icons";
+import { usePremise } from "../../hooks/PremiseHooks";
+import { useQRScanner } from "../../hooks/QrScannerHooks";
+import { LoadingSpinner } from "../../components/common/LoadingSpinner";
+import "./PremiseAccess.css";
+import { Scanner } from "@yudiel/react-qr-scanner";
 
 const PremiseAccess: React.FC = () => {
   const [showToast, setShowToast] = useState(false);
-  const [toastMessage, setToastMessage] = useState('');
-  const [toastColor, setToastColor] = useState<'success' | 'danger' | 'warning'>('success');
+  const [toastMessage, setToastMessage] = useState("");
+  const [toastColor, setToastColor] = useState<
+    "success" | "danger" | "warning"
+  >("success");
 
   const {
     access,
@@ -45,7 +48,8 @@ const PremiseAccess: React.FC = () => {
     refetchAccess,
   } = usePremise();
 
-  const { startScan, isScanning, hasPermission, checkPermission } = useQRScanner();
+  const { startScan, isScanning, hasPermission, checkPermission } =
+    useQRScanner();
 
   React.useEffect(() => {
     checkPermission();
@@ -56,19 +60,20 @@ const PremiseAccess: React.FC = () => {
     event.detail.complete();
   };
 
-  const handleScanQR = async () => {
+  const handleScanQR = async (result: any) => {
     try {
-      const scannedCode = await startScan();
-      if (scannedCode) {
-        await activateAccess.mutateAsync({ activationCode: scannedCode });
-        setToastMessage('Premise access activated successfully!');
-        setToastColor('success');
+      // const scannedCode = await startScan();
+      if (result) {
+        await activateAccess.mutateAsync({ activationCode: result });
+        setToastMessage("Premise access activated successfully!");
+        setToastColor("success");
         setShowToast(true);
       }
     } catch (error) {
-      const message = error instanceof Error ? error.message : 'Failed to activate access';
+      const message =
+        error instanceof Error ? error.message : "Failed to activate access";
       setToastMessage(message);
-      setToastColor('danger');
+      setToastColor("danger");
       setShowToast(true);
     }
   };
@@ -78,7 +83,7 @@ const PremiseAccess: React.FC = () => {
       await cleanupExpired.mutateAsync();
       await refetchAccess();
     } catch (error) {
-      console.error('Failed to cleanup expired access:', error);
+      console.error("Failed to cleanup expired access:", error);
     }
   };
 
@@ -86,7 +91,7 @@ const PremiseAccess: React.FC = () => {
     const totalMinutes = Math.floor(milliseconds / (1000 * 60));
     const hours = Math.floor(totalMinutes / 60);
     const minutes = totalMinutes % 60;
-    
+
     if (hours > 0) {
       return `${hours}h ${minutes}m`;
     }
@@ -95,13 +100,13 @@ const PremiseAccess: React.FC = () => {
 
   const getProgressPercentage = (): number => {
     if (!access) return 0;
-    
+
     const now = Date.now();
     const start = new Date(access.activatedAt).getTime();
     const end = new Date(access.expiresAt).getTime();
     const elapsed = now - start;
     const total = end - start;
-    
+
     return Math.max(0, Math.min(100, (elapsed / total) * 100));
   };
 
@@ -138,7 +143,7 @@ const PremiseAccess: React.FC = () => {
           <IonTitle>Premise Access</IonTitle>
         </IonToolbar>
       </IonHeader>
-      
+
       <IonContent fullscreen className="premise-content">
         <IonRefresher slot="fixed" onIonRefresh={handleRefresh}>
           <IonRefresherContent />
@@ -150,7 +155,10 @@ const PremiseAccess: React.FC = () => {
             <IonCard className="access-card active">
               <IonCardHeader>
                 <IonCardTitle className="access-title">
-                  <IonIcon icon={checkmarkCircleOutline} className="access-icon active" />
+                  <IonIcon
+                    icon={checkmarkCircleOutline}
+                    className="access-icon active"
+                  />
                   <div className="title-content">
                     <span>Access Active</span>
                     <IonBadge color="success" className="access-badge">
@@ -162,29 +170,29 @@ const PremiseAccess: React.FC = () => {
               <IonCardContent>
                 <div className="access-details">
                   <div className="location-info">
-                    <h3>{access.location || 'Study Premise'}</h3>
+                    <h3>{access.location || "Study Premise"}</h3>
                     <p>Access granted and active</p>
                   </div>
-                  
+
                   <div className="time-info">
                     <div className="time-remaining">
                       <IonIcon icon={timeOutline} />
-                      <span className={isExpiringSoon() ? 'time-warning' : ''}>
+                      <span className={isExpiringSoon() ? "time-warning" : ""}>
                         {formatTimeRemaining(access.timeRemaining)} remaining
                       </span>
                     </div>
-                    
+
                     <div className="progress-container">
-                      <IonProgressBar 
+                      <IonProgressBar
                         value={getProgressPercentage() / 100}
-                        color={isExpiringSoon() ? 'warning' : 'success'}
+                        color={isExpiringSoon() ? "warning" : "success"}
                       />
                       <span className="progress-text">
                         {Math.round(getProgressPercentage())}% elapsed
                       </span>
                     </div>
                   </div>
-                  
+
                   <div className="access-timestamps">
                     <div className="timestamp">
                       <span className="timestamp-label">Activated:</span>
@@ -200,11 +208,14 @@ const PremiseAccess: React.FC = () => {
                     </div>
                   </div>
                 </div>
-                
+
                 {isExpiringSoon() && (
                   <div className="warning-message">
                     <IonIcon icon={alertCircleOutline} />
-                    <span>Access will expire soon. Please scan the premise QR code to extend.</span>
+                    <span>
+                      Access will expire soon. Please scan the premise QR code
+                      to extend.
+                    </span>
                   </div>
                 )}
               </IonCardContent>
@@ -213,7 +224,10 @@ const PremiseAccess: React.FC = () => {
             <IonCard className="access-card inactive">
               <IonCardHeader>
                 <IonCardTitle className="access-title">
-                  <IonIcon icon={businessOutline} className="access-icon inactive" />
+                  <IonIcon
+                    icon={businessOutline}
+                    className="access-icon inactive"
+                  />
                   <div className="title-content">
                     <span>No Active Access</span>
                     <IonBadge color="medium" className="access-badge">
@@ -224,54 +238,55 @@ const PremiseAccess: React.FC = () => {
               </IonCardHeader>
               <IonCardContent>
                 <div className="no-access-content">
-                  <p>You don't have active premise access. Scan a premise QR code to gain entry.</p>
+                  <p>
+                    You don't have active premise access. Scan a premise QR code
+                    to gain entry.
+                  </p>
                 </div>
               </IonCardContent>
             </IonCard>
           )}
 
           {/* Actions */}
+
           <div className="premise-actions">
-            <IonCard className="action-card">
-              <IonCardContent>
-                <div className="action-content">
-                  <div className="action-header">
-                    <IonIcon icon={qrCodeOutline} className="action-icon" />
-                    <div className="action-info">
-                      <h3>Scan Premise QR Code</h3>
-                      <p>
-                        {access 
-                          ? 'Extend your access by scanning the premise QR code again'
-                          : 'Scan the QR code at the premise entrance to gain access'
-                        }
-                      </p>
+            {!access ? (
+              <IonCard className="action-card">
+                <IonCardContent>
+                  <div className="action-content">
+                    <div className="action-header">
+                      <div className="action-info">
+                        {/* <IonIcon icon={qrCodeOutline} className="action-icon" /> */}
+                        <Scanner onScan={(result) => handleScanQR(result)} />
+                        <IonButton
+                          expand="block"
+                          fill="solid"
+                          disabled={
+                            isScanning ||
+                            activateAccess.isPending ||
+                            hasPermission === false
+                          }
+                          className="scan-premise-button"
+                        >
+                          {isScanning ? (
+                            <>Scanning...</>
+                          ) : activateAccess.isPending ? (
+                            <>Activating...</>
+                          ) : hasPermission === false ? (
+                            <>Camera Permission Required</>
+                          ) : (
+                            <>
+                              <IonIcon icon={qrCodeOutline} slot="start" />
+                              {access ? "Extend Access" : "Scan for Access"}
+                            </>
+                          )}
+                        </IonButton>
+                      </div>
                     </div>
                   </div>
-                  
-                  <IonButton
-                    expand="block"
-                    fill="solid"
-                    onClick={handleScanQR}
-                    disabled={isScanning || activateAccess.isPending || hasPermission === false}
-                    className="scan-premise-button"
-                  >
-                    {isScanning ? (
-                      <>Scanning...</>
-                    ) : activateAccess.isPending ? (
-                      <>Activating...</>
-                    ) : hasPermission === false ? (
-                      <>Camera Permission Required</>
-                    ) : (
-                      <>
-                        <IonIcon icon={qrCodeOutline} slot="start" />
-                        {access ? 'Extend Access' : 'Scan for Access'}
-                      </>
-                    )}
-                  </IonButton>
-                </div>
-              </IonCardContent>
-            </IonCard>
-
+                </IonCardContent>
+              </IonCard>
+            ) : null}
             {/* Instructions */}
             <IonCard className="instructions-card">
               <IonCardContent>
@@ -281,10 +296,13 @@ const PremiseAccess: React.FC = () => {
                     <div className="step-number">1</div>
                     <div className="step-content">
                       <h4>Locate QR Code</h4>
-                      <p>Find the premise QR code at the main entrance or reception desk</p>
+                      <p>
+                        Find the premise QR code at the main entrance or
+                        reception desk
+                      </p>
                     </div>
                   </div>
-                  
+
                   <div className="instruction-item">
                     <div className="step-number">2</div>
                     <div className="step-content">
@@ -292,7 +310,7 @@ const PremiseAccess: React.FC = () => {
                       <p>Use the scanner above to scan the premise QR code</p>
                     </div>
                   </div>
-                  
+
                   <div className="instruction-item">
                     <div className="step-number">3</div>
                     <div className="step-content">
@@ -300,12 +318,14 @@ const PremiseAccess: React.FC = () => {
                       <p>You'll receive timed access to the study premise</p>
                     </div>
                   </div>
-                  
+
                   <div className="instruction-item">
                     <div className="step-number">4</div>
                     <div className="step-content">
                       <h4>Monitor Time</h4>
-                      <p>Keep track of your remaining access time in this screen</p>
+                      <p>
+                        Keep track of your remaining access time in this screen
+                      </p>
                     </div>
                   </div>
                 </div>
@@ -317,11 +337,16 @@ const PremiseAccess: React.FC = () => {
             <IonCard className="permission-card">
               <IonCardContent>
                 <div className="permission-content">
-                  <IonIcon icon={alertCircleOutline} className="permission-icon" />
+                  <IonIcon
+                    icon={alertCircleOutline}
+                    className="permission-icon"
+                  />
                   <h3>Camera Permission Required</h3>
-                  <p>Please grant camera permission to scan premise QR codes.</p>
-                  <IonButton 
-                    expand="block" 
+                  <p>
+                    Please grant camera permission to scan premise QR codes.
+                  </p>
+                  <IonButton
+                    expand="block"
                     fill="outline"
                     onClick={checkPermission}
                   >
