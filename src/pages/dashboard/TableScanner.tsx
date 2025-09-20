@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState } from "react";
 import {
   IonContent,
   IonPage,
@@ -12,55 +12,56 @@ import {
   IonText,
   IonToast,
   IonAlert,
-} from '@ionic/react';
-import {
-  qrCodeOutline,
-  cameraOutline,
-  closeOutline,
-} from 'ionicons/icons';
-import { useHistory } from 'react-router-dom';
-import { useQRScanner } from '../../hooks/QrScannerHooks';
-import { useTableByQR } from '../../hooks/TableHooks';
-import { useTables } from '../../hooks/TableHooks';
-import { LoadingSpinner } from '../../components/common/LoadingSpinner';
-import './TableScanner.css';
-
+} from "@ionic/react";
+import { qrCodeOutline, cameraOutline, closeOutline } from "ionicons/icons";
+import { useHistory } from "react-router-dom";
+import { useQRScanner } from "../../hooks/QrScannerHooks";
+import { useTableByQR } from "../../hooks/TableHooks";
+import { useTables } from "../../hooks/TableHooks";
+import { LoadingSpinner } from "../../components/common/LoadingSpinner";
+import "./TableScanner.css";
+import { Scanner } from "@yudiel/react-qr-scanner";
 const TableScanner: React.FC = () => {
   const [scannedCode, setScannedCode] = useState<string | null>(null);
   const [showToast, setShowToast] = useState(false);
-  const [toastMessage, setToastMessage] = useState('');
+  const [toastMessage, setToastMessage] = useState("");
   const [showConfirmAlert, setShowConfirmAlert] = useState(false);
-  
+  const [isScanning, setScanning] = useState(false);
   const history = useHistory();
-  const { startScan, stopScan, isScanning, hasPermission, checkPermission } = useQRScanner();
-  const { data: scannedTable, isLoading: isLoadingTable } = useTableByQR(scannedCode);
+  // const { startScan, stopScan, isScanning, hasPermission, checkPermission } = useQRScanner();
+  const { data: scannedTable, isLoading: isLoadingTable } =
+    useTableByQR(scannedCode);
   const { startSession, activeSession } = useTables();
 
-  React.useEffect(() => {
-    checkPermission();
-  }, [checkPermission]);
+  // React.useEffect(() => {
+  //   checkPermission();
+  // }, [checkPermission]);
 
-  const handleStartScan = async () => {
+  const handleScanResult = async (result: any) => {
     if (activeSession) {
-      setToastMessage('Please end your current session before starting a new one');
+      setToastMessage(
+        "Please end your current session before starting a new one"
+      );
       setShowToast(true);
       return;
     }
 
     try {
-      const result = await startScan();
-      if (result) {
-        setScannedCode(result);
-      }
+      // const result = await startScan();
+      // if (result) {
+      setScannedCode(result);
+      // }
     } catch (error) {
-      const message = error instanceof Error ? error.message : 'Failed to scan QR code';
+      const message =
+        error instanceof Error ? error.message : "Failed to scan QR code";
       setToastMessage(message);
       setShowToast(true);
     }
   };
 
   const handleStopScan = async () => {
-    await stopScan();
+    // await stopScan();
+    setScanning(false);
   };
 
   const handleStartSession = async () => {
@@ -71,9 +72,10 @@ const TableScanner: React.FC = () => {
           qrCode: scannedCode,
         });
         setShowConfirmAlert(false);
-        history.push('/app/dashboard');
+        history.push("/app/dashboard");
       } catch (error) {
-        const message = error instanceof Error ? error.message : 'Failed to start session';
+        const message =
+          error instanceof Error ? error.message : "Failed to start session";
         setToastMessage(message);
         setShowToast(true);
       }
@@ -86,34 +88,36 @@ const TableScanner: React.FC = () => {
     }
   }, [scannedTable, scannedCode]);
 
-  if (hasPermission === false) {
-    return (
-      <IonPage>
-        <IonHeader>
-          <IonToolbar>
-            <IonTitle>QR Scanner</IonTitle>
-          </IonToolbar>
-        </IonHeader>
-        <IonContent className="scanner-content">
-          <div className="scanner-container">
-            <IonCard className="permission-card">
-              <IonCardContent>
-                <div className="permission-content">
-                  <IonIcon icon={cameraOutline} className="permission-icon" />
-                  <h2>Camera Permission Required</h2>
-                  <p>Please allow camera access to scan QR codes</p>
-                  <IonButton expand="block" onClick={checkPermission}>
-                    Grant Permission
-                  </IonButton>
-                </div>
-              </IonCardContent>
-            </IonCard>
-          </div>
-        </IonContent>
-      </IonPage>
-    );
-  }
-
+  // if (hasPermission === false) {
+  //   return (
+  //     <IonPage>
+  //       <IonHeader>
+  //         <IonToolbar>
+  //           <IonTitle>QR Scanner</IonTitle>
+  //         </IonToolbar>
+  //       </IonHeader>
+  //       <IonContent className="scanner-content">
+  //         <div className="scanner-container">
+  //           <IonCard className="permission-card">
+  //             <IonCardContent>
+  //               <div className="permission-content">
+  //                 <IonIcon icon={cameraOutline} className="permission-icon" />
+  //                 <h2>Camera Permission Required</h2>
+  //                 <p>Please allow camera access to scan QR codes</p>
+  //                 <IonButton expand="block" onClick={checkPermission}>
+  //                   Grant Permission
+  //                 </IonButton>
+  //               </div>
+  //             </IonCardContent>
+  //           </IonCard>
+  //         </div>
+  //       </IonContent>
+  //     </IonPage>
+  //   );
+  // }
+  const handleStartScan = () => {
+    setScanning(true);
+  };
   return (
     <IonPage>
       <IonHeader>
@@ -121,7 +125,7 @@ const TableScanner: React.FC = () => {
           <IonTitle>QR Scanner</IonTitle>
         </IonToolbar>
       </IonHeader>
-      
+
       <IonContent fullscreen className="scanner-content">
         <div className="scanner-container">
           {!isScanning && !scannedCode && (
@@ -131,8 +135,11 @@ const TableScanner: React.FC = () => {
                   <div className="scanner-idle-content">
                     <IonIcon icon={qrCodeOutline} className="scanner-icon" />
                     <h2>Scan Table QR Code</h2>
-                    <p>Point your camera at a table QR code to start a study session</p>
-                    
+                    <p>
+                      Point your camera at a table QR code to start a study
+                      session
+                    </p>
+
                     <IonButton
                       expand="block"
                       size="large"
@@ -151,21 +158,19 @@ const TableScanner: React.FC = () => {
           {isScanning && (
             <div className="scanner-active">
               <div className="scanner-overlay">
-                <div className="scanner-frame">
+                {/* <div className="scanner-frame">
                   <div className="scanner-corners">
                     <div className="corner top-left"></div>
                     <div className="corner top-right"></div>
                     <div className="corner bottom-left"></div>
                     <div className="corner bottom-right"></div>
                   </div>
-                </div>
-                
+                </div> */}
+
                 <div className="scanner-instructions">
-                  <IonText color="light">
-                    <h3>Position QR code within the frame</h3>
-                  </IonText>
+                  <Scanner onScan={(result) => handleScanResult(result)} />
                 </div>
-                
+
                 <IonButton
                   fill="clear"
                   color="light"
@@ -199,28 +204,28 @@ const TableScanner: React.FC = () => {
             setScannedCode(null);
           }}
           header="Start Session"
-          subHeader={scannedTable ? `Table ${scannedTable.tableNumber}` : ''}
+          subHeader={scannedTable ? `Table ${scannedTable.tableNumber}` : ""}
           message={
             scannedTable
               ? `Location: ${scannedTable.location}<br/>Rate: ${scannedTable.hourlyRate} credits/hour<br/>Capacity: ${scannedTable.capacity} person(s)`
-              : 'Invalid QR code'
+              : "Invalid QR code"
           }
           buttons={
             scannedTable
               ? [
                   {
-                    text: 'Cancel',
-                    role: 'cancel',
+                    text: "Cancel",
+                    role: "cancel",
                   },
                   {
-                    text: 'Start Session',
+                    text: "Start Session",
                     handler: handleStartSession,
                   },
                 ]
               : [
                   {
-                    text: 'OK',
-                    role: 'cancel',
+                    text: "OK",
+                    role: "cancel",
                   },
                 ]
           }

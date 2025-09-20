@@ -6,9 +6,27 @@ import {
   TransactionWithUserSchema,
   CreateTableRequestSchema,
   CreatePremiseQRRequestSchema,
+  UpdateTableRequestSchema,
+  SelectedTable,
+  getTransactionWithUserTableSchema,
+  GetTransactionWithUserTableKeys,
+  getTransactionWithUserSchema,
 } from "../schema/admin.schema";
-import { PremiseQrCodeSchema } from "../schema/premise.schema";
+import {
+  getPremiseSchema,
+  GetPremiseTableKeys,
+  getPremiseTableSchema,
+  PremiseQrCodeSchema,
+} from "../schema/premise.schema";
 import { z } from "zod";
+import { TableState } from "@/shared/DynamicTable/Interface/TableInterface";
+import { PaginatedResponseSchema } from "@/shared/DynamicTable/TableProperties";
+import {
+  getTablesSchema,
+  GetTablesTableKeys,
+  getTablesTableSchema,
+  StudyTableSchema,
+} from "@/schema/table.schema";
 
 export const useUsersManagement = () => {
   const queryClient = useQueryClient();
@@ -90,16 +108,112 @@ export const useTransactionsManagement = () => {
     refetch: transactionsQuery.refetch,
   };
 };
+export class TransactionManagementServiceAPI {
+  static async fetchTransactions(state: TableState) {
+    await new Promise((resolve) => setTimeout(resolve, 800));
 
+    const fetchTransactionManagement = await apiClient.get(
+      "/admin/transactions/pending",
+      ApiResponseSchema(z.array(TransactionWithUserSchema))
+    );
+    console.log(fetchTransactionManagement);
+    const parsed = getTransactionWithUserTableSchema.parse({
+      data: Array.isArray(fetchTransactionManagement)
+        ? fetchTransactionManagement
+        : [fetchTransactionManagement],
+    });
+
+    let filteredTransactionWithUserTable = [...parsed.data];
+    if (state.search) {
+      const searchTerm = state.search.toLowerCase();
+      filteredTransactionWithUserTable =
+        filteredTransactionWithUserTable.filter(
+          (val) =>
+            val.id?.toString()?.toLowerCase().includes(searchTerm) ||
+            val.amount?.toString().toLowerCase().includes(searchTerm) ||
+            val.cost.toString()?.toLowerCase().includes(searchTerm) ||
+            val.paymentMethod?.toString().toLowerCase().includes(searchTerm) ||
+            val.user.toString()?.toLowerCase().includes(searchTerm)
+        );
+    }
+
+    const sortBy: GetTransactionWithUserTableKeys =
+      state.sortBy as GetTransactionWithUserTableKeys;
+    filteredTransactionWithUserTable.sort((a, b) => {
+      const aVal = a[sortBy];
+      const bVal = b[sortBy];
+
+      if (aVal == null) return 1;
+      if (bVal == null) return -1;
+
+      if (typeof aVal === "string" && typeof bVal === "string") {
+        return state.sortOrder === "asc"
+          ? aVal.localeCompare(bVal)
+          : bVal.localeCompare(aVal);
+      }
+
+      if (typeof aVal === "number" && typeof bVal === "number") {
+        return state.sortOrder === "asc" ? aVal - bVal : bVal - aVal;
+      }
+
+      return 0;
+    });
+
+    const total = filteredTransactionWithUserTable.length;
+    const totalPages = Math.ceil(total / state.pageSize);
+    const safePage = Math.min(state.page, totalPages || 1);
+    const startIndex = (safePage - 1) * state.pageSize;
+    const paginatedUsers = filteredTransactionWithUserTable.slice(
+      startIndex,
+      startIndex + state.pageSize
+    );
+    const response = {
+      data: paginatedUsers,
+      total,
+      page: safePage,
+      pageSize: state.pageSize,
+      totalPages,
+    };
+    const GetfilteredeTransactionWithUserTableSchema = PaginatedResponseSchema(
+      getTransactionWithUserSchema
+    );
+    const parsedResponse =
+      GetfilteredeTransactionWithUserTableSchema.parse(response);
+
+    return parsedResponse;
+  }
+}
 export const useTablesManagement = () => {
   const queryClient = useQueryClient();
 
   const tablesQuery = useQuery({
     queryKey: ["admin", "tables"],
     queryFn: () =>
-      apiClient.get("/tables", ApiResponseSchema(z.array(z.any()))), // Using StudyTableSchema
+      apiClient.get("/tables", ApiResponseSchema(z.array(z.any()))),
   });
-
+  const selectedTable = useMutation({
+    mutationFn: (data: any) => {
+      SelectedTable.parse(data);
+      return apiClient.post(
+        "/admin/tables/selected",
+        ApiResponseSchema(
+          z.object({
+            tableID: z.string(),
+            tableNumber: z.string(),
+            hourlyRate: z.number(),
+            location: z.string(),
+            capacity: z.number(),
+            qrCode: z.string(),
+          })
+        ),
+        data
+      );
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["admin", "tables"] });
+      queryClient.invalidateQueries({ queryKey: ["tables"] });
+    },
+  });
   const createTableMutation = useMutation({
     mutationFn: (data: any) => {
       CreateTableRequestSchema.parse(data);
@@ -119,16 +233,105 @@ export const useTablesManagement = () => {
       queryClient.invalidateQueries({ queryKey: ["tables"] });
     },
   });
-
+  const updateTableMutation = useMutation({
+    mutationFn: (data: any) => {
+      UpdateTableRequestSchema.parse(data);
+      return apiClient.put(
+        "/admin/tables/update",
+        ApiResponseSchema(
+          z.object({
+            tableNumber: z.string(),
+            qrCode: z.string(),
+          })
+        ),
+        data
+      );
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["admin", "tables"] });
+      queryClient.invalidateQueries({ queryKey: ["tables"] });
+    },
+  });
   return {
     tables: tablesQuery.data || [],
     isLoading: tablesQuery.isLoading,
     error: tablesQuery.error,
     createTable: createTableMutation,
+    updateTable: updateTableMutation,
+    selectedTable: selectedTable,
     refetch: tablesQuery.refetch,
   };
 };
+export class TableManagementServiceAPI {
+  static async fetchTables(state: TableState) {
+    await new Promise((resolve) => setTimeout(resolve, 800));
 
+    const fetchTablesManagement = await apiClient.get(
+      `/tables`,
+      ApiResponseSchema(z.array(StudyTableSchema))
+    );
+
+    const parsed = getTablesTableSchema.parse({
+      data: Array.isArray(fetchTablesManagement)
+        ? fetchTablesManagement
+        : [fetchTablesManagement],
+    });
+    let filteredetTablesTable = [...parsed.data];
+    if (state.search) {
+      const searchTerm = state.search.toLowerCase();
+      filteredetTablesTable = filteredetTablesTable.filter(
+        (val) =>
+          val.id?.toString()?.toLowerCase().includes(searchTerm) ||
+          val.capacity?.toString().toLowerCase().includes(searchTerm) ||
+          val.location.toString()?.toLowerCase().includes(searchTerm) ||
+          val.hourlyRate?.toString().toLowerCase().includes(searchTerm) ||
+          val.tableNumber.toString()?.toLowerCase().includes(searchTerm)
+      );
+    }
+
+    const sortBy: GetTablesTableKeys = state.sortBy as GetTablesTableKeys;
+    filteredetTablesTable.sort((a, b) => {
+      const aVal = a[sortBy];
+      const bVal = b[sortBy];
+
+      if (aVal == null) return 1;
+      if (bVal == null) return -1;
+
+      if (typeof aVal === "string" && typeof bVal === "string") {
+        return state.sortOrder === "asc"
+          ? aVal.localeCompare(bVal)
+          : bVal.localeCompare(aVal);
+      }
+
+      if (typeof aVal === "number" && typeof bVal === "number") {
+        return state.sortOrder === "asc" ? aVal - bVal : bVal - aVal;
+      }
+
+      return 0;
+    });
+
+    const total = filteredetTablesTable.length;
+    const totalPages = Math.ceil(total / state.pageSize);
+    const safePage = Math.min(state.page, totalPages || 1);
+    const startIndex = (safePage - 1) * state.pageSize;
+    const paginatedUsers = filteredetTablesTable.slice(
+      startIndex,
+      startIndex + state.pageSize
+    );
+    const response = {
+      data: paginatedUsers,
+      total,
+      page: safePage,
+      pageSize: state.pageSize,
+      totalPages,
+    };
+    const GetfilteredetTablesTableSchema =
+      PaginatedResponseSchema(getTablesSchema);
+    const parsedResponse = GetfilteredetTablesTableSchema.parse(response);
+
+    return parsedResponse;
+  }
+}
 export const usePremiseManagement = () => {
   const queryClient = useQueryClient();
 
@@ -168,3 +371,73 @@ export const usePremiseManagement = () => {
     refetch: premiseCodesQuery.refetch,
   };
 };
+export class PremiseManagementServiceAPI {
+  static async fetchPremises(state: TableState) {
+    await new Promise((resolve) => setTimeout(resolve, 800));
+
+    const fetchPremsiseManagement = await apiClient.get(
+      `/premise/qr-codes`,
+      ApiResponseSchema(z.array(PremiseQrCodeSchema))
+    );
+    const parsed = getPremiseTableSchema.parse({
+      data: Array.isArray(fetchPremsiseManagement)
+        ? fetchPremsiseManagement
+        : [fetchPremsiseManagement],
+    });
+
+    let filteredetPremiseTable = [...parsed.data];
+    if (state.search) {
+      const searchTerm = state.search.toLowerCase();
+      filteredetPremiseTable = filteredetPremiseTable.filter(
+        (val) =>
+          val.id?.toString()?.toLowerCase().includes(searchTerm) ||
+          val.code?.toString().toLowerCase().includes(searchTerm) ||
+          val.location.toString()?.toLowerCase().includes(searchTerm) ||
+          val.isActive?.toString().toLowerCase().includes(searchTerm) ||
+          val.validityHours.toString()?.toLowerCase().includes(searchTerm)
+      );
+    }
+
+    const sortBy: GetPremiseTableKeys = state.sortBy as GetPremiseTableKeys;
+    filteredetPremiseTable.sort((a, b) => {
+      const aVal = a[sortBy];
+      const bVal = b[sortBy];
+
+      if (aVal == null) return 1;
+      if (bVal == null) return -1;
+
+      if (typeof aVal === "string" && typeof bVal === "string") {
+        return state.sortOrder === "asc"
+          ? aVal.localeCompare(bVal)
+          : bVal.localeCompare(aVal);
+      }
+
+      if (typeof aVal === "number" && typeof bVal === "number") {
+        return state.sortOrder === "asc" ? aVal - bVal : bVal - aVal;
+      }
+
+      return 0;
+    });
+
+    const total = filteredetPremiseTable.length;
+    const totalPages = Math.ceil(total / state.pageSize);
+    const safePage = Math.min(state.page, totalPages || 1);
+    const startIndex = (safePage - 1) * state.pageSize;
+    const paginatedUsers = filteredetPremiseTable.slice(
+      startIndex,
+      startIndex + state.pageSize
+    );
+    const response = {
+      data: paginatedUsers,
+      total,
+      page: safePage,
+      pageSize: state.pageSize,
+      totalPages,
+    };
+    const GetfilteredetPremiseTableTableSchema =
+      PaginatedResponseSchema(getPremiseSchema);
+    const parsedResponse = GetfilteredetPremiseTableTableSchema.parse(response);
+
+    return parsedResponse;
+  }
+}

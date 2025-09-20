@@ -843,7 +843,7 @@
 }
 
 .users-table .table-row {
-  grid-template-columns:1fr 1fr 1fr 1fr 1fr 1fr 1fr;
+  grid-template-columns: 1fr 1fr 1fr 1fr 1fr 1fr 1fr;
 }
 
 .transactions-table .table-row {
@@ -1005,4 +1005,8 @@
 }
 .col-joined {
   gap: 12px;
+}
+.slideout-actions-button {
+  font-size: 12px;
+  text-transform: none;
 }

@@ -37,6 +37,7 @@ import { LoadingSpinner } from "../../components/common/LoadingSpinner";
 import { ErrorMessage } from "../../components/common/ErrorMessage";
 import { PurchaseCreditsRequestSchema } from "../../schema/user.schema";
 import "./credits.css";
+import { PesoFormat } from "@/shared/PesoHelper";
 
 const Credits: React.FC = () => {
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -264,21 +265,21 @@ const Credits: React.FC = () => {
                         onClick={() => setAmount(100)}
                       >
                         <h4>100 Credits</h4>
-                        <p>$10.00</p>
+                        <p>{PesoFormat(100.0)}</p>
                       </div>
                       <div
                         className={`package-option ${amount === 250 ? "selected" : ""}`}
                         onClick={() => setAmount(250)}
                       >
                         <h4>250 Credits</h4>
-                        <p>$25.00</p>
+                        <p>{PesoFormat(250.0)}</p>
                       </div>
                       <div
                         className={`package-option ${amount === 500 ? "selected" : ""}`}
                         onClick={() => setAmount(500)}
                       >
                         <h4>500 Credits</h4>
-                        <p>$50.00</p>
+                        <p>{PesoFormat(500.0)}</p>
                       </div>
                     </div>
                   </div>
@@ -307,16 +308,14 @@ const Credits: React.FC = () => {
                         placeholder="Select payment method"
                         onIonChange={(e) => setPaymentMethod(e.detail.value)}
                       >
-                        <IonSelectOption value="credit_card">
-                          Credit Card
-                        </IonSelectOption>
-                        <IonSelectOption value="debit_card">
+                        <IonSelectOption value="cash">Cash</IonSelectOption>
+                        {/* <IonSelectOption value="debit_card">
                           Debit Card
                         </IonSelectOption>
                         <IonSelectOption value="bank_transfer">
                           Bank Transfer
-                        </IonSelectOption>
-                        <IonSelectOption value="paypal">PayPal</IonSelectOption>
+                        </IonSelectOption> */}
+                        {/* <IonSelectOption value="paypal">PayPal</IonSelectOption> */}
                       </IonSelect>
                     </IonItem>
                   </div>
@@ -328,7 +327,7 @@ const Credits: React.FC = () => {
                     </div>
                     <div className="summary-row total">
                       <span>Total:</span>
-                      <span>${(amount * 0.1).toFixed(2)}</span>
+                      <span>{PesoFormat(amount * 0.1)}</span>
                     </div>
                   </div>
 

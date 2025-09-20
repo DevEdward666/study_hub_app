@@ -1,4 +1,4 @@
-import React from 'react';
+import React from "react";
 import {
   IonContent,
   IonPage,
@@ -16,7 +16,7 @@ import {
   IonRow,
   IonCol,
   RefresherEventDetail,
-} from '@ionic/react';
+} from "@ionic/react";
 import {
   qrCodeOutline,
   cardOutline,
@@ -27,14 +27,14 @@ import {
   statsChartOutline,
   bookOutline,
   personCircleOutline,
-} from 'ionicons/icons';
-import { useHistory } from 'react-router-dom';
-import { useAuth } from '../../hooks/AuthHooks';
-import { useTables } from '../../hooks/TableHooks';
-import { useUser } from '../../hooks/UserHooks';
-import { usePremise } from '../../hooks/PremiseHooks';
-import { LoadingSpinner } from '../../components/common/LoadingSpinner';
-import './Dashboard.css';
+} from "ionicons/icons";
+import { useHistory } from "react-router-dom";
+import { useAuth } from "../../hooks/AuthHooks";
+import { useTables } from "../../hooks/TableHooks";
+import { useUser } from "../../hooks/UserHooks";
+import { usePremise } from "../../hooks/PremiseHooks";
+import { LoadingSpinner } from "../../components/common/LoadingSpinner";
+import "./Dashboard.css";
 
 const Dashboard: React.FC = () => {
   const history = useHistory();
@@ -44,10 +44,7 @@ const Dashboard: React.FC = () => {
   const { access, isLoadingAccess, refetchAccess } = usePremise();
 
   const handleRefresh = async (event: CustomEvent<RefresherEventDetail>) => {
-    await Promise.all([
-      refetchCredits(),
-      refetchAccess(),
-    ]);
+    await Promise.all([refetchCredits(), refetchAccess()]);
     event.detail.complete();
   };
 
@@ -56,7 +53,7 @@ const Dashboard: React.FC = () => {
       try {
         await endSession.mutateAsync(activeSession.id);
       } catch (error) {
-        console.error('Error ending session:', error);
+        console.error("Error ending session:", error);
       }
     }
   };
@@ -69,21 +66,24 @@ const Dashboard: React.FC = () => {
 
   const getGreeting = (): string => {
     const hour = new Date().getHours();
-    if (hour < 12) return 'Good morning';
-    if (hour < 18) return 'Good afternoon';
-    return 'Good evening';
+    if (hour < 12) return "Good morning";
+    if (hour < 18) return "Good afternoon";
+    return "Good evening";
   };
 
   const getActivityStats = () => {
     const totalSessions = sessions?.length || 0;
-    const completedSessions = sessions?.filter(s => s.status === 'Completed').length || 0;
-    const totalHours = sessions?.reduce((sum, s) => {
-      if (s.endTime && s.startTime) {
-        const duration = new Date(s.endTime).getTime() - new Date(s.startTime).getTime();
-        return sum + (duration / (1000 * 60 * 60));
-      }
-      return sum;
-    }, 0) || 0;
+    const completedSessions =
+      sessions?.filter((s) => s.status === "Completed").length || 0;
+    const totalHours =
+      sessions?.reduce((sum, s) => {
+        if (s.endTime && s.startTime) {
+          const duration =
+            new Date(s.endTime).getTime() - new Date(s.startTime).getTime();
+          return sum + duration / (1000 * 60 * 60);
+        }
+        return sum;
+      }, 0) || 0;
 
     return {
       totalSessions,
@@ -112,22 +112,20 @@ const Dashboard: React.FC = () => {
 
   return (
     <IonPage>
-      
       <IonContent fullscreen className="dashboard-content">
-        
-      <IonHeader className="dashboard-header">
-        <IonToolbar>
-          <IonTitle>Dashboard</IonTitle>
-          <IonButton
-            slot="end"
-            fill="clear"
-            onClick={() => history.push('/app/profile')}
-            className="profile-button"
-          >
-            <IonIcon icon={personCircleOutline} />
-          </IonButton>
-        </IonToolbar>
-      </IonHeader>
+        <IonHeader className="dashboard-header">
+          <IonToolbar>
+            <IonTitle>Dashboard</IonTitle>
+            <IonButton
+              slot="end"
+              fill="clear"
+              onClick={() => history.push("/app/profile")}
+              className="profile-button"
+            >
+              <IonIcon icon={personCircleOutline} />
+            </IonButton>
+          </IonToolbar>
+        </IonHeader>
         <IonRefresher slot="fixed" onIonRefresh={handleRefresh}>
           <IonRefresherContent />
         </IonRefresher>
@@ -138,10 +136,12 @@ const Dashboard: React.FC = () => {
             <div className="hero-content">
               <div className="greeting-section">
                 <h1 className="greeting-text">{getGreeting()}</h1>
-                <h2 className="user-name">{user?.name || 'Student'}</h2>
-                <p className="welcome-subtitle">Ready to start your productive study session?</p>
+                <h2 className="user-name">{user?.name || "Student"}</h2>
+                <p className="welcome-subtitle">
+                  Ready to start your productive study session?
+                </p>
               </div>
-              
+
               <div className="hero-stats">
                 <div className="hero-stat">
                   <div className="stat-number">{credits?.balance || 0}</div>
@@ -174,7 +174,7 @@ const Dashboard: React.FC = () => {
                   <p>{activeSession.table.location}</p>
                 </div>
               </div>
-              
+
               <IonCardContent>
                 <div className="session-details">
                   <div className="session-metrics">
@@ -182,21 +182,28 @@ const Dashboard: React.FC = () => {
                       <IonIcon icon={timeOutline} />
                       <div>
                         <span className="metric-value">
-                          {Math.floor((Date.now() - new Date(activeSession.startTime).getTime()) / (1000 * 60))}m
+                          {Math.floor(
+                            (Date.now() -
+                              new Date(activeSession.startTime).getTime()) /
+                              (1000 * 60)
+                          )}
+                          m
                         </span>
                         <span className="metric-label">Duration</span>
                       </div>
                     </div>
-                    
+
                     <div className="metric">
                       <IonIcon icon={cardOutline} />
                       <div>
-                        <span className="metric-value">{activeSession.creditsUsed}</span>
+                        <span className="metric-value">
+                          {activeSession.creditsUsed}
+                        </span>
                         <span className="metric-label">Credits Used</span>
                       </div>
                     </div>
                   </div>
-                  
+
                   <IonButton
                     expand="block"
                     fill="outline"
@@ -206,7 +213,7 @@ const Dashboard: React.FC = () => {
                     className="end-session-btn"
                   >
                     <IonIcon icon={stopOutline} slot="start" />
-                    {endSession.isPending ? 'Ending...' : 'End Session'}
+                    {endSession.isPending ? "Ending..." : "End Session"}
                   </IonButton>
                 </div>
               </IonCardContent>
@@ -216,7 +223,7 @@ const Dashboard: React.FC = () => {
           {/* Quick Stats Grid */}
           <div className="stats-section">
             <h3 className="section-title">Your Study Analytics</h3>
-            
+
             <IonGrid className="stats-grid">
               <IonRow>
                 <IonCol size="6">
@@ -233,7 +240,7 @@ const Dashboard: React.FC = () => {
                     </div>
                   </div>
                 </IonCol>
-                
+
                 <IonCol size="6">
                   <div className="stat-card premise-stat">
                     <div className="stat-card-header">
@@ -250,7 +257,9 @@ const Dashboard: React.FC = () => {
                         </>
                       ) : (
                         <>
-                          <div className="stat-value access-inactive">Inactive</div>
+                          <div className="stat-value access-inactive">
+                            Inactive
+                          </div>
                           <div className="stat-title">Premise Access</div>
                           <div className="stat-subtitle">Scan to activate</div>
                         </>
@@ -259,7 +268,7 @@ const Dashboard: React.FC = () => {
                   </div>
                 </IonCol>
               </IonRow>
-              
+
               <IonRow>
                 <IonCol size="6">
                   <div className="stat-card sessions-stat">
@@ -267,13 +276,15 @@ const Dashboard: React.FC = () => {
                       <IonIcon icon={bookOutline} />
                     </div>
                     <div className="stat-card-content">
-                      <div className="stat-value">{stats.completedSessions}</div>
+                      <div className="stat-value">
+                        {stats.completedSessions}
+                      </div>
                       <div className="stat-title">Sessions</div>
                       <div className="stat-subtitle">Completed this month</div>
                     </div>
                   </div>
                 </IonCol>
-                
+
                 <IonCol size="6">
                   <div className="stat-card performance-stat">
                     <div className="stat-card-header">
@@ -289,16 +300,15 @@ const Dashboard: React.FC = () => {
               </IonRow>
             </IonGrid>
           </div>
-
           {/* Quick Actions */}
           <div className="actions-section">
             <h3 className="section-title">Quick Actions</h3>
-            
+
             <div className="action-cards">
-              <IonCard 
+              <IonCard
                 className="action-card primary-action"
-                button 
-                onClick={() => history.push('/app/scanner')}
+                button
+                onClick={() => history.push("/app/scanner")}
               >
                 <IonCardContent>
                   <div className="action-content">
@@ -313,10 +323,10 @@ const Dashboard: React.FC = () => {
                 </IonCardContent>
               </IonCard>
 
-              <IonCard 
+              <IonCard
                 className="action-card secondary-action"
-                button 
-                onClick={() => history.push('/app/credits')}
+                button
+                onClick={() => history.push("/app/credits")}
               >
                 <IonCardContent>
                   <div className="action-content">
@@ -331,10 +341,10 @@ const Dashboard: React.FC = () => {
                 </IonCardContent>
               </IonCard>
 
-              <IonCard 
+              <IonCard
                 className="action-card tertiary-action"
-                button 
-                onClick={() => history.push('/app/premise')}
+                button
+                onClick={() => history.push("/app/premise")}
               >
                 <IonCardContent>
                   <div className="action-content">
@@ -349,15 +359,18 @@ const Dashboard: React.FC = () => {
                 </IonCardContent>
               </IonCard>
 
-              <IonCard 
+              <IonCard
                 className="action-card quaternary-action"
-                button 
-                onClick={() => history.push('/app/history')}
+                button
+                onClick={() => history.push("/app/history")}
               >
                 <IonCardContent>
                   <div className="action-content">
                     <div className="action-icon-wrapper">
-                      <IonIcon icon={statsChartOutline} className="action-icon" />
+                      <IonIcon
+                        icon={statsChartOutline}
+                        className="action-icon"
+                      />
                     </div>
                     <div className="action-text">
                       <h4>View Analytics</h4>

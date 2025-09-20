@@ -299,7 +299,6 @@ const History: React.FC = () => {
         </IonRefresher>
 
         <div className="history-container">
-          {/* Filter Tabs */}
           <div className="filter-tabs">
             <IonSegment
               value={selectedFilter}
@@ -308,13 +307,13 @@ const History: React.FC = () => {
               }
             >
               <IonSegmentButton value="all">
-                <IonLabel>All</IonLabel>
+                <IonLabel className="segment-lable">All</IonLabel>
               </IonSegmentButton>
               <IonSegmentButton value="sessions">
-                <IonLabel>Sessions</IonLabel>
+                <IonLabel className="segment-lable">Sessions</IonLabel>
               </IonSegmentButton>
               <IonSegmentButton value="transactions">
-                <IonLabel>Transactions</IonLabel>
+                <IonLabel className="segment-lable">Transactions</IonLabel>
               </IonSegmentButton>
             </IonSegment>
           </div>

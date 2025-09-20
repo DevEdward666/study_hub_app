@@ -6,7 +6,7 @@
 
 .tabs-bar ion-tab-button {
   --color: var(--ion-color-medium);
-  --color-selected: var(--ion-color-primary);
+  --color-selected: var(--studyhub-secondary);
   --ripple-color: var(--ion-color-primary-tint);
   min-height: 65px;
 }

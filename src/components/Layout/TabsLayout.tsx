@@ -57,7 +57,7 @@ export const TabsLayout: React.FC<TabsLayoutProps> = ({ children }) => {
             <IonLabel>Users</IonLabel>
           </IonTabButton>
 
-          <IonTabButton tab="profile" href="/app/profile">
+          <IonTabButton tab="profile" href="/app/admin/profile">
             <IonIcon icon={personOutline} />
             <IonLabel>Profile</IonLabel>
           </IonTabButton>

@@ -1,4 +1,4 @@
-import { z } from 'zod';
+import { z } from "zod";
 
 export const StudyTableSchema = z.object({
   id: z.string(),
@@ -13,7 +13,7 @@ export const StudyTableSchema = z.object({
   createdAt: z.string(),
 });
 
-export const SessionStatusSchema = z.enum(['Active', 'Completed']);
+export const SessionStatusSchema = z.enum(["Active", "Completed"]);
 
 export const TableSessionSchema = z.object({
   id: z.string(),
@@ -45,3 +45,48 @@ export type TableSession = z.infer<typeof TableSessionSchema>;
 export type SessionWithTable = z.infer<typeof SessionWithTableSchema>;
 export type StartSessionRequest = z.infer<typeof StartSessionRequestSchema>;
 export type EndSessionResponse = z.infer<typeof EndSessionResponseSchema>;
+
+export const getTablesSchema = z.object({
+  id: z.string(),
+  tableNumber: z.string(),
+  qrCode: z.string(),
+  qrCodeImage: z.string().nullable(),
+  isOccupied: z.boolean(),
+  currentUserId: z.string().nullable(),
+  hourlyRate: z.number(),
+  location: z.string(),
+  capacity: z.number(),
+  createdAt: z.string(),
+});
+export const getTablesTableSchema = z.object({
+  data: z.array(
+    z.object({
+      id: z.string(),
+      tableNumber: z.string(),
+      qrCode: z.string(),
+      qrCodeImage: z.string().nullable(),
+      isOccupied: z.boolean(),
+      currentUserId: z.string().nullable(),
+      hourlyRate: z.number(),
+      location: z.string(),
+      capacity: z.number(),
+      createdAt: z.string(),
+    })
+  ),
+});
+export const getTablesTableColumn = z.object({
+  id: z.string(),
+  tableNumber: z.string(),
+  qrCode: z.string(),
+  qrCodeImage: z.string().nullable(),
+  isOccupied: z.boolean(),
+  currentUserId: z.string().nullable(),
+  hourlyRate: z.number(),
+  location: z.string(),
+  capacity: z.number(),
+  createdAt: z.string(),
+});
+export type GetTablesTableColumn = z.infer<typeof getTablesTableColumn>;
+export type GetTablesTableSchema = z.infer<typeof getTablesTableSchema>;
+export type GetTablesTable = GetTablesTableSchema["data"][number];
+export type GetTablesTableKeys = keyof GetTablesTable;

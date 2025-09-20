@@ -1,13 +1,56 @@
-import React, { useState } from "react";
-import { usePremiseManagement } from "../hooks/AdminDataHooks";
+import React, { useRef, useState } from "react";
+import {
+  PremiseManagementServiceAPI,
+  usePremiseManagement,
+} from "../hooks/AdminDataHooks";
 import { LoadingSpinner } from "../components/common/LoadingSpinner";
 import { ErrorMessage } from "../components/common/ErrorMessage";
 import QRCode from "react-qr-code";
-import { IonContent } from "@ionic/react";
+import {
+  IonButton,
+  IonButtons,
+  IonContent,
+  IonFooter,
+  IonItem,
+  IonLabel,
+  IonRange,
+  IonToolbar,
+} from "@ionic/react";
 import "./styles/admin.css";
+import DynamicTable, { useTable } from "@/shared/DynamicTable/DynamicTable";
+import { TableColumn } from "@/shared/DynamicTable/Interface/TableInterface";
+import {
+  createFinancesChip,
+  createTableStatusChip,
+  formatDate,
+} from "@/shared/DynamicTable/Utls/TableUtils";
+import { GetPremiseTableColumn } from "@/schema/premise.schema";
+import SlideoutModal from "@/shared/SideOutModal/SideoutModalComponent";
 export const PremiseManagement: React.FC = () => {
   const { codes, isLoading, error, createCode, refetch } =
     usePremiseManagement();
+  const {
+    tableState,
+    updateState,
+    data,
+    isLoading: IsLoadingtable,
+    isError,
+    error: IsErrorTable,
+    refetch: RefetchTable,
+    isFetching,
+  } = useTable({
+    queryKey: "premise-table",
+    fetchFn: PremiseManagementServiceAPI.fetchPremises,
+    initialState: { pageSize: 10 },
+  });
+  const containerRef = useRef<HTMLDivElement | null>(null);
+  const [qrSize, setQrSize] = useState<number>(128);
+  const [openSelectedRow, setOpenSelectedRow] = useState({
+    open: false,
+    qr: "",
+    location: "",
+  });
+  const [isExporting, setIsExporting] = useState(false);
   const [showCreateForm, setShowCreateForm] = useState(false);
   const [formData, setFormData] = useState({
     location: "",
@@ -61,7 +104,115 @@ export const PremiseManagement: React.FC = () => {
       <ErrorMessage message="Failed to load premise codes" onRetry={refetch} />
     );
   }
+  const columns: TableColumn<GetPremiseTableColumn>[] = [
+    { key: "code", label: "Code", sortable: true },
+    { key: "location", label: "Location", sortable: false },
+    {
+      key: "validityHours",
+      label: "Validity Hours",
+      sortable: true,
+      render: (value) => value,
+    },
 
+    {
+      key: "isActive",
+      label: "Active",
+      sortable: true,
+      render: (value) => createTableStatusChip(value.toString()),
+    },
+    // {
+    //   key: "id",
+    //   label: "Actions",
+    //   sortable: true,
+    //   render: (value) => (
+    //     <IonButton
+    //       size="small"
+    //       className="slideout-actions-button"
+    //       onClick={() => handleSetUpdate(value)}
+    //     >
+    //       Update
+    //     </IonButton>
+    //   ),
+    // },
+  ];
+  const handleSetUpdate = (val: any) => {};
+  const handleCloseSelectedCollectionModal = () => {
+    setOpenSelectedRow({ open: false, qr: "", location: "" });
+  };
+  const handleRowClick = (val: any) => {
+    setOpenSelectedRow({
+      open: true,
+      qr: val.code,
+      location: val.location,
+    });
+  };
+  const handleDownloadQr = () => {
+    if (!containerRef.current) return;
+    setIsExporting(true);
+
+    try {
+      const svgElement = containerRef.current.querySelector("svg");
+      if (!svgElement) return;
+
+      const canvas = document.createElement("canvas");
+      const ctx = canvas.getContext("2d");
+      const img = new Image();
+
+      // Add padding to canvas dimensions
+      const totalWidth = qrSize + 100;
+      const totalHeight = qrSize + 100;
+
+      canvas.width = totalWidth;
+      canvas.height = totalHeight;
+
+      img.onload = () => {
+        if (ctx) {
+          ctx.fillStyle = "white";
+          ctx.fillRect(0, 0, totalWidth, totalHeight);
+
+          ctx.drawImage(img, 50, 50, qrSize, qrSize);
+
+          ctx.fillStyle = "#333";
+          ctx.font = "14px Arial";
+          ctx.textAlign = "center";
+          ctx.fillText(
+            `Table - ${openSelectedRow.location}`,
+            totalWidth / 2,
+            totalHeight - 25
+          );
+
+          canvas.toBlob(
+            (blob) => {
+              if (blob) {
+                const url = URL.createObjectURL(blob);
+                const link = document.createElement("a");
+                link.href = url;
+                link.download = `table-${openSelectedRow.qr}-${openSelectedRow.location}-qr.png`;
+                document.body.appendChild(link);
+                link.click();
+                document.body.removeChild(link);
+                URL.revokeObjectURL(url);
+              }
+              setIsExporting(false);
+            },
+            "image/png",
+            1.0
+          );
+        }
+      };
+
+      // Create a new SVG without padding for consistent export
+      const qrSvgOnly = svgElement.cloneNode(true) as SVGElement;
+      if (qrSvgOnly.style) {
+        qrSvgOnly.style.padding = "0";
+      }
+      const cleanSvgData = new XMLSerializer().serializeToString(qrSvgOnly);
+      img.src = "data:image/svg+xml;base64," + btoa(cleanSvgData);
+    } catch (error) {
+      console.error("Error exporting QR code:", error);
+      setIsExporting(false);
+    }
+  };
   return (
     <IonContent>
       <div className="premise-management">
@@ -139,10 +290,89 @@ export const PremiseManagement: React.FC = () => {
             </form>
           </div>
         )}
+        <DynamicTable
+          columns={columns}
+          data={data?.data}
+          total={data?.total}
+          totalPages={data?.totalPages}
+          isLoading={isLoading || isFetching}
+          isError={isError}
+          error={error}
+          onRefetch={refetch}
+          tableState={tableState}
+          onStateChange={updateState}
+          onRowClick={handleRowClick}
+          searchPlaceholder="Search entries..."
+          emptyMessage="No entries found"
+          loadingMessage="Loading entries..."
+          pageSizeOptions={[10, 20, 50, 100]}
+        />
+        <SlideoutModal
+          isOpen={openSelectedRow.open}
+          onClose={() => handleCloseSelectedCollectionModal()}
+          title={`QR`}
+          position="end"
+          size="large"
+        >
+          <div className="qr-controls">
+            <IonItem lines="none">
+              <IonLabel>QR Size: {qrSize}px</IonLabel>
+              <IonRange
+                min={128}
+                max={346}
+                step={16}
+                value={qrSize}
+                onIonChange={(e) => setQrSize(e.detail.value as number)}
+              />
+            </IonItem>
+          </div>
 
+          <div
+            ref={containerRef}
+            className="qr-code-container"
+            style={{
+              display: "flex",
+              justifyContent: "center",
+              alignItems: "center",
+              margin: "20px 0",
+              padding: "15px",
+              backgroundColor: "white",
+              borderRadius: "8px",
+              boxShadow: "0 2px 10px rgba(0,0,0,0.1)",
+            }}
+          >
+            <QRCode
+              size={qrSize}
+              level="H"
+              value={openSelectedRow.qr}
+              style={{ padding: `25px` }}
+            />
+          </div>
+          <IonFooter className="ion-no-border">
+            <IonToolbar className="qr-modal-footer">
+              <IonButtons slot="end" className="modal-action-buttons">
+                <IonButton
+                  size="default"
+                  onClick={() =>
+                    setOpenSelectedRow({ open: false, qr: "", location: "" })
+                  }
+                >
+                  Close
+                </IonButton>
+                <IonButton
+                  size="default"
+                  onClick={handleDownloadQr}
+                  disabled={isExporting}
+                >
+                  {isExporting ? "Exporting..." : "Download PNG"}
+                </IonButton>
+              </IonButtons>
+            </IonToolbar>
+          </IonFooter>
+        </SlideoutModal>
         {/* Premise Codes List */}
         <div className="premise-codes-grid">
-          {codes.map((code) => (
+          {/* {codes.map((code) => (
             <div key={code.id} className="premise-code-card">
               <div className="premise-card-header">
                 <h3>📍 {code.location}</h3>
@@ -196,7 +426,7 @@ export const PremiseManagement: React.FC = () => {
                 </button>
               </div>
             </div>
-          ))}
+          ))} */}
         </div>
 
         {codes.length === 0 && (

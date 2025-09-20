@@ -90,6 +90,7 @@ const App: React.FC = () => (
                 path="/app/admin/users"
                 component={UsersManagement}
               />
+              <Route exact path="/app/admin/profile" component={Profile} />
 
               <Route exact path="/app">
                 <Redirect to="/app/dashboard" />
