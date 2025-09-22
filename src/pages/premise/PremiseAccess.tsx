@@ -64,7 +64,9 @@ const PremiseAccess: React.FC = () => {
     try {
       // const scannedCode = await startScan();
       if (result) {
-        await activateAccess.mutateAsync({ activationCode: result });
+        await activateAccess.mutateAsync({
+          activationCode: result[0]?.rawValue,
+        });
         setToastMessage("Premise access activated successfully!");
         setToastColor("success");
         setShowToast(true);

@@ -5,8 +5,10 @@ import { ApiResponse } from "../schema/api.schema";
 class ApiClient {
   private client: AxiosInstance;
 
-  constructor(baseURL: string = "https://studyhubapi-i0o7.onrender.com/api/") {
-    // constructor(baseURL: string = "http://localhost:5212/api/") {
+  // constructor(baseURL: string = "https://studyhubapi-i0o7.onrender.com/api/") {
+  constructor(
+    baseURL: string = "https://nvtpdm58-5212.asse.devtunnels.ms/api/"
+  ) {
     this.client = axios.create({
       baseURL,
       headers: {

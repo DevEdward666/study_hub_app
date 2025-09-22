@@ -24,7 +24,7 @@ import { Scanner } from "@yudiel/react-qr-scanner";
 const TableScanner: React.FC = () => {
   const [scannedCode, setScannedCode] = useState<string | null>(null);
   const [showToast, setShowToast] = useState(false);
-  const [toastMessage, setToastMessage] = useState("");
+  const [toastMessage, setToastMessage] = useState({ message: "", color: "" });
   const [showConfirmAlert, setShowConfirmAlert] = useState(false);
   const [isScanning, setScanning] = useState(false);
   const history = useHistory();
@@ -39,9 +39,10 @@ const TableScanner: React.FC = () => {
 
   const handleScanResult = async (result: any) => {
     if (activeSession) {
-      setToastMessage(
-        "Please end your current session before starting a new one"
-      );
+      setToastMessage({
+        message: "Please end your current session before starting a new one",
+        color: "warning",
+      });
       setShowToast(true);
       return;
     }
@@ -49,12 +50,17 @@ const TableScanner: React.FC = () => {
     try {
       // const result = await startScan();
       // if (result) {
-      setScannedCode(result);
+      setScannedCode(result[0]?.rawValue);
+      setScanning(false);
       // }
     } catch (error) {
       const message =
         error instanceof Error ? error.message : "Failed to scan QR code";
-      setToastMessage(message);
+
+      setToastMessage({
+        message: message,
+        color: "danger",
+      });
       setShowToast(true);
     }
   };
@@ -76,7 +82,10 @@ const TableScanner: React.FC = () => {
       } catch (error) {
         const message =
           error instanceof Error ? error.message : "Failed to start session";
-        setToastMessage(message);
+        setToastMessage({
+          message: message,
+          color: "danger",
+        });
         setShowToast(true);
       }
     }
@@ -192,9 +201,9 @@ const TableScanner: React.FC = () => {
         <IonToast
           isOpen={showToast}
           onDidDismiss={() => setShowToast(false)}
-          message={toastMessage}
+          message={toastMessage.message}
           duration={3000}
-          color="danger"
+          color={toastMessage.color}
         />
 
         <IonAlert
