@@ -301,7 +301,7 @@ const Dashboard: React.FC = () => {
             </IonGrid>
           </div>
           {/* Quick Actions */}
-          <div className="actions-section">
+          {/* <div className="actions-section">
             <h3 className="section-title">Quick Actions</h3>
 
             <div className="action-cards">
@@ -380,7 +380,7 @@ const Dashboard: React.FC = () => {
                 </IonCardContent>
               </IonCard>
             </div>
-          </div>
+          </div> */}
         </div>
       </IonContent>
     </IonPage>
