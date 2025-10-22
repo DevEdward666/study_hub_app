@@ -32,7 +32,6 @@ export const useTables = () => {
       queryClient.invalidateQueries({ queryKey: ['user', 'credits'] });
     },
   });
-
   return {
     tables: tablesQuery.data || [],
     isLoadingTables: tablesQuery.isLoading,

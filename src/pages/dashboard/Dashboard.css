@@ -1,16 +1,16 @@
 .dashboard-content {
-  --background: #f8fafc;
+ background: var(--ion-color-primary);
   --padding-top: 0;
   --padding-bottom: 0;
 }
 
 .dashboard-header {
-  --background: #667eea;
+  background: var(--ion-color-primary);
   --color: white;
 }
 
 .dashboard-header ion-toolbar {
-  --background: #667eea;
+  --background: #F8D03D;
   --color: white;
 }
 
@@ -30,10 +30,9 @@
   max-width: 100%;
   margin: 0;
 }
-
 /* Hero Section */
 .hero-section {
-  background: #667eea;
+background: var(--ion-color-primary);
   padding: 40px 24px 60px 24px;
   position: relative;
   overflow: hidden;
@@ -76,7 +75,7 @@
 .greeting-text {
   font-size: 16px;
   font-weight: 500;
-  color: rgba(255, 255, 255, 0.8);
+color: var(--ion-color-dark);
   margin: 0 0 4px 0;
   letter-spacing: 0.5px;
 }
@@ -84,7 +83,7 @@
 .user-name {
   font-size: 32px;
   font-weight: 800;
-  color: white;
+color: var(--ion-color-dark);
   margin: 0 0 8px 0;
   letter-spacing: -1px;
   text-shadow: 0 2px 20px rgba(0, 0, 0, 0.1);
@@ -92,7 +91,7 @@
 
 .welcome-subtitle {
   font-size: 16px;
-  color: rgba(255, 255, 255, 0.7);
+color: var(--ion-color-dark);
   margin: 0;
   line-height: 1.4;
 }

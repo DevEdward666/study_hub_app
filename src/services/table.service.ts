@@ -45,10 +45,12 @@ export class TableService {
   }
 
   async getActiveSession(): Promise<SessionWithTable | null> {
-    return apiClient.get(
+     const res = apiClient.get(
       '/tables/sessions/active',
       ApiResponseSchema(SessionWithTableSchema.nullable())
     );
+    console.log(res)
+  return res;
   }
 }
 

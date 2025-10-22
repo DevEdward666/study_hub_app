@@ -72,6 +72,14 @@ class ApiClient {
         }
       );
 
+      // Log the actual response for debugging
+      console.log('API Response:', {
+        url,
+        method,
+        status: response.status,
+        data: response.data
+      });
+
       const validatedResponse = schema.parse(response.data);
 
       if (!validatedResponse.success) {
@@ -81,7 +89,13 @@ class ApiClient {
       return validatedResponse.data!;
     } catch (error) {
       if (error instanceof z.ZodError) {
-        throw new Error("Invalid API response format");
+        console.error('Zod Validation Error:', {
+          url,
+          method,
+          errors: error.issues,
+          receivedData: error.message
+        });
+        throw new Error(`Invalid API response format: ${error.issues.map((e: z.ZodIssue) => `${e.path.join('.')}: ${e.message}`).join(', ')}`);
       }
       throw error;
     }

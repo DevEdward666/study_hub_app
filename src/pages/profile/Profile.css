@@ -5,7 +5,7 @@
 
 .profile-container {
   padding: 16px;
-  max-width: 600px;
+  width: 100vw;
   margin: 0 auto;
 }
 

@@ -22,7 +22,7 @@ export const TableSessionSchema = z.object({
   startTime: z.string(),
   endTime: z.string().nullable(),
   creditsUsed: z.number(),
-  status: SessionStatusSchema,
+status: z.string(),
   createdAt: z.string(),
 });
 
@@ -33,6 +33,8 @@ export const SessionWithTableSchema = TableSessionSchema.extend({
 export const StartSessionRequestSchema = z.object({
   tableId: z.string(),
   qrCode: z.string(),
+  hours: z.number().optional(),
+  endTime: z.string().optional(),
 });
 
 export const EndSessionResponseSchema = z.object({

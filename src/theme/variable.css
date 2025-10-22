@@ -4,19 +4,19 @@ http://ionicframework.com/docs/theming/ */
 
 /* Primary Colors */
 :root {
-  --ion-color-primary: #3dc2ff;
-  --ion-color-primary-rgb: 56, 128, 255;
+  --ion-color-primary: #F8D03D;
+--ion-color-primary-rgb: 	248,	208,	61;
   --ion-color-primary-contrast: #ffffff;
   --ion-color-primary-contrast-rgb: 255, 255, 255;
-  --ion-color-primary-shade: #36abe0;
-  --ion-color-primary-tint: #50c8ff;
+  --ion-color-primary-shade: #F8D03D;
+  --ion-color-primary-tint: #F8D03D;
 
-  --ion-color-secondary: #3dc2ff;
-  --ion-color-secondary-rgb: 61, 194, 255;
+  --ion-color-secondary: #FAAB35;
+  --ion-color-secondary-rgb: 	250,	171,	53;
   --ion-color-secondary-contrast: #ffffff;
   --ion-color-secondary-contrast-rgb: 255, 255, 255;
-  --ion-color-secondary-shade: #36abe0;
-  --ion-color-secondary-tint: #50c8ff;
+  --ion-color-secondary-shade: #FAAB35;
+--ion-color-secondary-tint: #FAAB35;
 
   --ion-color-tertiary: #5260ff;
   --ion-color-tertiary-rgb: 82, 96, 255;
@@ -70,11 +70,11 @@ http://ionicframework.com/docs/theming/ */
 
 /* StudyHub Brand Colors */
 :root {
-  --studyhub-primary: #4f46e5;
-  --studyhub-primary-light: #6366f1;
-  --studyhub-primary-dark: #4338ca;
-  --studyhub-secondary: #007bff;
-  --studyhub-accent: #f59e0b;
+  --studyhub-primary: #F8D03D;
+  --studyhub-primary-light: #f0d884;
+  --studyhub-primary-dark: #34332e;
+  --studyhub-secondary: #FAAB35;
+  --studyhub-accent: #f4d6a0;
   --studyhub-success: #10b981;
   --studyhub-warning: #f59e0b;
   --studyhub-error: #ef4444;
