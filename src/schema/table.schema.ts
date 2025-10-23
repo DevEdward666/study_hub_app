@@ -1,5 +1,11 @@
 import { z } from "zod";
 
+export const CurrentSessionSchema = z.object({
+  id: z.string(),
+  startTime: z.string(),
+  endTime: z.string(),
+}).nullable().optional();
+
 export const StudyTableSchema = z.object({
   id: z.string(),
   tableNumber: z.string(),
@@ -11,6 +17,7 @@ export const StudyTableSchema = z.object({
   location: z.string(),
   capacity: z.number(),
   createdAt: z.string(),
+  currentSession: CurrentSessionSchema,
 });
 
 export const SessionStatusSchema = z.enum(["Active", "Completed"]);
@@ -32,7 +39,8 @@ export const SessionWithTableSchema = TableSessionSchema.extend({
 
 export const StartSessionRequestSchema = z.object({
   tableId: z.string(),
-  qrCode: z.string(),
+  qrCode: z.string().optional(),
+  userId: z.string().optional(),
   hours: z.number().optional(),
   endTime: z.string().optional(),
 });
@@ -59,6 +67,7 @@ export const getTablesSchema = z.object({
   location: z.string(),
   capacity: z.number(),
   createdAt: z.string(),
+  currentSession: CurrentSessionSchema,
 });
 export const getTablesTableSchema = z.object({
   data: z.array(
@@ -73,6 +82,7 @@ export const getTablesTableSchema = z.object({
       location: z.string(),
       capacity: z.number(),
       createdAt: z.string(),
+      currentSession: CurrentSessionSchema,
     })
   ),
 });
@@ -87,6 +97,7 @@ export const getTablesTableColumn = z.object({
   location: z.string(),
   capacity: z.number(),
   createdAt: z.string(),
+  currentSession: CurrentSessionSchema,
 });
 export type GetTablesTableColumn = z.infer<typeof getTablesTableColumn>;
 export type GetTablesTableSchema = z.infer<typeof getTablesTableSchema>;

@@ -1,0 +1,39 @@
+.session-timer-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 12px;
+  font-size: 13px;
+  font-weight: 600;
+  border-radius: 16px;
+  white-space: nowrap;
+}
+
+.session-timer-badge ion-icon {
+  font-size: 16px;
+}
+
+.session-timer-badge.ended {
+  animation: pulse-danger 1.5s ease-in-out infinite;
+}
+
+@keyframes pulse-danger {
+  0%, 100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.7;
+  }
+}
+
+/* Card View Styles */
+@media (max-width: 767px) {
+  .session-timer-badge {
+    font-size: 12px;
+    padding: 5px 10px;
+  }
+  
+  .session-timer-badge ion-icon {
+    font-size: 14px;
+  }
+}

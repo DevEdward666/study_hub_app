@@ -93,11 +93,12 @@ const TableBody: React.FC<{
           onDoubleClick={() => onRowClick?.(row)}
         >
           {normalizedColumns.map(
-            (column, index) =>
+            (column, colIndex) =>
               column.visible && (
                 <td
-                  key={`${String(column.key)} - ${String(index)}`}
+                  key={`${String(column.key)} - ${String(colIndex)}`}
                   style={{ padding: "0.75rem", fontSize: "12px" }}
+                  data-label={column.label}
                 >
                   {column.render
                     ? column.render(row[column.key], row)

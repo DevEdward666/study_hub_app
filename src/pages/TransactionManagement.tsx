@@ -6,6 +6,7 @@ import {
 import { LoadingSpinner } from "../components/common/LoadingSpinner";
 import { ErrorMessage } from "../components/common/ErrorMessage";
 import "../Admin/styles/admin.css";
+import "../Admin/styles/admin-responsive.css";
 import DynamicTable, { useTable } from "@/shared/DynamicTable/DynamicTable";
 import { GetTransactionWithUserTableColumn } from "@/schema/admin.schema";
 import { TableColumn } from "@/shared/DynamicTable/Interface/TableInterface";
@@ -138,15 +139,6 @@ const TransactionsManagement: React.FC = () => {
         </div>
       ) : (
         <div className="transactions-table">
-          {/* <div className="table-header">
-            <div className="col-user">User</div>
-            <div className="col-amount">Amount</div>
-            <div className="col-cost">Cost</div>
-            <div className="col-method">Payment Method</div>
-            <div className="col-date">Date</div>
-            <div className="col-actions">Actions</div>
-          </div> */}
-
           <div className="table-body">
             <DynamicTable
               columns={columns}

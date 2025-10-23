@@ -52,11 +52,37 @@ export const useUsersManagement = () => {
     },
   });
 
+  const approveUserMutation = useMutation({
+    mutationFn: (userId: string) =>
+      apiClient.post(
+        "/admin/users/approve",
+        ApiResponseSchema(z.object({ isApproved: z.boolean() })),
+        { userId }
+      ),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["admin", "users"] });
+    },
+  });
+
+  const declineUserMutation = useMutation({
+    mutationFn: (userId: string) =>
+      apiClient.post(
+        "/admin/users/decline",
+        ApiResponseSchema(z.object({ isApproved: z.boolean() })),
+        { userId }
+      ),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["admin", "users"] });
+    },
+  });
+
   return {
     users: usersQuery.data || [],
     isLoading: usersQuery.isLoading,
     error: usersQuery.error,
     toggleAdmin: toggleAdminMutation,
+    approveUser: approveUserMutation,
+    declineUser: declineUserMutation,
     refetch: usersQuery.refetch,
   };
 };
@@ -270,6 +296,9 @@ export class TableManagementServiceAPI {
       `/tables`,
       ApiResponseSchema(z.array(StudyTableSchema))
     );
+
+    // Debug: Log the raw API response
+    console.log("Raw API Response from /tables:", fetchTablesManagement);
 
     const parsed = getTablesTableSchema.parse({
       data: Array.isArray(fetchTablesManagement)

@@ -12,9 +12,9 @@
 /* Profile Header */
 .profile-header-card {
   border-radius: 16px;
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+  box-shadow: 0 8px 24px rgba(var(--ion-color-primary-rgb, 56, 128, 255), 0.3);
   margin-bottom: 20px;
-  background: linear-gradient(135deg, var(--ion-color-primary-tint) 0%, white 100%);
+  background: linear-gradient(135deg, var(--ion-color-primary) 0%, var(--ion-color-secondary) 200%);
 }
 
 .profile-header {
@@ -41,25 +41,25 @@
 .avatar-placeholder {
   width: 100%;
   height: 100%;
-  background: var(--ion-color-primary);
+  background: rgba(255, 255, 255, 0.2);
   color: white;
   display: flex;
   align-items: center;
   justify-content: center;
   font-size: 28px;
-  font-weight: 600;
+  font-weight: 700;
 }
 
 .profile-basic-info h2 {
   font-size: 24px;
   font-weight: 700;
   margin: 0 0 4px 0;
-  color: var(--ion-color-dark);
+  color: white;
 }
 
 .profile-basic-info p {
   font-size: 14px;
-  color: var(--ion-color-medium);
+  color: rgba(255, 255, 255, 0.9);
   margin: 0 0 8px 0;
 }
 
@@ -79,8 +79,14 @@
 .edit-profile-btn {
   --border-radius: 12px;
   --border-width: 2px;
-  --border-color: var(--ion-color-primary);
+  --border-color: white;
+  --color: white;
+  --background: transparent;
   font-weight: 600;
+}
+
+.edit-profile-btn:hover {
+  --background: rgba(255, 255, 255, 0.1);
 }
 
 /* Account Info */
@@ -104,7 +110,7 @@
 .account-info-card ion-card-title ion-icon,
 .settings-card ion-card-title ion-icon {
   font-size: 20px;
-  color: var(--ion-color-primary);
+  color: var(--ion-color-dark);
 }
 
 .info-list,
@@ -122,7 +128,7 @@
 }
 
 .info-item ion-icon {
-  color: var(--ion-color-medium);
+  color: var(--ion-color-dark);
   font-size: 20px;
 }
 
@@ -258,6 +264,70 @@
   
   .stat-value {
     font-size: 20px;
+  }
+}
+
+@media (min-width: 768px) {
+  .profile-container {
+    max-width: 900px;
+    padding: 24px;
+  }
+
+  .profile-avatar {
+    width: 120px;
+    height: 120px;
+  }
+
+  .avatar-placeholder {
+    font-size: 42px;
+  }
+
+  .profile-basic-info h2 {
+    font-size: 28px;
+  }
+
+  .stats-grid {
+    grid-template-columns: repeat(4, 1fr);
+    gap: 20px;
+  }
+
+  .stat-item {
+    padding: 20px;
+  }
+
+  .stat-value {
+    font-size: 32px;
+  }
+
+  .stat-label {
+    font-size: 13px;
+  }
+}
+
+@media (min-width: 1024px) {
+  .profile-container {
+    padding: 32px;
+  }
+
+  .profile-avatar {
+    width: 140px;
+    height: 140px;
+  }
+
+  .avatar-placeholder {
+    font-size: 48px;
+  }
+
+  .profile-basic-info h2 {
+    font-size: 32px;
+  }
+
+  .profile-basic-info p {
+    font-size: 16px;
+  }
+
+  .stat-value {
+    font-size: 36px;
   }
 }
 

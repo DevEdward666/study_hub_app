@@ -17,6 +17,7 @@ import {
   IonToolbar,
 } from "@ionic/react";
 import "./styles/admin.css";
+import "./styles/admin-responsive.css";
 import DynamicTable, { useTable } from "@/shared/DynamicTable/DynamicTable";
 import { TableColumn } from "@/shared/DynamicTable/Interface/TableInterface";
 import {
@@ -431,7 +432,6 @@ export const PremiseManagement: React.FC = () => {
 
         {codes.length === 0 && (
           <div className="empty-state">
-            <div className="empty-icon">🏢</div>
             <h3>No premise codes created yet</h3>
             <p>
               Create your first premise QR code to enable building access
@@ -441,11 +441,11 @@ export const PremiseManagement: React.FC = () => {
         )}
 
         {/* Instructions */}
-        <div className="instructions-section">
+                  <div className="instructions-section">
           <h3>How Premise QR Codes Work</h3>
           <div className="instructions-grid">
             <div className="instruction-card">
-              <div className="instruction-icon">1️⃣</div>
+              <div className="instruction-number">1</div>
               <h4>Create QR Code</h4>
               <p>
                 Generate a QR code for each entrance location with specified
@@ -454,7 +454,7 @@ export const PremiseManagement: React.FC = () => {
             </div>
 
             <div className="instruction-card">
-              <div className="instruction-icon">2️⃣</div>
+              <div className="instruction-number">2</div>
               <h4>Display QR Code</h4>
               <p>
                 Print and display the QR code at the designated entrance
@@ -463,7 +463,7 @@ export const PremiseManagement: React.FC = () => {
             </div>
 
             <div className="instruction-card">
-              <div className="instruction-icon">3️⃣</div>
+              <div className="instruction-number">3</div>
               <h4>User Activation</h4>
               <p>
                 Students scan the code with their mobile app to gain timed
@@ -472,7 +472,7 @@ export const PremiseManagement: React.FC = () => {
             </div>
 
             <div className="instruction-card">
-              <div className="instruction-icon">4️⃣</div>
+              <div className="instruction-number">4</div>
               <h4>Access Control</h4>
               <p>
                 Monitor and manage access duration for security and usage

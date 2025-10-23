@@ -1,0 +1,1464 @@
+/* ============================================
+   SHARED ADMIN PAGES - RESPONSIVE STYLES
+   Professional Design with Primary Colors
+   ============================================ */
+
+/* Base Container */
+.premise-management,
+.tables-management,
+.transactions-management,
+.users-management {
+  max-width: 1400px;
+  margin: 0 auto;
+  padding: 16px;
+  min-height: 100vh;
+  background: var(--ion-background-color, #f5f7fa);
+}
+
+/* ============================================
+   PAGE HEADER
+   ============================================ */
+.page-header {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  margin-bottom: 24px;
+  padding: 20px;
+  background: white;
+  border-radius: 12px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+}
+
+.page-header h1 {
+  margin: 0;
+  font-size: 24px;
+  font-weight: 700;
+  color: var(--ion-color-dark);
+}
+
+.page-header p {
+  margin: 0;
+  font-size: 14px;
+  color: var(--ion-color-medium);
+  line-height: 1.5;
+}
+
+.page-header .btn {
+  align-self: flex-start;
+}
+
+/* ============================================
+   BUTTONS
+   ============================================ */
+.btn {
+  padding: 10px 20px;
+  border-radius: 8px;
+  border: none;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  white-space: nowrap;
+}
+
+.btn-primary {
+  background: var(--ion-color-primary);
+  color: white;
+}
+
+.btn-primary:hover {
+  background: var(--ion-color-primary-shade);
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(var(--ion-color-primary-rgb), 0.3);
+}
+
+.btn-secondary {
+  background: var(--ion-color-light);
+  color: var(--ion-color-dark);
+}
+
+.btn-secondary:hover {
+  background: var(--ion-color-light-shade);
+}
+
+.btn-success {
+  background: #10b981;
+  color: white;
+}
+
+.btn-success:hover {
+  background: #059669;
+  transform: translateY(-1px);
+}
+
+.btn-danger {
+  background: var(--ion-color-danger);
+  color: white;
+}
+
+.btn-danger:hover {
+  background: var(--ion-color-danger-shade);
+}
+
+.btn-warning {
+  background: var(--ion-color-warning);
+  color: white;
+}
+
+.btn-warning:hover {
+  background: var(--ion-color-warning-shade);
+}
+
+.btn-outline {
+  background: transparent;
+  border: 2px solid var(--ion-color-primary);
+  color: var(--ion-color-primary);
+}
+
+.btn-outline:hover {
+  background: var(--ion-color-primary);
+  color: white;
+}
+
+.btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  transform: none !important;
+}
+
+/* ============================================
+   FORM SECTIONS
+   ============================================ */
+.create-form-section {
+  margin-bottom: 24px;
+  animation: slideDown 0.3s ease;
+}
+
+@keyframes slideDown {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.create-premise-form,
+.create-table-form {
+  background: white;
+  padding: 24px;
+  border-radius: 12px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+}
+
+.create-premise-form h3,
+.create-table-form h3 {
+  margin: 0 0 20px 0;
+  font-size: 18px;
+  font-weight: 700;
+  color: var(--ion-color-dark);
+}
+
+.form-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 16px;
+  margin-bottom: 20px;
+}
+
+.form-group {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.form-group label {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--ion-color-dark);
+}
+
+.form-group input,
+.form-group select {
+  padding: 12px;
+  border: 2px solid var(--ion-color-light);
+  border-radius: 8px;
+  font-size: 14px;
+  font-family: inherit;
+  transition: all 0.2s ease;
+}
+
+.form-group input:focus,
+.form-group select:focus {
+  outline: none;
+  border-color: var(--ion-color-primary);
+  box-shadow: 0 0 0 3px rgba(var(--ion-color-primary-rgb), 0.1);
+}
+
+.form-actions {
+  display: flex;
+  gap: 12px;
+  justify-content: flex-end;
+  flex-wrap: wrap;
+}
+
+/* ============================================
+   CONTROLS SECTION (Search & Filter)
+   ============================================ */
+.controls-section {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  margin-bottom: 20px;
+  padding: 16px;
+  background: white;
+  border-radius: 12px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+}
+
+.search-bar {
+  flex: 1;
+}
+
+.search-input {
+  width: 100%;
+  padding: 12px 16px;
+  border: 2px solid var(--ion-color-light);
+  border-radius: 8px;
+  font-size: 14px;
+  transition: all 0.2s ease;
+}
+
+.search-input:focus {
+  outline: none;
+  border-color: var(--ion-color-primary);
+  box-shadow: 0 0 0 3px rgba(var(--ion-color-primary-rgb), 0.1);
+}
+
+.filter-buttons {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.filter-btn {
+  padding: 8px 16px;
+  border-radius: 8px;
+  border: 2px solid var(--ion-color-light);
+  background: white;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--ion-color-medium);
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.filter-btn.active {
+  background: var(--ion-color-primary);
+  border-color: var(--ion-color-primary);
+  color: white;
+}
+
+.filter-btn:hover:not(.active) {
+  border-color: var(--ion-color-primary);
+  color: var(--ion-color-primary);
+}
+
+/* ============================================
+   TABLES - CARD STYLE
+   ============================================ */
+.transactions-table,
+.users-table {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.table-header {
+  display: none; /* Always hidden in card view */
+}
+
+.transactions-table .table-body,
+.users-table .table-body {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 0;
+}
+
+.table-row {
+  background: white;
+  border-radius: 12px;
+  padding: 20px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+  transition: all 0.2s ease;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  border: 2px solid transparent;
+  width: 100%;
+  max-width: 100%;
+  box-sizing: border-box;
+}
+
+.table-row:hover {
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.1);
+  transform: translateY(-2px);
+  border-color: var(--ion-color-primary);
+}
+
+/* Card Field Style */
+.table-row > div {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.table-row > div::before {
+  content: attr(data-label);
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--ion-color-medium);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+/* Card Field Values */
+.table-row > div {
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--ion-color-dark);
+}
+
+/* User Cell */
+.user-cell {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.user-cell strong {
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--ion-color-dark);
+}
+
+.user-cell span {
+  font-size: 13px;
+  color: var(--ion-color-medium);
+}
+
+/* Amount, Cost, Credits Display */
+.amount,
+.cost,
+.credits {
+  font-size: 18px;
+  font-weight: 700;
+  color: var(--ion-color-primary);
+}
+
+/* Method, Date, Status Display */
+.method,
+.joined-date {
+  font-size: 14px;
+  color: var(--ion-color-dark);
+}
+
+/* Actions Row */
+.col-actions,
+.col-action {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin-top: 4px;
+}
+
+.col-actions .btn,
+.col-action .btn {
+  flex: 1;
+  min-width: 100px;
+}
+
+/* Badges */
+.status-badge,
+.session-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 12px;
+  border-radius: 20px;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.status-badge.admin {
+  background: var(--ion-color-primary);
+  color: white;
+}
+
+.status-badge.user {
+  background: var(--ion-color-light);
+  color: var(--ion-color-dark);
+}
+
+.status-badge.approved {
+  background: #d1fae5;
+  color: #065f46;
+  border: 1px solid #10b981;
+}
+
+.status-badge.pending {
+  background: #fef3c7;
+  color: #92400e;
+  border: 1px solid #f59e0b;
+}
+
+.session-badge.active {
+  background: #d1fae5;
+  color: #065f46;
+}
+
+.session-badge.inactive {
+  background: var(--ion-color-light);
+  color: var(--ion-color-medium);
+}
+
+.session-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+}
+
+.session-dot.active {
+  background: #10b981;
+  animation: pulse 2s infinite;
+}
+
+.session-dot.inactive {
+  background: var(--ion-color-medium);
+}
+
+@keyframes pulse {
+  0%, 100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.5;
+  }
+}
+
+/* ============================================
+   EMPTY STATE
+   ============================================ */
+.empty-state {
+  text-align: center;
+  padding: 60px 20px;
+  background: white;
+  border-radius: 12px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+}
+
+.empty-icon {
+  font-size: 64px;
+  margin-bottom: 16px;
+}
+
+.empty-state h3 {
+  margin: 0 0 8px 0;
+  font-size: 18px;
+  font-weight: 600;
+  color: var(--ion-color-dark);
+}
+
+.empty-state p {
+  margin: 0;
+  font-size: 14px;
+  color: var(--ion-color-medium);
+  line-height: 1.5;
+}
+
+/* ============================================
+   INSTRUCTIONS SECTION
+   ============================================ */
+.instructions-section {
+  margin-top: 32px;
+  padding: 24px;
+  background: white;
+  border-radius: 12px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+}
+
+.instructions-section h3 {
+  margin: 0 0 20px 0;
+  font-size: 18px;
+  font-weight: 700;
+  color: var(--ion-color-dark);
+}
+
+.instructions-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 16px;
+}
+
+.instruction-card {
+  padding: 16px;
+  background: var(--ion-color-light);
+  border-radius: 8px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.instruction-number {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background: var(--ion-color-primary);
+  color: white;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 18px;
+  font-weight: 700;
+  flex-shrink: 0;
+}
+
+.instruction-card h4 {
+  margin: 0;
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--ion-color-dark);
+}
+
+.instruction-card p {
+  margin: 0;
+  font-size: 13px;
+  color: var(--ion-color-medium);
+  line-height: 1.5;
+}
+
+/* ============================================
+   QR CODE MODAL
+   ============================================ */
+.qr-modal-footer {
+  --background: white;
+  border-top: 1px solid var(--ion-color-light);
+}
+
+.modal-action-buttons {
+  gap: 8px;
+}
+
+.qr-controls {
+  padding: 16px;
+  background: var(--ion-color-light);
+  border-radius: 8px;
+  margin-bottom: 16px;
+}
+
+/* ============================================
+   TABLET STYLES (768px and up)
+   ============================================ */
+@media (min-width: 768px) {
+  .premise-management,
+  .tables-management,
+  .transactions-management,
+  .users-management {
+    padding: 24px;
+  }
+
+  .page-header {
+    flex-direction: row;
+    justify-content: space-between;
+    align-items: center;
+    padding: 24px;
+  }
+
+  .page-header h1 {
+    font-size: 28px;
+  }
+
+  .form-grid {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 20px;
+  }
+
+  .controls-section {
+    flex-direction: row;
+    align-items: center;
+    padding: 20px;
+  }
+
+  .instructions-grid {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 20px;
+  }
+
+  /* Card Grid Layout for Tablet */
+  .transactions-table {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+  }
+
+  .users-table {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 16px;
+  }
+
+  .transactions-table .table-body {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+  }
+
+  .users-table .table-body {
+    display: contents; /* Let grid handle the layout */
+  }
+
+  .table-row {
+    padding: 24px;
+    width: 100%;
+    max-width: 100%;
+  }
+
+  .table-row > div::before {
+    font-size: 12px;
+  }
+
+  .user-cell strong {
+    font-size: 17px;
+  }
+
+  .amount,
+  .cost,
+  .credits {
+    font-size: 20px;
+  }
+}
+
+/* ============================================
+   DESKTOP STYLES (1024px and up)
+   ============================================ */
+@media (min-width: 1024px) {
+  .premise-management,
+  .tables-management,
+  .transactions-management,
+  .users-management {
+    padding: 32px;
+  }
+
+  .page-header {
+    padding: 28px;
+  }
+
+  .page-header h1 {
+    font-size: 32px;
+  }
+
+  .create-premise-form,
+  .create-table-form {
+    padding: 32px;
+  }
+
+  .form-grid {
+    grid-template-columns: repeat(4, 1fr);
+  }
+
+  .instructions-grid {
+    grid-template-columns: repeat(4, 1fr);
+  }
+
+  /* Desktop: Transactions one per row, Users 3 columns */
+  .transactions-table {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+  }
+
+  .transactions-table .table-body {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+  }
+
+  .users-table {
+    grid-template-columns: repeat(3, 1fr);
+    gap: 20px;
+  }
+
+  .table-row {
+    padding: 28px;
+    width: 100%;
+    max-width: 100%;
+  }
+
+  .table-row > div::before {
+    font-size: 12px;
+  }
+
+  .user-cell strong {
+    font-size: 18px;
+  }
+
+  .amount,
+  .cost,
+  .credits {
+    font-size: 22px;
+  }
+}
+
+/* ============================================
+   DYNAMIC TABLE CARD STYLES - PROFESSIONAL INFINITE LIST
+   ============================================ */
+
+/* Base: Add infinite scroll container styling */
+.dynamic-table-container {
+  max-height: calc(100vh - 250px);
+  overflow-y: auto;
+  overflow-x: hidden;
+  scrollbar-width: thin;
+  scrollbar-color: var(--ion-color-primary-tint) rgba(0, 0, 0, 0.05);
+  position: relative;
+  scroll-behavior: smooth;
+  -webkit-overflow-scrolling: touch;
+}
+
+.dynamic-table-container::-webkit-scrollbar {
+  width: 6px;
+}
+
+.dynamic-table-container::-webkit-scrollbar-track {
+  background: rgba(0, 0, 0, 0.02);
+  border-radius: 10px;
+}
+
+.dynamic-table-container::-webkit-scrollbar-thumb {
+  background: var(--ion-color-primary-tint);
+  border-radius: 10px;
+  transition: background 0.2s ease;
+}
+
+.dynamic-table-container::-webkit-scrollbar-thumb:hover {
+  background: var(--ion-color-primary);
+}
+
+/* Hide the default table structure, show professional cards */
+table {
+  display: block;
+  border: none !important;
+  box-shadow: none !important;
+  background: transparent !important;
+  width: 100%;
+}
+
+table thead {
+  display: none;
+}
+
+table tbody {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 4px;
+  min-height: min-content;
+  width: 100%;
+}
+
+/* Professional card design with gradient accent */
+table tbody tr {
+  display: flex;
+  flex-direction: row;
+  flex-wrap: wrap;
+  align-items: center;
+  background: #ffffff;
+  border-radius: 10px;
+  padding: 14px 18px;
+  box-shadow: 
+    0 1px 2px rgba(0, 0, 0, 0.06),
+    0 2px 6px rgba(0, 0, 0, 0.04);
+  border: 1px solid rgba(0, 0, 0, 0.08);
+  border-left: 4px solid var(--ion-color-primary);
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  gap: 12px;
+  position: relative;
+  overflow: hidden;
+  width: 100%;
+}
+
+/* Top accent bar */
+table tbody tr::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 2px;
+  background: linear-gradient(
+    90deg,
+    var(--ion-color-primary) 0%,
+    var(--ion-color-secondary) 100%
+  );
+  opacity: 0.7;
+  transition: opacity 0.2s ease;
+}
+
+table tbody tr:hover {
+  box-shadow: 
+    0 2px 4px rgba(0, 0, 0, 0.08),
+    0 4px 12px rgba(0, 0, 0, 0.1);
+  transform: translateY(-2px);
+  border-left-color: var(--ion-color-secondary);
+  cursor: pointer;
+}
+
+table tbody tr:hover::before {
+  opacity: 1;
+}
+
+/* Active/Selected state */
+table tbody tr:active {
+  transform: translateY(-1px) scale(0.99);
+}
+
+/* Field layout - horizontal row items */
+table tbody td {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 0 !important;
+  border: none !important;
+  text-align: left !important;
+  min-width: 0;
+  flex: 1 1 auto;
+}
+
+/* Last field contains action buttons */
+table tbody td:last-child {
+  flex: 0 0 auto;
+  flex-direction: row;
+  align-items: center;
+  gap: 6px;
+  margin-left: auto;
+}
+
+/* Field labels */
+table tbody td::before {
+  content: attr(data-label);
+  font-size: 9px;
+  font-weight: 700;
+  color: #888888;
+  text-transform: uppercase;
+  letter-spacing: 0.6px;
+  white-space: nowrap;
+}
+
+/* Field values */
+table tbody td > * {
+  font-size: 13px;
+  font-weight: 600;
+  color: #000000;
+  text-align: left;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* Action buttons styling - small, icon-based, professional */
+table tbody td ion-button {
+  margin: 0;
+  --border-radius: 6px;
+  --padding-start: 8px;
+  --padding-end: 8px;
+  font-weight: 600;
+  font-size: 0;
+  letter-spacing: 0;
+  text-transform: none;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.08);
+  transition: all 0.2s ease;
+  height: 32px;
+  min-width: 32px;
+  width: 32px;
+}
+
+table tbody td ion-button ion-icon {
+  font-size: 18px;
+  color: #444444;
+  margin: 0;
+  padding: 0;
+}
+
+table tbody td ion-button:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.12);
+  background: rgba(0, 0, 0, 0.04);
+}
+
+table tbody td ion-button:hover ion-icon {
+  color: #000000;
+}
+
+/* Button with text (if needed) */
+table tbody td ion-button[size="small"] {
+  font-size: 11px;
+  padding: 0 10px;
+  width: auto;
+  min-width: auto;
+}
+
+.slideout-actions-button {
+  height: 32px;
+  font-size: 11px;
+  border-radius: 6px;
+  padding: 0 10px;
+}
+
+/* ============================================
+   TABLET TABLE CARDS (768px and up)
+   ============================================ */
+@media (min-width: 768px) {
+  .dynamic-table-container {
+    max-height: calc(100vh - 220px);
+  }
+
+  /* Keep single column layout */
+  table tbody {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    padding: 8px;
+    width: 100%;
+  }
+
+  table tbody tr {
+    padding: 16px 20px;
+    border-radius: 10px;
+  }
+
+  table tbody tr::before {
+    height: 2px;
+  }
+
+  table tbody td {
+    flex: 1 1 150px;
+    max-width: 200px;
+  }
+
+  table tbody td::before {
+    font-size: 9px;
+    letter-spacing: 0.6px;
+  }
+
+  table tbody td > * {
+    font-size: 13px;
+  }
+
+  table tbody td:last-child {
+    flex: 0 0 auto;
+    gap: 8px;
+  }
+
+  table tbody td ion-button {
+    height: 34px;
+    min-width: 34px;
+    width: 34px;
+  }
+
+  table tbody td ion-button ion-icon {
+    font-size: 19px;
+  }
+}
+
+/* ============================================
+   DESKTOP TABLE CARDS (1024px and up)
+   ============================================ */
+@media (min-width: 1024px) {
+  .dynamic-table-container {
+    max-height: calc(100vh - 200px);
+  }
+
+  /* Keep single column layout */
+  table tbody {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    padding: 10px;
+    width: 100%;
+  }
+
+  table tbody tr {
+    padding: 18px 24px;
+    border-radius: 10px;
+  }
+
+  table tbody tr:hover {
+    transform: translateY(-2px);
+    box-shadow: 
+      0 3px 6px rgba(0, 0, 0, 0.1),
+      0 6px 12px rgba(0, 0, 0, 0.08);
+  }
+
+  table tbody td {
+    flex: 1 1 180px;
+    max-width: 220px;
+  }
+
+  table tbody td::before {
+    font-size: 9px;
+  }
+
+  table tbody td > * {
+    font-size: 14px;
+  }
+
+  table tbody td:last-child {
+    flex: 0 0 auto;
+    gap: 8px;
+  }
+
+  table tbody td ion-button {
+    height: 36px;
+    min-width: 36px;
+    width: 36px;
+  }
+
+  table tbody td ion-button ion-icon {
+    font-size: 20px;
+  }
+
+  .slideout-actions-button {
+    height: 36px;
+    font-size: 11px;
+  }
+}
+
+/* ============================================
+   LARGE DESKTOP (1440px and up)
+   ============================================ */
+@media (min-width: 1440px) {
+  /* Keep single column but with more max-width for fields */
+  table tbody tr {
+    padding: 20px 28px;
+  }
+
+  table tbody td {
+    flex: 1 1 200px;
+    max-width: 250px;
+  }
+
+  table tbody td > * {
+    font-size: 14px;
+  }
+}
+
+/* ============================================
+   PRINT STYLES
+   ============================================ */
+/* ============================================
+   USERS TABLE CUSTOM LAYOUT (Horizontal Row Cards)
+   ============================================ */
+.users-table {
+  width: 100%;
+}
+
+.users-table .table-header {
+  display: none;
+}
+
+.users-table .table-body {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 4px;
+  width: 100%;
+  max-width: 100%;
+}
+
+.users-table .table-row {
+  display: flex;
+  flex-direction: row;
+  flex-wrap: nowrap;
+  align-items: center;
+  background: #ffffff;
+  border-radius: 10px;
+  padding: 14px 18px;
+  box-shadow: 
+    0 1px 2px rgba(0, 0, 0, 0.06),
+    0 2px 6px rgba(0, 0, 0, 0.04);
+  border: 1px solid rgba(0, 0, 0, 0.08);
+  border-left: 4px solid var(--ion-color-primary);
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  gap: 12px;
+  position: relative;
+  overflow: hidden;
+  width: 100%;
+  max-width: 100%;
+}
+
+.users-table .table-row::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 2px;
+  background: linear-gradient(
+    90deg,
+    var(--ion-color-primary) 0%,
+    var(--ion-color-secondary) 100%
+  );
+  opacity: 0.7;
+  transition: opacity 0.2s ease;
+}
+
+.users-table .table-row:hover {
+  box-shadow: 
+    0 2px 4px rgba(0, 0, 0, 0.08),
+    0 4px 12px rgba(0, 0, 0, 0.1);
+  transform: translateY(-2px);
+  border-left-color: var(--ion-color-secondary);
+  cursor: pointer;
+}
+
+.users-table .table-row:hover::before {
+  opacity: 1;
+}
+
+/* Each field in the card - horizontal layout */
+.users-table .table-row > div {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 0;
+  border: none;
+  min-width: 0;
+  flex: 1 1 100px;
+  max-width: 200px;
+}
+
+.users-table .table-row > div:last-child {
+  flex: 0 0 auto;
+  flex-direction: row;
+  align-items: center;
+  gap: 6px;
+  margin-left: auto;
+}
+
+.users-table .table-row > div::before {
+  content: attr(class);
+  font-size: 9px;
+  font-weight: 700;
+  color: #888888;
+  text-transform: uppercase;
+  letter-spacing: 0.6px;
+  white-space: nowrap;
+}
+
+.users-table .col-user::before {
+  content: 'User';
+}
+
+.users-table .col-email::before {
+  content: 'Email';
+}
+
+.users-table .col-credits::before {
+  content: 'Credits';
+}
+
+.users-table .col-status::before {
+  content: 'Status';
+}
+
+.users-table .col-session::before {
+  content: 'Session';
+}
+
+.users-table .col-joined::before {
+  content: 'Joined';
+}
+
+.users-table .col-action::before {
+  content: 'Action';
+}
+
+/* Field values */
+.users-table .table-row > div > * {
+  font-size: 13px;
+  font-weight: 600;
+  color: #000000;
+  text-align: left;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* Action column */
+.users-table .col-action {
+  justify-content: flex-end;
+  gap: 6px;
+}
+
+.users-table .col-action::before {
+  display: none;
+}
+
+/* Button styling - Professional with icon + text */
+.users-table .btn {
+  margin: 0;
+  border-radius: 6px;
+  padding: 8px 12px;
+  font-weight: 600;
+  font-size: 11px;
+  letter-spacing: 0.3px;
+  text-transform: uppercase;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.08);
+  transition: all 0.2s ease;
+  height: 32px;
+  min-width: auto;
+  width: auto;
+  border: 1px solid rgba(0, 0, 0, 0.1);
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  background: #ffffff;
+  color: #333333;
+  white-space: nowrap;
+}
+
+.users-table .btn::before {
+  content: '↑';
+  font-size: 14px;
+  font-weight: 700;
+  color: #666666;
+  line-height: 1;
+}
+
+.users-table .btn-primary::before {
+  content: '↑';
+}
+
+.users-table .btn-warning::before {
+  content: '↓';
+}
+
+.users-table .btn:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.12);
+  background: #f8f9fa;
+  border-color: rgba(0, 0, 0, 0.15);
+}
+
+.users-table .btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  transform: none;
+}
+
+/* Badges - Professional simple design */
+.users-table .status-badge,
+.users-table .session-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 5px 10px;
+  border-radius: 6px;
+  font-size: 11px;
+  font-weight: 600;
+  border: 1px solid rgba(0, 0, 0, 0.1);
+  background: #ffffff;
+}
+
+.users-table .status-badge.admin {
+  border-color: #333333;
+  color: #333333;
+}
+
+.users-table .status-badge.user {
+  border-color: #999999;
+  color: #666666;
+}
+
+.users-table .status-badge .badge-icon {
+  filter: grayscale(100%);
+  font-size: 12px;
+}
+
+.users-table .session-badge {
+  font-size: 11px;
+}
+
+.users-table .session-badge.active {
+  color: #333333;
+  border-color: #333333;
+}
+
+.users-table .session-badge.inactive {
+  color: #999999;
+  border-color: #cccccc;
+}
+
+.users-table .session-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+}
+
+.users-table .session-dot.active {
+  background: #333333;
+}
+
+.users-table .session-dot.inactive {
+  background: #999999;
+}
+
+/* ============================================
+   SESSION TIMER IN TABLES
+   ============================================ */
+.session-timer-wrapper {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+}
+
+.table-body .session-timer-badge {
+  margin: 0 auto;
+  min-width: 120px;
+  justify-content: center;
+}
+
+/* Ensure timer is visible in card layout */
+@media (max-width: 767px) {
+  .table-body .session-timer-badge {
+    margin: 8px 0;
+    width: auto;
+    max-width: 200px;
+  }
+}
+
+/* Tablet and Desktop */
+@media (min-width: 768px) {
+  .users-table .table-body {
+    gap: 10px;
+    padding: 8px;
+  }
+
+  .users-table .table-row {
+    padding: 16px 20px;
+  }
+
+  .users-table .table-row > div {
+    flex: 1 1 110px;
+    max-width: 170px;
+  }
+
+  .users-table .col-user {
+    flex: 1 1 130px;
+    max-width: 190px;
+  }
+
+  .users-table .col-email {
+    flex: 1 1 150px;
+    max-width: 210px;
+  }
+
+  .users-table .table-row > div > * {
+    font-size: 13px;
+  }
+
+  .users-table .btn {
+    height: 34px;
+    padding: 8px 14px;
+    font-size: 11px;
+  }
+
+  .users-table .btn::before {
+    font-size: 15px;
+  }
+}
+
+@media (min-width: 1024px) {
+  .users-table .table-row {
+    padding: 18px 24px;
+  }
+
+  .users-table .table-row > div {
+    flex: 1 1 120px;
+    max-width: 180px;
+  }
+
+  .users-table .col-user {
+    flex: 1 1 140px;
+    max-width: 200px;
+  }
+
+  .users-table .col-email {
+    flex: 1 1 160px;
+    max-width: 220px;
+  }
+
+  .users-table .table-row > div > * {
+    font-size: 14px;
+  }
+
+  .users-table .btn {
+    height: 36px;
+    padding: 8px 16px;
+    font-size: 12px;
+  }
+
+  .users-table .btn::before {
+    font-size: 16px;
+  }
+}
+
+/* ============================================
+   PRINT STYLES
+   ============================================ */
+@media print {
+  .page-header .btn,
+  .form-actions,
+  .col-actions,
+  .col-action {
+    display: none !important;
+  }
+  
+  /* Restore table for printing */
+  table {
+    display: table !important;
+  }
+  
+  table thead {
+    display: table-header-group !important;
+  }
+  
+  table tbody {
+    display: table-row-group !important;
+  }
+  
+  table tbody tr {
+    display: table-row !important;
+  }
+  
+  table tbody td {
+    display: table-cell !important;
+  }
+
+  .users-table .table-header {
+    display: flex !important;
+  }
+
+  .users-table .table-row {
+    break-inside: avoid;
+  }
+}

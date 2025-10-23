@@ -1,12 +1,162 @@
+/* ============================================
+   RESPONSIVE LAYOUT - SIDEBAR + BOTTOM NAV
+   ============================================ */
+
+.app-layout {
+  display: flex;
+  height: 100vh;
+  width: 100vw;
+  overflow: hidden;
+}
+
+/* User layout - always uses bottom navigation */
+.app-layout.user-layout {
+  flex-direction: column;
+}
+
+.app-layout.user-layout .main-content {
+  margin-left: 0 !important;
+}
+
+/* Admin layout - uses sidebar on tablet/desktop */
+.app-layout.admin-layout {
+  flex-direction: row;
+}
+
+/* ============================================
+   SIDEBAR - ADMIN ONLY, DESKTOP/TABLET
+   ============================================ */
+.sidebar {
+  display: none;
+  flex-direction: column;
+  width: 280px;
+  background: linear-gradient(180deg, var(--ion-color-primary) 0%, var(--ion-color-primary-shade) 100%);
+  color: white;
+  box-shadow: 2px 0 12px rgba(0, 0, 0, 0.1);
+  z-index: 100;
+  overflow-y: auto;
+  flex-shrink: 0;
+}
+
+.sidebar-header {
+  padding: 28px 24px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+  background: rgba(0, 0, 0, 0.1);
+}
+
+.sidebar-header h2 {
+  margin: 0;
+  font-size: 24px;
+  font-weight: 700;
+  color: white;
+  letter-spacing: 0.5px;
+}
+
+.sidebar-menu {
+  display: flex;
+  flex-direction: column;
+  padding: 16px 12px;
+  gap: 8px;
+}
+
+.sidebar-item {
+  display: flex;
+  align-items: center;
+  padding: 16px 20px;
+  border-radius: 12px;
+  color: rgba(255, 255, 255, 0.85);
+  text-decoration: none;
+  font-size: 15px;
+  font-weight: 500;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  position: relative;
+  overflow: hidden;
+  gap: 16px;
+}
+
+.sidebar-item::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  width: 4px;
+  background: white;
+  transform: scaleY(0);
+  transition: transform 0.3s ease;
+}
+
+.sidebar-item:hover {
+  background: rgba(255, 255, 255, 0.15);
+  color: white;
+  transform: translateX(4px);
+}
+
+.sidebar-item:hover::before {
+  transform: scaleY(1);
+}
+
+.sidebar-item.active,
+.sidebar-item[aria-current="page"] {
+  background: rgba(255, 255, 255, 0.2);
+  color: white;
+  font-weight: 600;
+}
+
+.sidebar-item.active::before,
+.sidebar-item[aria-current="page"]::before {
+  transform: scaleY(1);
+}
+
+.sidebar-item ion-icon {
+  font-size: 24px;
+  flex-shrink: 0;
+}
+
+.sidebar-item span {
+  flex: 1;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* ============================================
+   MAIN CONTENT
+   ============================================ */
+.main-content {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  width: 100%;
+  min-width: 0;
+}
+
+.main-content ion-tabs {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+}
+
+.main-content ion-router-outlet {
+  flex: 1;
+  overflow: auto;
+}
+
+/* ============================================
+   BOTTOM TAB BAR
+   ============================================ */
 .tabs-bar {
   --background: var(--ion-color-light);
   --border: 1px solid var(--ion-color-light-shade);
   height: 65px;
+  display: flex;
 }
 
 .tabs-bar ion-tab-button {
   --color: var(--ion-color-medium);
-  --color-selected: var(--studyhub-secondary);
+  --color-selected: var(--ion-color-primary);
   --ripple-color: var(--ion-color-primary-tint);
   min-height: 65px;
 }
@@ -20,4 +170,76 @@
   font-size: 11px;
   font-weight: 500;
   margin-top: 2px;
+}
+
+/* ============================================
+   TABLET (768px and up) - SHOW SIDEBAR FOR ADMIN ONLY
+   ============================================ */
+@media (min-width: 768px) {
+  /* Sidebar only shows for admin layout */
+  .admin-layout .sidebar {
+    display: flex;
+  }
+
+  .admin-layout .main-content {
+    margin-left: 0;
+  }
+
+  /* Hide bottom tabs on tablet/desktop for admin only */
+  .admin-layout .tabs-bar.mobile-only {
+    display: none;
+  }
+
+  /* User layout keeps bottom tabs on all screen sizes */
+  .user-layout .sidebar {
+    display: none;
+  }
+
+  .user-layout .main-content {
+    margin-left: 0;
+  }
+
+  .user-layout .tabs-bar {
+    display: flex;
+  }
+}
+
+/* ============================================
+   DESKTOP (1024px and up) - WIDER SIDEBAR FOR ADMIN
+   ============================================ */
+@media (min-width: 1024px) {
+  .admin-layout .sidebar {
+    width: 300px;
+  }
+
+  .admin-layout .main-content {
+    margin-left: 0;
+  }
+
+  .sidebar-header {
+    padding: 32px 28px;
+  }
+
+  .sidebar-header h2 {
+    font-size: 26px;
+  }
+
+  .sidebar-menu {
+    padding: 20px 16px;
+    gap: 10px;
+  }
+
+  .sidebar-item {
+    padding: 18px 24px;
+    font-size: 16px;
+  }
+
+  .sidebar-item ion-icon {
+    font-size: 26px;
+  }
+
+  /* User layout continues using bottom tabs */
+  .user-layout .main-content {
+    margin-left: 0;
+  }
 }

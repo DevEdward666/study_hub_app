@@ -6,6 +6,7 @@ export const UserWithInfoSchema = UserSchema.extend({
   credits: z.number(),
   isAdmin: z.boolean(),
   hasActiveSession: z.boolean(),
+  isApproved: z.boolean().optional(),
 });
 
 export const TransactionWithUserSchema = CreditTransactionSchema.extend({
