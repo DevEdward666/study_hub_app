@@ -42,6 +42,7 @@ import { TabsLayout } from "./components/Layout/TabsLayout";
 import TablesManagement from "./pages/TableManagement";
 import TransactionsManagement from "./pages/TransactionManagement";
 import UsersManagement from "./pages/UserManagement";
+import ReportsPage from "./pages/ReportsPage";
 import { AdminLogin } from "./Admin/AdminLogin";
 import { PremiseManagement } from "./Admin/PremiseManagement";
 setupIonicReact();
@@ -90,6 +91,7 @@ const App: React.FC = () => (
                 path="/app/admin/users"
                 component={UsersManagement}
               />
+              <Route exact path="/app/admin/reports" component={ReportsPage} />
               <Route exact path="/app/admin/profile" component={Profile} />
 
               <Route exact path="/app">

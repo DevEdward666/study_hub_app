@@ -18,12 +18,14 @@ import {
   IonItem,
   IonList,
 } from "@ionic/react";
-import { qrCodeOutline, cameraOutline, closeOutline } from "ionicons/icons";
+import { qrCodeOutline, cameraOutline, closeOutline, notificationsOutline } from "ionicons/icons";
 import { useHistory } from "react-router-dom";
 import { useQRScanner } from "../../hooks/QrScannerHooks";
 import { useTableByQR } from "../../hooks/TableHooks";
 import { useTables } from "../../hooks/TableHooks";
+import { useUser } from "../../hooks/UserHooks";
 import { LoadingSpinner } from "../../components/common/LoadingSpinner";
+import { useNotifications } from "../../hooks/useNotifications";
 import "./TableScanner.css";
 import { Scanner } from "@yudiel/react-qr-scanner";
 const TableScanner: React.FC = () => {
@@ -35,6 +37,18 @@ const TableScanner: React.FC = () => {
   const [isScanning, setScanning] = useState(false);
   const [selectedHours, setSelectedHours] = useState<number>(1);
   const history = useHistory();
+  const { credits } = useUser();
+  
+  // Notifications hook
+  const {
+    notifySessionStart,
+    setupSessionMonitoring,
+    isSupported: isPushSupported,
+    permission: pushPermission,
+    isSubscribed: isPushSubscribed,
+    requestPermission,
+  } = useNotifications();
+  
   // const { startScan, stopScan, isScanning, hasPermission, checkPermission } = useQRScanner();
   const { data: scannedTable, isLoading: isLoadingTable } =
     useTableByQR(scannedCode);
@@ -121,6 +135,21 @@ const { startSession, activeSession,tables } = useTables();
 
   const handleStartSession = async () => {
     if (scannedTable && scannedCode) {
+      // Show confirmation dialog
+      const totalCredits = scannedTable.hourlyRate * selectedHours;
+      const confirmed = window.confirm(
+        `Start study session at Table ${scannedTable.tableNumber}?\n\n` +
+        `Location: ${scannedTable.location}\n` +
+        `Duration: ${selectedHours} hour${selectedHours > 1 ? 's' : ''}\n` +
+        `Credits needed: ${totalCredits}\n` +
+        `Your balance: ${credits?.balance || 0} credits\n\n` +
+        `Session will start immediately.`
+      );
+      
+      if (!confirmed) {
+        return;
+      }
+
       try {
         const endTime = new Date();
         endTime.setHours(endTime.getHours() + selectedHours);
@@ -131,6 +160,29 @@ const { startSession, activeSession,tables } = useTables();
           hours: selectedHours,
           endTime: endTime.toISOString(),
         });
+        
+        // Send session start notification
+        if (isPushSupported && pushPermission === "granted") {
+          try {
+            await notifySessionStart(
+              scannedTable.id, // Will be replaced with actual session ID by service
+              scannedTable.tableNumber,
+              scannedTable.location,
+              scannedTable.hourlyRate * selectedHours
+            );
+            
+            // Setup monitoring for 30-minute warning
+            setupSessionMonitoring(
+              scannedTable.id, // Will be replaced with actual session ID 
+              scannedTable.tableNumber,
+              new Date(),
+              selectedHours * 60 // Convert hours to minutes
+            );
+          } catch (notifError) {
+            console.error("Failed to send notification:", notifError);
+          }
+        }
+        
         setShowConfirmAlert(false);
         setSelectedHours(1); // Reset to default
         history.push("/app/dashboard");

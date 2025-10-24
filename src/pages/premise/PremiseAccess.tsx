@@ -60,12 +60,18 @@ const PremiseAccess: React.FC = () => {
     event.detail.complete();
   };
 
-  const handleScanQR = async (result: any) => {
+  const handleActivateAccess = async () => {
     try {
-      // const scannedCode = await startScan();
+      const result = await startScan();
       if (result) {
+        const confirmActivate = window.confirm(
+          `Activate premise access with code: ${result}?\n\nThis will grant you access to the premise.`
+        );
+        
+        if (!confirmActivate) return;
+        
         await activateAccess.mutateAsync({
-          activationCode: result[0]?.rawValue,
+          activationCode: result,
         });
         setToastMessage("Premise access activated successfully!");
         setToastColor("success");
@@ -81,6 +87,12 @@ const PremiseAccess: React.FC = () => {
   };
 
   const handleCleanupExpired = async () => {
+    const confirmCleanup = window.confirm(
+      "Clean up expired premise access codes?\n\nThis will permanently remove all expired access codes from the system."
+    );
+    
+    if (!confirmCleanup) return;
+    
     try {
       await cleanupExpired.mutateAsync();
       await refetchAccess();
@@ -258,11 +270,10 @@ const PremiseAccess: React.FC = () => {
                   <div className="action-content">
                     <div className="action-header">
                       <div className="action-info">
-                        {/* <IonIcon icon={qrCodeOutline} className="action-icon" /> */}
-                        <Scanner onScan={(result) => handleScanQR(result)} />
                         <IonButton
                           expand="block"
                           fill="solid"
+                          onClick={handleActivateAccess}
                           disabled={
                             isScanning ||
                             activateAccess.isPending ||

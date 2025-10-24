@@ -1,5 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { apiClient } from "../services/api.client";
+import { userService } from "../services/user.service";
 import { ApiResponseSchema } from "../schema/api.schema";
 import {
   UserWithInfoSchema,
@@ -52,25 +53,9 @@ export const useUsersManagement = () => {
     },
   });
 
-  const approveUserMutation = useMutation({
-    mutationFn: (userId: string) =>
-      apiClient.post(
-        "/admin/users/approve",
-        ApiResponseSchema(z.object({ isApproved: z.boolean() })),
-        { userId }
-      ),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["admin", "users"] });
-    },
-  });
-
-  const declineUserMutation = useMutation({
-    mutationFn: (userId: string) =>
-      apiClient.post(
-        "/admin/users/decline",
-        ApiResponseSchema(z.object({ isApproved: z.boolean() })),
-        { userId }
-      ),
+  const addCreditsMutation = useMutation({
+    mutationFn: ({ userId, amount, creditType }: { userId: string; amount: number; creditType: string }) =>
+      userService.addCreditsAsAdmin(userId, amount, creditType),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["admin", "users"] });
     },
@@ -81,8 +66,7 @@ export const useUsersManagement = () => {
     isLoading: usersQuery.isLoading,
     error: usersQuery.error,
     toggleAdmin: toggleAdminMutation,
-    approveUser: approveUserMutation,
-    declineUser: declineUserMutation,
+    addCredits: addCreditsMutation,
     refetch: usersQuery.refetch,
   };
 };

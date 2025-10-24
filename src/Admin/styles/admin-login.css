@@ -4,7 +4,7 @@
     display: flex;
     align-items: center;
     justify-content: center;
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    background: linear-gradient(135deg, var(--ion-color-primary) 0%, var(--ion-color-secondary) 100%);
     padding: 20px;
   }
   
@@ -30,7 +30,7 @@
   }
   
   .admin-login-header {
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    background: linear-gradient(135deg, var(--ion-color-primary) 0%, var(--ion-color-secondary) 100%);
     color: white;
     padding: 40px 32px;
     text-align: center;
@@ -145,7 +145,7 @@
   
   .admin-login-button {
     width: 100%;
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+   background: linear-gradient(135deg, var(--ion-color-primary) 0%, var(--ion-color-secondary) 100%);
     color: white;
     border: none;
     padding: 14px 24px;
@@ -259,7 +259,7 @@
   }
   
   .premise-card-header {
-    background: linear-gradient(135deg, #8b5cf6, #7c3aed);
+    background: linear-gradient(135deg, var(--ion-color-primary), var(--ion-color-secondary));
     color: white;
     padding: 20px 24px;
     display: flex;
@@ -354,7 +354,7 @@
   }
   
   .copy-button {
-    background: #667eea;
+    background: var(--ion-color-primary);
     color: white;
     border: none;
     padding: 4px 8px;

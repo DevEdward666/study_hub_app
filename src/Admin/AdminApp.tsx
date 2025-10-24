@@ -14,6 +14,7 @@ import UsersManagement from "../pages/UserManagement";
 import TransactionsManagement from "../pages/TransactionManagement";
 import TablesManagement from "../pages/TableManagement";
 import { PremiseManagement } from "../Admin/PremiseManagement";
+import ReportsPage from "../pages/ReportsPage";
 import "./styles/admin.css";
 
 const AdminApp: React.FC = () => {
@@ -41,6 +42,7 @@ const AdminApp: React.FC = () => {
                       path="/premise"
                       component={PremiseManagement}
                     />
+                    <Route exact path="/reports" component={ReportsPage} />
                     <Route exact path="/">
                       <Redirect to="/dashboard" />
                     </Route>

@@ -35,6 +35,21 @@ export class UserService {
     );
   }
 
+  async addCreditsAsAdmin(userId: string, amount: number, creditType: string): Promise<string> {
+    const request: PurchaseCreditsRequest = {
+      amount: amount,
+      paymentMethod: `admin_${creditType}`,
+      transactionId: `admin_${Date.now()}_${Math.random().toString(36).substring(7)}`
+    };
+    
+    PurchaseCreditsRequestSchema.parse(request);
+    return apiClient.post(
+      '/admin/credits/add-approved',
+      ApiResponseSchema(z.string()),
+      { ...request, userId, status: 'Approved' }
+    );
+  }
+
   async getUserTransactions(): Promise<CreditTransaction[]> {
     return apiClient.get(
       '/user/transactions',

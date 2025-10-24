@@ -156,6 +156,19 @@ const TablesManagement: React.FC = () => {
   const handleUpdateTable = async (e: React.FormEvent) => {
     e.preventDefault();
 
+    // Show confirmation dialog
+    const confirmed = window.confirm(
+      `Are you sure you want to update Table ${formData.tableNumber}?\n\n` +
+      `Location: ${formData.location}\n` +
+      `Capacity: ${formData.capacity} people\n` +
+      `Hourly Rate: ${formData.hourlyRate} credits\n\n` +
+      `This will modify the table settings.`
+    );
+    
+    if (!confirmed) {
+      return;
+    }
+
     try {
       await updateTable.mutateAsync({
         tableID: formData.tableID,
@@ -180,6 +193,20 @@ const TablesManagement: React.FC = () => {
   };
   const handleCreateTable = async (e: React.FormEvent) => {
     e.preventDefault();
+
+    // Show confirmation dialog
+    const confirmed = window.confirm(
+      `Are you sure you want to create a new table?\n\n` +
+      `Table Number: ${formData.tableNumber}\n` +
+      `Location: ${formData.location}\n` +
+      `Capacity: ${formData.capacity} people\n` +
+      `Hourly Rate: ${formData.hourlyRate} credits\n\n` +
+      `This will create a new study table.`
+    );
+    
+    if (!confirmed) {
+      return;
+    }
 
     try {
       await createTable.mutateAsync({

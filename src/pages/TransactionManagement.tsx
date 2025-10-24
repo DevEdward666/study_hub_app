@@ -3,6 +3,7 @@ import {
   TransactionManagementServiceAPI,
   useTransactionsManagement,
 } from "../hooks/AdminDataHooks";
+import { useNotifications } from "../hooks/useNotifications";
 import { LoadingSpinner } from "../components/common/LoadingSpinner";
 import { ErrorMessage } from "../components/common/ErrorMessage";
 import "../Admin/styles/admin.css";
@@ -20,6 +21,7 @@ import { PesoFormat } from "@/shared/PesoHelper";
 const TransactionsManagement: React.FC = () => {
   const { isLoading, error, approve, reject, refetch } =
     useTransactionsManagement();
+  const { notifyCreditApproved } = useNotifications();
   const {
     tableState,
     updateState,
@@ -35,8 +37,44 @@ const TransactionsManagement: React.FC = () => {
     initialState: { pageSize: 10 },
   });
   const handleApprove = async (transactionId: string) => {
+    // Find the transaction details to get user info and amount
+    const transaction = data?.data.find(t => t.id === transactionId);
+    
+    // Show confirmation dialog
+    const confirmed = window.confirm(
+      `Are you sure you want to approve this credit purchase transaction?\n\n` +
+      `Transaction ID: ${transactionId}\n` +
+      `User: ${transaction?.user?.name || 'Unknown'}\n` +
+      `Amount: ${transaction?.amount || 0} credits\n\n` +
+      `This will add credits to the user's account and cannot be undone.`
+    );
+    
+    if (!confirmed) {
+      return;
+    }
+
     try {
       await approve.mutateAsync(transactionId);
+      
+      // Send notification to user about credit approval
+      if (transaction) {
+        try {
+          // Note: In a real implementation, the API would return the updated balance
+          // For now, we'll use the amount as placeholder
+          const newBalance = transaction.amount; // This should come from API response
+          
+          await notifyCreditApproved(
+            transaction.user.id,
+            transactionId,
+            transaction.amount,
+            newBalance
+          );
+        } catch (notifError) {
+          console.error("Failed to send approval notification:", notifError);
+          // Don't block the approval flow if notification fails
+        }
+      }
+      
       RefetchTable();
     } catch (error) {
       console.error("Failed to approve transaction:", error);
@@ -44,6 +82,17 @@ const TransactionsManagement: React.FC = () => {
   };
 
   const handleReject = async (transactionId: string) => {
+    // Show confirmation dialog
+    const confirmed = window.confirm(
+      `Are you sure you want to reject this credit purchase transaction?\n\n` +
+      `Transaction ID: ${transactionId}\n\n` +
+      `This will permanently reject the user's credit purchase request.`
+    );
+    
+    if (!confirmed) {
+      return;
+    }
+
     try {
       await reject.mutateAsync(transactionId);
       RefetchTable();

@@ -61,6 +61,18 @@ export const PremiseManagement: React.FC = () => {
   const handleCreateCode = async (e: React.FormEvent) => {
     e.preventDefault();
 
+    // Show confirmation dialog
+    const confirmed = window.confirm(
+      `Are you sure you want to create a new premise QR code?\n\n` +
+      `Location: ${formData.location}\n` +
+      `Validity: ${formData.validityHours} hours\n\n` +
+      `This will generate a new QR code for premise access.`
+    );
+    
+    if (!confirmed) {
+      return;
+    }
+
     try {
       await createCode.mutateAsync({
         location: formData.location,

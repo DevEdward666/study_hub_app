@@ -33,6 +33,8 @@ import {
   hourglass,
 } from "ionicons/icons";
 import { useUser } from "../../hooks/UserHooks";
+import { useAuth } from "../../hooks/AuthHooks";
+import { useNotifications } from "../../hooks/useNotifications";
 import { LoadingSpinner } from "../../components/common/LoadingSpinner";
 import { ErrorMessage } from "../../components/common/ErrorMessage";
 import { PurchaseCreditsRequestSchema } from "../../schema/user.schema";
@@ -45,6 +47,9 @@ const Credits: React.FC = () => {
   const [paymentMethod, setPaymentMethod] = useState<string>("credit_card");
   const [showToast, setShowToast] = useState(false);
   const [toastMessage, setToastMessage] = useState("");
+
+  const { user } = useAuth();
+  const { notifyCreditPurchase } = useNotifications();
 
   const {
     credits,
@@ -62,6 +67,19 @@ const Credits: React.FC = () => {
   };
 
   const handlePurchase = async () => {
+    // Show confirmation dialog
+    const confirmed = window.confirm(
+      `Are you sure you want to purchase ${amount} credits?\n\n` +
+      `Amount: ${amount} credits\n` +
+      `Cost: ${PesoFormat(amount * 0.1)}\n` +
+      `Payment Method: ${paymentMethod.replace("_", " ").toUpperCase()}\n\n` +
+      `This request will be sent to admin for approval.`
+    );
+    
+    if (!confirmed) {
+      return;
+    }
+
     try {
       const transactionId = `tx_${Date.now()}_${Math.random().toString(36).substring(7)}`;
 
@@ -70,6 +88,21 @@ const Credits: React.FC = () => {
         paymentMethod,
         transactionId,
       });
+
+      // Send notification to admins about credit purchase
+      if (user) {
+        try {
+          await notifyCreditPurchase(
+            user.id,
+            user.name || user.email,
+            amount,
+            transactionId
+          );
+        } catch (notifError) {
+          console.error("Failed to send purchase notification:", notifError);
+          // Don't block the purchase flow if notification fails
+        }
+      }
 
       setToastMessage("Purchase request submitted for admin approval");
       setShowToast(true);

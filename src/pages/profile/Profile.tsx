@@ -38,7 +38,9 @@ import {
 } from "ionicons/icons";
 import { useAuth } from "../../hooks/AuthHooks";
 import { useUser } from "../../hooks/UserHooks";
+import { useConfirmation } from "../../hooks/useConfirmation";
 import { LoadingSpinner } from "../../components/common/LoadingSpinner";
+import { ConfirmToast } from "../../components/common/ConfirmToast";
 import "./Profile.css";
 import { useHistory } from "react-router-dom";
 
@@ -52,6 +54,16 @@ const Profile: React.FC = () => {
   const { user, signOut, refetchUser } = useAuth();
   const { credits, sessions, refetchCredits } = useUser();
   const history = useHistory();
+  
+  // Confirmation toast hook
+  const {
+    isOpen: isConfirmOpen,
+    options: confirmOptions,
+    showConfirmation,
+    handleConfirm: confirmAction,
+    handleCancel: cancelAction,
+    handleDismiss: dismissConfirm
+  } = useConfirmation();
   React.useEffect(() => {
     if (user?.name) {
       setEditName(user.name);
@@ -64,11 +76,26 @@ const Profile: React.FC = () => {
   };
 
   const handleSignOut = async () => {
+    // Show confirmation toast
+    showConfirmation({
+      header: 'Sign Out',
+      message: `Are you sure you want to sign out?\n\nYou will be logged out of the StudyHub app and redirected to the login page.`,
+      confirmText: 'Sign Out',
+      cancelText: 'Stay Logged In'
+    }, async () => {
+      await performSignOut();
+    });
+  };
+
+  const performSignOut = async () => {
     try {
       await signOut.mutateAsync();
       history.push("/login");
     } catch (error) {
       console.error("Sign out error:", error);
+      setToastMessage("Failed to sign out. Please try again.");
+      setToastColor("danger");
+      setShowToast(true);
     }
   };
 
@@ -382,6 +409,17 @@ const Profile: React.FC = () => {
           message={toastMessage}
           duration={3000}
           color={toastColor}
+        />
+
+        <ConfirmToast
+          isOpen={isConfirmOpen}
+          onDidDismiss={dismissConfirm}
+          onConfirm={confirmAction}
+          onCancel={cancelAction}
+          message={confirmOptions.message}
+          header={confirmOptions.header}
+          confirmText={confirmOptions.confirmText}
+          cancelText={confirmOptions.cancelText}
         />
       </IonContent>
     </IonPage>

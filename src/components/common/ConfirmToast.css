@@ -1,0 +1,101 @@
+.confirm-toast-alert {
+  --backdrop-opacity: 0.6;
+  --max-width: 400px;
+  --border-radius: 16px;
+  --box-shadow: 0 8px 32px rgba(0, 0, 0, 0.15);
+}
+
+.confirm-toast-alert .alert-wrapper {
+  border-radius: 16px;
+  overflow: hidden;
+  background: var(--ion-color-step-50, #f9f9f9);
+  backdrop-filter: blur(10px);
+  border: 1px solid var(--ion-color-step-150, #e1e1e1);
+}
+
+.confirm-toast-alert .alert-head {
+  padding: 16px 20px 8px;
+  background: linear-gradient(135deg, var(--ion-color-primary, #3880ff), var(--ion-color-secondary, #3171e0));
+  color: white;
+  font-weight: 600;
+}
+
+.confirm-toast-alert .alert-message {
+  padding: 12px 20px 16px;
+  color: var(--ion-color-step-850, #262626);
+  line-height: 1.5;
+  font-size: 14px;
+}
+
+.confirm-toast-alert .alert-button-group {
+  display: flex;
+  gap: 8px;
+  padding: 12px 20px 16px;
+  background: var(--ion-color-step-50, #f9f9f9);
+}
+
+.confirm-toast-cancel {
+  --border-radius: 8px;
+  --padding-start: 16px;
+  --padding-end: 16px;
+  --color: var(--ion-color-medium, #92949c);
+  font-weight: 500;
+  flex: 1;
+}
+
+.confirm-toast-confirm {
+  --border-radius: 8px;
+  --padding-start: 16px;
+  --padding-end: 16px;
+  --background: var(--ion-color-primary, #3880ff);
+  --color: white;
+  font-weight: 600;
+  flex: 1;
+  box-shadow: 0 2px 8px rgba(56, 128, 255, 0.3);
+}
+
+/* Animation for toast appearance */
+@keyframes slideInDown {
+  from {
+    transform: translateY(-100%);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+.confirm-toast-alert.alert-enter-active {
+  animation: slideInDown 0.3s ease-out;
+}
+
+/* Dark mode support */
+@media (prefers-color-scheme: dark) {
+  .confirm-toast-alert .alert-wrapper {
+    background: var(--ion-color-step-100, #1e1e1e);
+    border-color: var(--ion-color-step-200, #2c2c2c);
+  }
+  
+  .confirm-toast-alert .alert-message {
+    color: var(--ion-color-step-150, #d4d4d4);
+  }
+  
+  .confirm-toast-alert .alert-button-group {
+    background: var(--ion-color-step-100, #1e1e1e);
+  }
+}
+
+/* Responsive design */
+@media (max-width: 767px) {
+  .confirm-toast-alert {
+    --max-width: calc(100vw - 32px);
+  }
+  
+  .confirm-toast-alert .alert-head,
+  .confirm-toast-alert .alert-message,
+  .confirm-toast-alert .alert-button-group {
+    padding-left: 16px;
+    padding-right: 16px;
+  }
+}

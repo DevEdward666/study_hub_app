@@ -96,6 +96,12 @@ const TableDetails: React.FC = () => {
       return;
     }
 
+    const confirmStart = window.confirm(
+      `Start study session at Table ${table.tableNumber}?\n\nLocation: ${table.location}\nHourly rate: ${table.hourlyRate} credits\nCurrent balance: ${credits?.balance || 0} credits\n\nYour session will begin and credits will be deducted.`
+    );
+    
+    if (!confirmStart) return;
+
     try {
       await startSession.mutateAsync({
         tableId: table.id,
@@ -121,6 +127,12 @@ const TableDetails: React.FC = () => {
 
   const handleEndSession = async () => {
     if (!activeSession) return;
+
+    const confirmEnd = window.confirm(
+      `End your current study session?\n\nTable: ${activeSession.table.tableNumber}\nDuration: ${getSessionDuration()}\n\nThis will stop your session and finalize credit charges.`
+    );
+    
+    if (!confirmEnd) return;
 
     try {
       await endSession.mutateAsync(activeSession.id);

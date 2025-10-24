@@ -22,7 +22,6 @@ import {
   cardOutline,
   businessOutline,
   timeOutline,
-  stopOutline,
   trendingUpOutline,
   statsChartOutline,
   bookOutline,
@@ -33,7 +32,10 @@ import { useAuth } from "../../hooks/AuthHooks";
 import { useTables } from "../../hooks/TableHooks";
 import { useUser } from "../../hooks/UserHooks";
 import { usePremise } from "../../hooks/PremiseHooks";
+import { useNotifications } from "../../hooks/useNotifications";
+import { useConfirmation } from "../../hooks/useConfirmation";
 import { LoadingSpinner } from "../../components/common/LoadingSpinner";
+import { ConfirmToast } from "../../components/common/ConfirmToast";
 import "./Dashboard.css";
 
 const Dashboard: React.FC = () => {
@@ -42,6 +44,23 @@ const Dashboard: React.FC = () => {
   const { activeSession, endSession, isLoadingActiveSession } = useTables();
   const { credits, sessions, isLoadingCredits, refetchCredits } = useUser();
   const { access, isLoadingAccess, refetchAccess } = usePremise();
+  
+  // Notifications hook
+  const {
+    notifySessionEnd,
+    isSupported: isPushSupported,
+    permission: pushPermission,
+  } = useNotifications();
+
+  // Confirmation toast hook
+  const {
+    isOpen: isConfirmOpen,
+    options: confirmOptions,
+    showConfirmation,
+    handleConfirm: confirmAction,
+    handleCancel: cancelAction,
+    handleDismiss: dismissConfirm
+  } = useConfirmation();
 
   const handleRefresh = async (event: CustomEvent<RefresherEventDetail>) => {
     await Promise.all([refetchCredits(), refetchAccess()]);
@@ -50,11 +69,46 @@ const Dashboard: React.FC = () => {
 
   const handleEndSession = async () => {
     if (activeSession) {
-      try {
-        await endSession.mutateAsync(activeSession.id);
-      } catch (error) {
-        console.error("Error ending session:", error);
+      const durationMinutes = Math.floor((Date.now() - new Date(activeSession.startTime).getTime()) / (1000 * 60));
+      
+      // Show confirmation toast
+      showConfirmation({
+        header: 'End Study Session',
+        message: `Are you sure you want to end your study session at Table ${activeSession.table.tableNumber}?\n\nDuration: ${durationMinutes} minutes\nCredits used: ${activeSession.creditsUsed || 0}\n\nThis action cannot be undone.`,
+        confirmText: 'End Session',
+        cancelText: 'Continue Studying'
+      }, async () => {
+        await performEndSession();
+      });
+    }
+  };
+
+  const performEndSession = async () => {
+    if (!activeSession) return;
+
+    try {
+      // Calculate session duration
+      const startTime = new Date(activeSession.startTime).getTime();
+      const endTime = Date.now();
+      const durationMinutes = Math.floor((endTime - startTime) / (1000 * 60));
+        
+      await endSession.mutateAsync(activeSession.id);
+      
+      // Send push notification when session ends
+      if (isPushSupported && pushPermission === "granted") {
+        try {
+          await notifySessionEnd(
+            activeSession.id,
+            activeSession.table.tableNumber,
+            durationMinutes,
+            activeSession.creditsUsed || 0
+          );
+        } catch (notifError) {
+          console.error("Failed to send notification:", notifError);
+        }
       }
+    } catch (error) {
+      console.error("Error ending session:", error);
     }
   };
 
@@ -156,68 +210,37 @@ const Dashboard: React.FC = () => {
             </div>
           </div>
 
-          {/* Active Session Card */}
+          {/* Active Session Card - Ultra Compact */}
           {activeSession && (
-            <IonCard className="session-card modern-card">
-              <div className="session-card-header">
-                <div className="session-info">
-                  <div className="session-title">
-                    <IonIcon icon={timeOutline} className="session-icon" />
-                    <span>Active Study Session</span>
+            <div className="active-session-banner">
+              <div className="session-banner-content">
+                <div className="session-info-compact">
+                  <div className="session-status-mini">
+                    <div className="status-dot-mini"></div>
+                    <span className="session-text">Table {activeSession.table.tableNumber}</span>
                   </div>
-                  <IonBadge color="success" className="session-badge">
-                    In Progress
-                  </IonBadge>
+                  <div className="session-metrics-mini">
+                    <span className="metric-mini">
+                      {Math.floor(
+                        (Date.now() - new Date(activeSession.startTime).getTime()) / (1000 * 60)
+                      )}m
+                    </span>
+                    <span className="metric-separator">•</span>
+                    <span className="metric-mini">{activeSession.creditsUsed} credits</span>
+                  </div>
                 </div>
-                <div className="session-table">
-                  <h3>Table {activeSession.table.tableNumber}</h3>
-                  <p>{activeSession.table.location}</p>
-                </div>
+                <IonButton
+                  fill="clear"
+                  color="danger"
+                  size="small"
+                  onClick={handleEndSession}
+                  disabled={endSession.isPending}
+                  className="end-session-mini"
+                >
+                  {endSession.isPending ? "Ending..." : "End"}
+                </IonButton>
               </div>
-
-              <IonCardContent>
-                <div className="session-details">
-                  <div className="session-metrics">
-                    <div className="metric">
-                      <IonIcon icon={timeOutline} />
-                      <div>
-                        <span className="metric-value">
-                          {Math.floor(
-                            (Date.now() -
-                              new Date(activeSession.startTime).getTime()) /
-                              (1000 * 60)
-                          )}
-                          m
-                        </span>
-                        <span className="metric-label">Duration</span>
-                      </div>
-                    </div>
-
-                    <div className="metric">
-                      <IonIcon icon={cardOutline} />
-                      <div>
-                        <span className="metric-value">
-                          {activeSession.creditsUsed}
-                        </span>
-                        <span className="metric-label">Credits Used</span>
-                      </div>
-                    </div>
-                  </div>
-
-                  <IonButton
-                    expand="block"
-                    fill="outline"
-                    color="danger"
-                    onClick={handleEndSession}
-                    disabled={endSession.isPending}
-                    className="end-session-btn"
-                  >
-                    <IonIcon icon={stopOutline} slot="start" />
-                    {endSession.isPending ? "Ending..." : "End Session"}
-                  </IonButton>
-                </div>
-              </IonCardContent>
-            </IonCard>
+            </div>
           )}
 
           {/* Quick Stats Grid */}
@@ -227,41 +250,54 @@ const Dashboard: React.FC = () => {
             <IonGrid className="stats-grid">
               <IonRow>
                 <IonCol size="6">
-                  <div className="stat-card credits-stat">
+                  <div className="modern-stat-card credits-card">
                     <div className="stat-card-header">
-                      <IonIcon icon={cardOutline} />
+                      <div className="stat-icon-container credits-icon">
+                        <IonIcon icon={cardOutline} />
+                      </div>
+                      <div className="stat-trend">
+                        <IonIcon icon={trendingUpOutline} />
+                        <span>+12%</span>
+                      </div>
                     </div>
                     <div className="stat-card-content">
-                      <div className="stat-value">{credits?.balance || 0}</div>
+                      <div className="stat-main-value">{credits?.balance || 0}</div>
                       <div className="stat-title">Available Credits</div>
                       <div className="stat-subtitle">
-                        {credits?.totalPurchased || 0} purchased total
+                        <span className="stat-highlight">{stats.totalSpent}</span> spent this month
+                        <span className="stat-change-text">
+                          {stats.totalSpent > 0 && ` • ${Math.round((stats.totalSpent / (credits?.balance || 1)) * 100)}% usage rate`}
+                        </span>
                       </div>
                     </div>
                   </div>
                 </IonCol>
 
                 <IonCol size="6">
-                  <div className="stat-card premise-stat">
+                  <div className="modern-stat-card premise-card">
                     <div className="stat-card-header">
-                      <IonIcon icon={businessOutline} />
+                      <div className="stat-icon-container premise-icon">
+                        <IonIcon icon={businessOutline} />
+                      </div>
+                      <div className={`status-badge ${access ? 'active' : 'inactive'}`}>
+                        {access ? 'Active' : 'Inactive'}
+                      </div>
                     </div>
                     <div className="stat-card-content">
                       {access ? (
                         <>
-                          <div className="stat-value access-active">Active</div>
-                          <div className="stat-title">Premise Access</div>
-                          <div className="stat-subtitle">
-                            {formatTimeRemaining(access.timeRemaining)} left
+                          <div className="stat-main-value access-active">
+                            {formatTimeRemaining(access.timeRemaining).split(' ')[0]}
+                            <span className="stat-unit">h</span>
                           </div>
+                          <div className="stat-title">Time Remaining</div>
+                          <div className="stat-subtitle">Premise access active</div>
                         </>
                       ) : (
                         <>
-                          <div className="stat-value access-inactive">
-                            Inactive
-                          </div>
+                          <div className="stat-main-value access-inactive">--</div>
                           <div className="stat-title">Premise Access</div>
-                          <div className="stat-subtitle">Scan to activate</div>
+                          <div className="stat-subtitle">Scan QR to activate</div>
                         </>
                       )}
                     </div>
@@ -271,29 +307,42 @@ const Dashboard: React.FC = () => {
 
               <IonRow>
                 <IonCol size="6">
-                  <div className="stat-card sessions-stat">
+                  <div className="modern-stat-card sessions-card">
                     <div className="stat-card-header">
-                      <IonIcon icon={bookOutline} />
+                      <div className="stat-icon-container sessions-icon">
+                        <IonIcon icon={bookOutline} />
+                      </div>
+                      <div className="stat-change positive">
+                        <IonIcon icon={trendingUpOutline} />
+                        <span>+5</span>
+                      </div>
                     </div>
                     <div className="stat-card-content">
-                      <div className="stat-value">
-                        {stats.completedSessions}
+                      <div className="stat-main-value">{stats.completedSessions}</div>
+                      <div className="stat-title">Study Sessions</div>
+                      <div className="stat-subtitle">
+                        <span className="stat-highlight">{stats.totalSessions}</span> total sessions
                       </div>
-                      <div className="stat-title">Sessions</div>
-                      <div className="stat-subtitle">Completed this month</div>
                     </div>
                   </div>
                 </IonCol>
 
                 <IonCol size="6">
-                  <div className="stat-card performance-stat">
+                  <div className="modern-stat-card performance-card">
                     <div className="stat-card-header">
-                      <IonIcon icon={trendingUpOutline} />
+                      <div className="stat-icon-container performance-icon">
+                        <IonIcon icon={statsChartOutline} />
+                      </div>
                     </div>
                     <div className="stat-card-content">
-                      <div className="stat-value">{stats.totalHours}h</div>
+                      <div className="stat-main-value">
+                        {stats.totalHours}
+                        <span className="stat-unit">h</span>
+                      </div>
                       <div className="stat-title">Study Hours</div>
-                      <div className="stat-subtitle">Total time logged</div>
+                      <div className="stat-subtitle">
+                        Avg <span className="stat-highlight">{stats.completedSessions > 0 ? (stats.totalHours / stats.completedSessions).toFixed(1) : 0}h</span> per session
+                      </div>
                     </div>
                   </div>
                 </IonCol>
@@ -383,6 +432,17 @@ const Dashboard: React.FC = () => {
           </div> */}
         </div>
       </IonContent>
+
+      <ConfirmToast
+        isOpen={isConfirmOpen}
+        onDidDismiss={dismissConfirm}
+        onConfirm={confirmAction}
+        onCancel={cancelAction}
+        message={confirmOptions.message}
+        header={confirmOptions.header}
+        confirmText={confirmOptions.confirmText}
+        cancelText={confirmOptions.cancelText}
+      />
     </IonPage>
   );
 };

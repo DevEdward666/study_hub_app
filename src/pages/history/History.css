@@ -59,8 +59,8 @@
   border-left-color: var(--ion-color-warning);
   background: linear-gradient(
     135deg,
-    var(--ion-color-warning-tint) 0%,
-    white 100%
+    var(--ion-color-primary) 0%,
+     var(--ion-color-secondary) 100%
   );
 }
 

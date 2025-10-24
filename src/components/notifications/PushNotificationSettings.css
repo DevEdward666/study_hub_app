@@ -1,0 +1,40 @@
+.push-notification-settings {
+  margin: 1rem 0;
+}
+
+.push-notification-settings .permission-request,
+.push-notification-settings .permission-blocked {
+  padding: 1rem;
+  margin-top: 1rem;
+}
+
+.push-notification-settings .permission-blocked ol {
+  padding-left: 1.5rem;
+  margin: 0.5rem 0;
+}
+
+.push-notification-settings .permission-blocked li {
+  margin: 0.5rem 0;
+}
+
+.push-notification-settings .notification-features {
+  margin-top: 1.5rem;
+  padding-top: 1rem;
+  border-top: 1px solid var(--ion-color-light);
+}
+
+.push-notification-settings ion-list-header {
+  font-weight: 600;
+  font-size: 0.9rem;
+  padding-bottom: 0.5rem;
+}
+
+.push-notification-settings ion-item {
+  --padding-start: 0;
+  --padding-end: 0;
+}
+
+.push-notification-settings ion-toggle {
+  padding-left: 0.5rem;
+}
+

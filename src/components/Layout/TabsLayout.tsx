@@ -20,6 +20,7 @@ import {
   listOutline,
   listSharp,
   tabletPortraitSharp,
+  statsChartOutline,
 } from "ionicons/icons";
 import "./TabsLayout.css";
 import { useAdminStatus } from "@/hooks/AdminHooks";
@@ -59,6 +60,11 @@ export const TabsLayout: React.FC<TabsLayoutProps> = ({ children }) => {
               <span>Users</span>
             </a>
 
+            <a href="/app/admin/reports" className="sidebar-item">
+              <IonIcon icon={statsChartOutline} />
+              <span>Reports</span>
+            </a>
+
             <a href="/app/admin/profile" className="sidebar-item">
               <IonIcon icon={personOutline} />
               <span>Profile</span>
@@ -91,6 +97,11 @@ export const TabsLayout: React.FC<TabsLayoutProps> = ({ children }) => {
               <IonTabButton tab="premise" href="/app/admin/users">
                 <IonIcon icon={peopleCircle} />
                 <IonLabel>Users</IonLabel>
+              </IonTabButton>
+
+              <IonTabButton tab="reports" href="/app/admin/reports">
+                <IonIcon icon={statsChartOutline} />
+                <IonLabel>Reports</IonLabel>
               </IonTabButton>
 
               <IonTabButton tab="profile" href="/app/admin/profile">

@@ -9,8 +9,20 @@
   white-space: nowrap;
 }
 
+.session-timer-badge.compact {
+  gap: 4px;
+  padding: 4px 8px;
+  font-size: 12px;
+  border-radius: 12px;
+  min-width: fit-content;
+}
+
 .session-timer-badge ion-icon {
   font-size: 16px;
+}
+
+.session-timer-badge.compact ion-icon {
+  font-size: 14px;
 }
 
 .session-timer-badge.ended {
@@ -35,5 +47,14 @@
   
   .session-timer-badge ion-icon {
     font-size: 14px;
+  }
+
+  .session-timer-badge.compact {
+    font-size: 11px;
+    padding: 3px 6px;
+  }
+
+  .session-timer-badge.compact ion-icon {
+    font-size: 12px;
   }
 }
