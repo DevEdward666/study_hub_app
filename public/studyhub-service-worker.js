@@ -1,16 +1,50 @@
 // Service Worker for Push Notifications
 /* eslint-disable no-restricted-globals */
 
+const CACHE_NAME = 'studyhub-v1';
+
 // Install event
 self.addEventListener("install", (event) => {
   console.log("Service Worker installing...");
+  
+  // Force the waiting service worker to become the active service worker
   self.skipWaiting();
+  
+  // Pre-cache essential resources
+  event.waitUntil(
+    caches.open(CACHE_NAME).then((cache) => {
+      return cache.addAll([
+        '/',
+        '/manifest.json',
+        // Add other essential resources here
+      ]).catch((error) => {
+        console.error('Failed to cache resources during install:', error);
+      });
+    })
+  );
 });
 
 // Activate event
 self.addEventListener("activate", (event) => {
   console.log("Service Worker activating...");
-  event.waitUntil(self.clients.claim());
+  
+  event.waitUntil(
+    Promise.all([
+      // Clean up old caches
+      caches.keys().then((cacheNames) => {
+        return Promise.all(
+          cacheNames.map((cacheName) => {
+            if (cacheName !== CACHE_NAME) {
+              console.log('Deleting old cache:', cacheName);
+              return caches.delete(cacheName);
+            }
+          })
+        );
+      }),
+      // Claim all clients
+      self.clients.claim()
+    ])
+  );
 });
 
 // Push event - handle incoming push notifications

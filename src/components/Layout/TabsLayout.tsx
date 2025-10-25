@@ -6,7 +6,9 @@ import {
   IonTabButton,
   IonIcon,
   IonLabel,
+  useIonViewDidEnter,
 } from "@ionic/react";
+import { useHistory, useLocation } from "react-router-dom";
 import {
   homeOutline,
   qrCodeOutline,
@@ -24,6 +26,7 @@ import {
 } from "ionicons/icons";
 import "./TabsLayout.css";
 import { useAdminStatus } from "@/hooks/AdminHooks";
+import { useNotifications } from "@/hooks/useNotifications";
 
 interface TabsLayoutProps {
   children: React.ReactNode;
@@ -31,7 +34,29 @@ interface TabsLayoutProps {
 
 export const TabsLayout: React.FC<TabsLayoutProps> = ({ children }) => {
   const { refetch: refetchAdminStatus, isAdmin } = useAdminStatus();
+  const history = useHistory();
+  const location = useLocation();
   const isAdminPath = window.location.pathname.includes("/admin");
+  const {
+      notifySessionEnd,
+      isSupported: isPushSupported,
+      permission: pushPermission,
+      requestPermission: requestPushPermission
+    } = useNotifications();
+
+useIonViewDidEnter(()=>{
+  console.log(pushPermission)
+    if( pushPermission !== "granted"){
+      requestPushPermission();
+    }
+  })
+  const navigateTo = (path: string) => {
+    history.push(path);
+  };
+
+  const isActiveRoute = (path: string) => {
+    return location.pathname === path;
+  };
   return (
     <div className={`app-layout ${isAdmin && isAdminPath ? 'admin-layout' : 'user-layout'}`}>
       {isAdmin && isAdminPath && (
@@ -40,35 +65,53 @@ export const TabsLayout: React.FC<TabsLayoutProps> = ({ children }) => {
             <h2>StudyHub Admin</h2>
           </div>
           <div className="sidebar-menu">
-            <a href="/app/admin/premise" className="sidebar-item">
+            <button 
+              onClick={() => navigateTo('/app/admin/premise')} 
+              className={`sidebar-item ${isActiveRoute('/app/admin/premise') ? 'active' : ''}`}
+            >
               <IonIcon icon={homeOutline} />
               <span>Premise Management</span>
-            </a>
+            </button>
 
-            <a href="/app/admin/tables" className="sidebar-item">
+            <button 
+              onClick={() => navigateTo('/app/admin/tables')} 
+              className={`sidebar-item ${isActiveRoute('/app/admin/tables') ? 'active' : ''}`}
+            >
               <IonIcon icon={tabletPortraitSharp} />
               <span>Table's Management</span>
-            </a>
+            </button>
 
-            <a href="/app/admin/transactions" className="sidebar-item">
+            <button 
+              onClick={() => navigateTo('/app/admin/transactions')} 
+              className={`sidebar-item ${isActiveRoute('/app/admin/transactions') ? 'active' : ''}`}
+            >
               <IonIcon icon={listOutline} />
               <span>Transactions</span>
-            </a>
+            </button>
 
-            <a href="/app/admin/users" className="sidebar-item">
+            <button 
+              onClick={() => navigateTo('/app/admin/users')} 
+              className={`sidebar-item ${isActiveRoute('/app/admin/users') ? 'active' : ''}`}
+            >
               <IonIcon icon={peopleCircle} />
               <span>Users</span>
-            </a>
+            </button>
 
-            <a href="/app/admin/reports" className="sidebar-item">
+            <button 
+              onClick={() => navigateTo('/app/admin/reports')} 
+              className={`sidebar-item ${isActiveRoute('/app/admin/reports') ? 'active' : ''}`}
+            >
               <IonIcon icon={statsChartOutline} />
               <span>Reports</span>
-            </a>
+            </button>
 
-            <a href="/app/admin/profile" className="sidebar-item">
+            <button 
+              onClick={() => navigateTo('/app/admin/profile')} 
+              className={`sidebar-item ${isActiveRoute('/app/admin/profile') ? 'active' : ''}`}
+            >
               <IonIcon icon={personOutline} />
               <span>Profile</span>
-            </a>
+            </button>
           </div>
         </nav>
       )}

@@ -34,6 +34,8 @@ import {
 } from "ionicons/icons";
 import { useUser } from "../../hooks/UserHooks";
 import { useAuth } from "../../hooks/AuthHooks";
+import { useConfirmation } from "../../hooks/useConfirmation";
+import { ConfirmToast } from "../../components/common/ConfirmToast";
 import { useNotifications } from "../../hooks/useNotifications";
 import { LoadingSpinner } from "../../components/common/LoadingSpinner";
 import { ErrorMessage } from "../../components/common/ErrorMessage";
@@ -51,6 +53,16 @@ const Credits: React.FC = () => {
   const { user } = useAuth();
   const { notifyCreditPurchase } = useNotifications();
 
+  // Confirmation hook
+  const {
+    isOpen: isConfirmOpen,
+    options: confirmOptions,
+    showConfirmation,
+    handleConfirm: confirmAction,
+    handleCancel: cancelAction,
+    handleDismiss: dismissConfirm
+  } = useConfirmation();
+
   const {
     credits,
     transactions,
@@ -66,57 +78,57 @@ const Credits: React.FC = () => {
     event.detail.complete();
   };
 
-  const handlePurchase = async () => {
+    const handlePurchase = async () => {
     // Show confirmation dialog
-    const confirmed = window.confirm(
-      `Are you sure you want to purchase ${amount} credits?\n\n` +
-      `Amount: ${amount} credits\n` +
-      `Cost: ${PesoFormat(amount * 0.1)}\n` +
-      `Payment Method: ${paymentMethod.replace("_", " ").toUpperCase()}\n\n` +
-      `This request will be sent to admin for approval.`
-    );
-    
-    if (!confirmed) {
-      return;
-    }
+    showConfirmation({
+      header: 'Purchase Credits',
+      message: `Are you sure you want to purchase ${amount} credits?\n\n` +
+        `Amount: ${amount} credits\n` +
+        `Cost: ${PesoFormat(amount * 0.1)}\n` +
+        `Payment Method: ${paymentMethod.replace("_", " ").toUpperCase()}\n\n` +
+        `This request will be sent to admin for approval.`,
+      confirmText: 'Purchase',
+      cancelText: 'Cancel'
+    }, async () => {
+      try {
+        const transactionId = `tx_${Date.now()}_${Math.random().toString(36).substring(7)}`;
 
-    try {
-      const transactionId = `tx_${Date.now()}_${Math.random().toString(36).substring(7)}`;
+        await purchaseCredits.mutateAsync({
+          amount,
+          paymentMethod,
+          transactionId,
+        });
 
-      await purchaseCredits.mutateAsync({
-        amount,
-        paymentMethod,
-        transactionId,
-      });
-
-      // Send notification to admins about credit purchase
-      if (user) {
-        try {
-          await notifyCreditPurchase(
-            user.id,
-            user.name || user.email,
-            amount,
-            transactionId
-          );
-        } catch (notifError) {
-          console.error("Failed to send purchase notification:", notifError);
-          // Don't block the purchase flow if notification fails
+        // Send notification to admins about credit purchase
+        if (user) {
+          try {
+            await notifyCreditPurchase(
+              user.id,
+              user.name || user.email,
+              amount,
+              transactionId
+            );
+          } catch (notifError) {
+            console.error("Failed to send credit purchase notification:", notifError);
+          }
         }
+
+        setToastMessage(
+          `✅ Purchase request submitted successfully! Transaction ID: ${transactionId}`
+        );
+        setShowToast(true);
+        setIsModalOpen(false);
+
+        // Reset form
+        setAmount(100);
+        setPaymentMethod("credit_card");
+      } catch (error: any) {
+        setToastMessage(
+          `❌ Failed to submit purchase request: ${error.message || "Unknown error"}`
+        );
+        setShowToast(true);
       }
-
-      setToastMessage("Purchase request submitted for admin approval");
-      setShowToast(true);
-      setIsModalOpen(false);
-
-      // Reset form
-      setAmount(100);
-      setPaymentMethod("credit_card");
-    } catch (error) {
-      const message =
-        error instanceof Error ? error.message : "Purchase failed";
-      setToastMessage(message);
-      setShowToast(true);
-    }
+    });
   };
 
   const getStatusColor = (status: string) => {
@@ -394,6 +406,18 @@ const Credits: React.FC = () => {
           onDidDismiss={() => setShowToast(false)}
           message={toastMessage}
           duration={3000}
+        />
+
+        {/* Confirmation Toast */}
+        <ConfirmToast
+          isOpen={isConfirmOpen}
+          onDidDismiss={dismissConfirm}
+          onConfirm={confirmAction}
+          onCancel={cancelAction}
+          message={confirmOptions.message}
+          header={confirmOptions.header}
+          confirmText={confirmOptions.confirmText}
+          cancelText={confirmOptions.cancelText}
         />
       </IonContent>
     </IonPage>

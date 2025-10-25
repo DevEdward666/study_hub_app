@@ -39,6 +39,7 @@ import History from "./pages/history/History";
 /* Components */
 import { AuthGuard } from "./components/guards/AuthGuard";
 import { TabsLayout } from "./components/Layout/TabsLayout";
+import { PushNotificationInitializer } from "./components/notifications/PushNotificationInitializer";
 import TablesManagement from "./pages/TableManagement";
 import TransactionsManagement from "./pages/TransactionManagement";
 import UsersManagement from "./pages/UserManagement";
@@ -49,6 +50,7 @@ setupIonicReact();
 
 const App: React.FC = () => (
   <IonApp>
+    <PushNotificationInitializer />
     <IonReactRouter>
       <IonRouterOutlet>
         {/* Public Routes */}

@@ -7,6 +7,9 @@ import {
 } from "../hooks/AdminDataHooks";
 import { LoadingSpinner } from "../components/common/LoadingSpinner";
 import { ErrorMessage } from "../components/common/ErrorMessage";
+import { useConfirmation } from "../hooks/useConfirmation";
+import { ConfirmToast } from "../components/common/ConfirmToast";
+import { useNotifications } from "../hooks/useNotifications";
 import "../Admin/styles/admin.css";
 import "../Admin/styles/admin-responsive.css";
 import QRCode from "react-qr-code";
@@ -59,6 +62,21 @@ const TablesManagement: React.FC = () => {
     initialState: { pageSize: 10 },
   });
 
+  // Confirmation hook
+  const {
+    isOpen: isConfirmOpen,
+    options: confirmOptions,
+    showConfirmation,
+    handleConfirm: confirmAction,
+    handleCancel: cancelAction,
+    handleDismiss: dismissConfirm
+  } = useConfirmation();
+
+  // Notifications hook
+  const {
+    showLocalNotification
+  } = useNotifications();
+
   // Auto-refresh table data every 30 seconds to keep timers in sync
   React.useEffect(() => {
     const interval = setInterval(() => {
@@ -106,7 +124,7 @@ const TablesManagement: React.FC = () => {
         endTime: endTime.toISOString(),
       });
     },
-    onSuccess: () => {
+    onSuccess: async (result, variables) => {
       RefetchTable();
       setShowStartSessionModal(false);
       setSelectedTableForSession(null);
@@ -115,6 +133,39 @@ const TablesManagement: React.FC = () => {
       setToastMessage("🎉 Session started successfully!");
       setToastColor("success");
       setShowToast(true);
+
+      // Send push notification to admin about the session start
+      try {
+        const selectedUser = users.find(user => user.id === variables.userId);
+        const tableName = selectedTableForSession?.tableNumber || 'Unknown';
+        const location = selectedTableForSession?.location || 'Unknown';
+        const creditsUsed = (selectedTableForSession?.hourlyRate || 0) * variables.hours;
+
+        await showLocalNotification(
+          "📚 New Study Session Started",
+          {
+            body: `${selectedUser?.name || 'User'} started a ${variables.hours}h session at Table ${tableName} (${location}). Credits: ${creditsUsed}`,
+            icon: "/icon-192.png",
+            badge: "/badge.png",
+            tag: "admin-session-start",
+            data: {
+              type: "session_start",
+              userId: variables.userId,
+              tableId: variables.tableId,
+              tableNumber: tableName,
+              location: location,
+              hours: variables.hours,
+              creditsUsed: creditsUsed,
+              url: "/app/admin/tables"
+            },
+            requireInteraction: true
+          }
+        );
+        console.log("Admin notification sent for session start");
+      } catch (notificationError) {
+        console.error("Failed to send admin notification:", notificationError);
+        // Don't block the success flow if notification fails
+      }
     },
     onError: (error: any) => {
       setToastMessage(`Failed to start session: ${error.message || "Unknown error"}`);
@@ -127,11 +178,32 @@ const TablesManagement: React.FC = () => {
     mutationFn: async (sessionId: string) => {
       return tableService.endSession(sessionId);
     },
-    onSuccess: () => {
+    onSuccess: async (result, sessionId) => {
       RefetchTable();
       setToastMessage("Session ended successfully!");
       setToastColor("success");
       setShowToast(true);
+
+      // Send push notification to admin about the session end
+      try {
+        await showLocalNotification(
+          "🏁 Study Session Ended",
+          {
+            body: `A study session was ended by admin. Session ID: ${sessionId}`,
+            icon: "/icon-192.png",
+            badge: "/badge.png",
+            tag: "admin-session-end",
+            data: {
+              type: "session_end",
+              sessionId: sessionId,
+              url: "/app/admin/tables"
+            }
+          }
+        );
+        console.log("Admin notification sent for session end");
+      } catch (notificationError) {
+        console.error("Failed to send admin session end notification:", notificationError);
+      }
     },
     onError: (error: any) => {
       setToastMessage(`Failed to end session: ${error.message || "Unknown error"}`);
@@ -141,13 +213,34 @@ const TablesManagement: React.FC = () => {
   });
 
   const handleEndSession = async (sessionId: string, tableNumber?: string) => {
-    if (window.confirm(`Are you sure you want to end the session for Table ${tableNumber || ''}?`)) {
+    showConfirmation({
+      header: 'End Session',
+      message: `Are you sure you want to end the session for Table ${tableNumber || ''}?`,
+      confirmText: 'End Session',
+      cancelText: 'Keep Session'
+    }, () => {
       endSessionMutation.mutate(sessionId);
-    }
+    });
   };
 
   const handleSessionTimeUp = (sessionId: string, tableNumber?: string) => {
     console.log(`Session time expired for Table ${tableNumber}, automatically ending session:`, sessionId);
+    
+    // Send notification to admin about automatic session timeout
+    const sessionData = tables?.find(table => table.currentSession?.id === sessionId);
+    if (sessionData?.currentSession) {
+      showLocalNotification('🔔 Session Timeout', {
+        body: `Time expired! Session for Table ${tableNumber} automatically ended.\n` +
+              `User: ${sessionData.currentSession.user.firstName} ${sessionData.currentSession.user.lastName}\n` +
+              `Location: ${sessionData.location}\n` +
+              `Duration: ${sessionData.currentSession.duration}h\n` +
+              `Credits Used: ${sessionData.currentSession.totalCost}`,
+        icon: '/icon-192.png',
+        tag: `timeout-${sessionId}`,
+        requireInteraction: true
+      });
+    }
+    
     endSessionMutation.mutate(sessionId);
     setToastMessage(`⏰ Time's up! Session for Table ${tableNumber} has been automatically ended.`);
     setToastColor("warning");
@@ -157,77 +250,99 @@ const TablesManagement: React.FC = () => {
     e.preventDefault();
 
     // Show confirmation dialog
-    const confirmed = window.confirm(
-      `Are you sure you want to update Table ${formData.tableNumber}?\n\n` +
-      `Location: ${formData.location}\n` +
-      `Capacity: ${formData.capacity} people\n` +
-      `Hourly Rate: ${formData.hourlyRate} credits\n\n` +
-      `This will modify the table settings.`
-    );
-    
-    if (!confirmed) {
-      return;
-    }
-
-    try {
-      await updateTable.mutateAsync({
-        tableID: formData.tableID,
-        tableNumber: formData.tableNumber,
-        hourlyRate: parseFloat(formData.hourlyRate),
-        location: formData.location,
-        capacity: parseInt(formData.capacity),
-      });
-      RefetchTable();
-      // Reset form
-      setFormData({
-        tableID: "",
-        tableNumber: "",
-        hourlyRate: "",
-        location: "",
-        capacity: "",
-      });
-      setShowCreateForm(false);
-    } catch (error) {
-      console.error("Failed to update table:", error);
-    }
+    showConfirmation({
+      header: 'Update Table',
+      message: `Are you sure you want to update Table ${formData.tableNumber}?\n\n` +
+        `Location: ${formData.location}\n` +
+        `Capacity: ${formData.capacity} people\n` +
+        `Hourly Rate: ${formData.hourlyRate} credits\n\n` +
+        `This will modify the table settings.`,
+      confirmText: 'Update Table',
+      cancelText: 'Cancel'
+    }, async () => {
+      try {
+        await updateTable.mutateAsync({
+          tableID: formData.tableID,
+          tableNumber: formData.tableNumber,
+          hourlyRate: parseFloat(formData.hourlyRate),
+          location: formData.location,
+          capacity: parseInt(formData.capacity),
+        });
+        
+        // Send notification to admin about table update
+        showLocalNotification('🔧 Table Updated', {
+          body: `Table ${formData.tableNumber} has been updated.\n` +
+                `Location: ${formData.location}\n` +
+                `Capacity: ${formData.capacity} people\n` +
+                `Hourly Rate: ${formData.hourlyRate} credits`,
+          icon: '/icon-192.png',
+          tag: `table-update-${formData.tableID}`,
+          requireInteraction: false
+        });
+        
+        RefetchTable();
+        // Reset form
+        setFormData({
+          tableID: "",
+          tableNumber: "",
+          hourlyRate: "",
+          location: "",
+          capacity: "",
+        });
+        setShowCreateForm(false);
+      } catch (error) {
+        console.error("Failed to update table:", error);
+      }
+    });
   };
   const handleCreateTable = async (e: React.FormEvent) => {
     e.preventDefault();
 
     // Show confirmation dialog
-    const confirmed = window.confirm(
-      `Are you sure you want to create a new table?\n\n` +
-      `Table Number: ${formData.tableNumber}\n` +
-      `Location: ${formData.location}\n` +
-      `Capacity: ${formData.capacity} people\n` +
-      `Hourly Rate: ${formData.hourlyRate} credits\n\n` +
-      `This will create a new study table.`
-    );
-    
-    if (!confirmed) {
-      return;
-    }
-
-    try {
-      await createTable.mutateAsync({
-        tableNumber: formData.tableNumber,
-        hourlyRate: parseFloat(formData.hourlyRate),
-        location: formData.location,
-        capacity: parseInt(formData.capacity),
-      });
-      RefetchTable();
-      // Reset form
-      setFormData({
-        tableID: "",
-        tableNumber: "",
-        hourlyRate: "",
-        location: "",
-        capacity: "",
-      });
-      setShowCreateForm(false);
-    } catch (error) {
-      console.error("Failed to create table:", error);
-    }
+    showConfirmation({
+      header: 'Create New Table',
+      message: `Are you sure you want to create a new table?\n\n` +
+        `Table Number: ${formData.tableNumber}\n` +
+        `Location: ${formData.location}\n` +
+        `Capacity: ${formData.capacity} people\n` +
+        `Hourly Rate: ${formData.hourlyRate} credits\n\n` +
+        `This will create a new study table.`,
+      confirmText: 'Create Table',
+      cancelText: 'Cancel'
+    }, async () => {
+      try {
+        await createTable.mutateAsync({
+          tableNumber: formData.tableNumber,
+          hourlyRate: parseFloat(formData.hourlyRate),
+          location: formData.location,
+          capacity: parseInt(formData.capacity),
+        });
+        
+        // Send notification to admin about new table creation
+        showLocalNotification('✅ New Table Created', {
+          body: `Table ${formData.tableNumber} has been created.\n` +
+                `Location: ${formData.location}\n` +
+                `Capacity: ${formData.capacity} people\n` +
+                `Hourly Rate: ${formData.hourlyRate} credits`,
+          icon: '/icon-192.png',
+          tag: `table-create-${formData.tableNumber}`,
+          requireInteraction: false
+        });
+        
+        RefetchTable();
+        // Reset form
+        setFormData({
+          tableID: "",
+          tableNumber: "",
+          hourlyRate: "",
+          location: "",
+          capacity: "",
+        });
+        setShowCreateForm(false);
+      } catch (error) {
+        console.error("Failed to create table:", error);
+      }
+    });
   };
 
   const handleInputChange = (
@@ -362,11 +477,21 @@ const TablesManagement: React.FC = () => {
 
   const handleConfirmStartSession = () => {
     if (!selectedUserId) {
-      alert("Please select a user");
+      showConfirmation({
+        header: 'User Required',
+        message: 'Please select a user before starting the session.',
+        confirmText: 'OK',
+        cancelText: ''
+      }, () => {});
       return;
     }
     if (!selectedTableForSession) {
-      alert("No table selected");
+      showConfirmation({
+        header: 'Table Required',
+        message: 'No table selected. Please try again.',
+        confirmText: 'OK',
+        cancelText: ''
+      }, () => {});
       return;
     }
 
@@ -800,6 +925,18 @@ const TablesManagement: React.FC = () => {
         duration={4000}
         color={toastColor}
         position="top"
+      />
+
+      {/* Confirmation Toast */}
+      <ConfirmToast
+        isOpen={isConfirmOpen}
+        onDidDismiss={dismissConfirm}
+        onConfirm={confirmAction}
+        onCancel={cancelAction}
+        message={confirmOptions.message}
+        header={confirmOptions.header}
+        confirmText={confirmOptions.confirmText}
+        cancelText={confirmOptions.cancelText}
       />
     </IonContent>
   );

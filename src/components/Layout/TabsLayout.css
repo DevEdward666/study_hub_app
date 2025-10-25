@@ -72,6 +72,13 @@
   position: relative;
   overflow: hidden;
   gap: 16px;
+  /* Button-specific styles */
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-family: inherit;
+  width: 100%;
+  text-align: left;
 }
 
 .sidebar-item::before {
@@ -93,6 +100,17 @@
 }
 
 .sidebar-item:hover::before {
+  transform: scaleY(1);
+}
+
+.sidebar-item:focus {
+  outline: none;
+  background: rgba(255, 255, 255, 0.15);
+  color: white;
+  transform: translateX(4px);
+}
+
+.sidebar-item:focus::before {
   transform: scaleY(1);
 }
 

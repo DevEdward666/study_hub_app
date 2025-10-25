@@ -5,6 +5,8 @@ import {
 } from "../hooks/AdminDataHooks";
 import { LoadingSpinner } from "../components/common/LoadingSpinner";
 import { ErrorMessage } from "../components/common/ErrorMessage";
+import { useConfirmation } from "../hooks/useConfirmation";
+import { ConfirmToast } from "../components/common/ConfirmToast";
 import QRCode from "react-qr-code";
 import {
   IonButton,
@@ -15,6 +17,7 @@ import {
   IonLabel,
   IonRange,
   IonToolbar,
+  useIonViewDidEnter,
 } from "@ionic/react";
 import "./styles/admin.css";
 import "./styles/admin-responsive.css";
@@ -27,9 +30,20 @@ import {
 } from "@/shared/DynamicTable/Utls/TableUtils";
 import { GetPremiseTableColumn } from "@/schema/premise.schema";
 import SlideoutModal from "@/shared/SideOutModal/SideoutModalComponent";
+import { useNotifications } from "@/hooks/useNotifications";
 export const PremiseManagement: React.FC = () => {
   const { codes, isLoading, error, createCode, refetch } =
     usePremiseManagement();
+
+  // Confirmation hook
+  const {
+    isOpen: isConfirmOpen,
+    options: confirmOptions,
+    showConfirmation,
+    handleConfirm: confirmAction,
+    handleCancel: cancelAction,
+    handleDismiss: dismissConfirm
+  } = useConfirmation();
   const {
     tableState,
     updateState,
@@ -62,32 +76,31 @@ export const PremiseManagement: React.FC = () => {
     e.preventDefault();
 
     // Show confirmation dialog
-    const confirmed = window.confirm(
-      `Are you sure you want to create a new premise QR code?\n\n` +
-      `Location: ${formData.location}\n` +
-      `Validity: ${formData.validityHours} hours\n\n` +
-      `This will generate a new QR code for premise access.`
-    );
-    
-    if (!confirmed) {
-      return;
-    }
+    showConfirmation({
+      header: 'Create Premise QR Code',
+      message: `Are you sure you want to create a new premise QR code?\n\n` +
+        `Location: ${formData.location}\n` +
+        `Validity: ${formData.validityHours} hours\n\n` +
+        `This will generate a new QR code for premise access.`,
+      confirmText: 'Create QR Code',
+      cancelText: 'Cancel'
+    }, async () => {
+      try {
+        await createCode.mutateAsync({
+          location: formData.location,
+          validityHours: parseInt(formData.validityHours),
+        });
 
-    try {
-      await createCode.mutateAsync({
-        location: formData.location,
-        validityHours: parseInt(formData.validityHours),
-      });
-
-      // Reset form
-      setFormData({
-        location: "",
-        validityHours: "",
-      });
-      setShowCreateForm(false);
-    } catch (error) {
-      console.error("Failed to create premise code:", error);
-    }
+        // Reset form
+        setFormData({
+          location: "",
+          validityHours: "",
+        });
+        setShowCreateForm(false);
+      } catch (error) {
+        console.error("Failed to create premise code:", error);
+      }
+    });
   };
 
   const handleInputChange = (
@@ -494,6 +507,18 @@ export const PremiseManagement: React.FC = () => {
           </div>
         </div>
       </div>
+
+      {/* Confirmation Toast */}
+      <ConfirmToast
+        isOpen={isConfirmOpen}
+        onDidDismiss={dismissConfirm}
+        onConfirm={confirmAction}
+        onCancel={cancelAction}
+        message={confirmOptions.message}
+        header={confirmOptions.header}
+        confirmText={confirmOptions.confirmText}
+        cancelText={confirmOptions.cancelText}
+      />
     </IonContent>
   );
 };

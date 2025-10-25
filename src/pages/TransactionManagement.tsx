@@ -4,8 +4,10 @@ import {
   useTransactionsManagement,
 } from "../hooks/AdminDataHooks";
 import { useNotifications } from "../hooks/useNotifications";
+import { useConfirmation } from "../hooks/useConfirmation";
 import { LoadingSpinner } from "../components/common/LoadingSpinner";
 import { ErrorMessage } from "../components/common/ErrorMessage";
+import { ConfirmToast } from "../components/common/ConfirmToast";
 import "../Admin/styles/admin.css";
 import "../Admin/styles/admin-responsive.css";
 import DynamicTable, { useTable } from "@/shared/DynamicTable/DynamicTable";
@@ -22,6 +24,16 @@ const TransactionsManagement: React.FC = () => {
   const { isLoading, error, approve, reject, refetch } =
     useTransactionsManagement();
   const { notifyCreditApproved } = useNotifications();
+
+  // Confirmation hook
+  const {
+    isOpen: isConfirmOpen,
+    options: confirmOptions,
+    showConfirmation,
+    handleConfirm: confirmAction,
+    handleCancel: cancelAction,
+    handleDismiss: dismissConfirm
+  } = useConfirmation();
   const {
     tableState,
     updateState,
@@ -41,64 +53,62 @@ const TransactionsManagement: React.FC = () => {
     const transaction = data?.data.find(t => t.id === transactionId);
     
     // Show confirmation dialog
-    const confirmed = window.confirm(
-      `Are you sure you want to approve this credit purchase transaction?\n\n` +
-      `Transaction ID: ${transactionId}\n` +
-      `User: ${transaction?.user?.name || 'Unknown'}\n` +
-      `Amount: ${transaction?.amount || 0} credits\n\n` +
-      `This will add credits to the user's account and cannot be undone.`
-    );
-    
-    if (!confirmed) {
-      return;
-    }
-
-    try {
-      await approve.mutateAsync(transactionId);
-      
-      // Send notification to user about credit approval
-      if (transaction) {
-        try {
-          // Note: In a real implementation, the API would return the updated balance
-          // For now, we'll use the amount as placeholder
-          const newBalance = transaction.amount; // This should come from API response
-          
-          await notifyCreditApproved(
-            transaction.user.id,
-            transactionId,
-            transaction.amount,
-            newBalance
-          );
-        } catch (notifError) {
-          console.error("Failed to send approval notification:", notifError);
-          // Don't block the approval flow if notification fails
+    showConfirmation({
+      header: 'Approve Transaction',
+      message: `Are you sure you want to approve this credit purchase transaction?\n\n` +
+        `Transaction ID: ${transactionId}\n` +
+        `User: ${transaction?.user?.name || 'Unknown'}\n` +
+        `Amount: ${transaction?.amount || 0} credits\n\n` +
+        `This will add credits to the user's account and cannot be undone.`,
+      confirmText: 'Approve',
+      cancelText: 'Cancel'
+    }, async () => {
+      try {
+        await approve.mutateAsync(transactionId);
+        
+        // Send notification to user about credit approval
+        if (transaction) {
+          try {
+            // Note: In a real implementation, the API would return the updated balance
+            // For now, we'll use the amount as placeholder
+            const newBalance = transaction.amount; // This should come from API response
+            
+            await notifyCreditApproved(
+              transaction.user.id,
+              transactionId,
+              transaction.amount,
+              newBalance
+            );
+          } catch (notifError) {
+            console.error("Failed to send approval notification:", notifError);
+            // Don't block the approval flow if notification fails
+          }
         }
+        
+        RefetchTable();
+      } catch (error) {
+        console.error("Failed to approve transaction:", error);
       }
-      
-      RefetchTable();
-    } catch (error) {
-      console.error("Failed to approve transaction:", error);
-    }
+    });
   };
 
   const handleReject = async (transactionId: string) => {
     // Show confirmation dialog
-    const confirmed = window.confirm(
-      `Are you sure you want to reject this credit purchase transaction?\n\n` +
-      `Transaction ID: ${transactionId}\n\n` +
-      `This will permanently reject the user's credit purchase request.`
-    );
-    
-    if (!confirmed) {
-      return;
-    }
-
-    try {
-      await reject.mutateAsync(transactionId);
-      RefetchTable();
-    } catch (error) {
-      console.error("Failed to reject transaction:", error);
-    }
+    showConfirmation({
+      header: 'Reject Transaction',
+      message: `Are you sure you want to reject this credit purchase transaction?\n\n` +
+        `Transaction ID: ${transactionId}\n\n` +
+        `This will permanently reject the user's credit purchase request.`,
+      confirmText: 'Reject',
+      cancelText: 'Cancel'
+    }, async () => {
+      try {
+        await reject.mutateAsync(transactionId);
+        RefetchTable();
+      } catch (error) {
+        console.error("Failed to reject transaction:", error);
+      }
+    });
   };
 
   if (isLoading) {
@@ -251,6 +261,18 @@ const TransactionsManagement: React.FC = () => {
           </div>
         </div>
       )}
+
+      {/* Confirmation Toast */}
+      <ConfirmToast
+        isOpen={isConfirmOpen}
+        onDidDismiss={dismissConfirm}
+        onConfirm={confirmAction}
+        onCancel={cancelAction}
+        message={confirmOptions.message}
+        header={confirmOptions.header}
+        confirmText={confirmOptions.confirmText}
+        cancelText={confirmOptions.cancelText}
+      />
     </div>
   );
 };

@@ -37,8 +37,10 @@ import {
 import { useParams, useHistory } from 'react-router-dom';
 import { useTables } from '../../hooks/TableHooks';
 import { useUser } from '../../hooks/UserHooks';
+import { useConfirmation } from '../../hooks/useConfirmation';
 import { LoadingSpinner } from '../../components/common/LoadingSpinner';
 import { ErrorMessage } from '../../components/common/ErrorMessage';
+import { ConfirmToast } from '../../components/common/ConfirmToast';
 import './TableDetails.css';
 
 interface TableParams {
@@ -53,6 +55,16 @@ const TableDetails: React.FC = () => {
   const [toastMessage, setToastMessage] = useState('');
   const [toastColor, setToastColor] = useState<'success' | 'danger' | 'warning'>('success');
   const [showEndSessionAlert, setShowEndSessionAlert] = useState(false);
+
+  // Confirmation hook
+  const {
+    isOpen: isConfirmOpen,
+    options: confirmOptions,
+    showConfirmation,
+    handleConfirm: confirmAction,
+    handleCancel: cancelAction,
+    handleDismiss: dismissConfirm
+  } = useConfirmation();
 
   const { 
     tables, 
@@ -96,58 +108,60 @@ const TableDetails: React.FC = () => {
       return;
     }
 
-    const confirmStart = window.confirm(
-      `Start study session at Table ${table.tableNumber}?\n\nLocation: ${table.location}\nHourly rate: ${table.hourlyRate} credits\nCurrent balance: ${credits?.balance || 0} credits\n\nYour session will begin and credits will be deducted.`
-    );
-    
-    if (!confirmStart) return;
-
-    try {
-      await startSession.mutateAsync({
-        tableId: table.id,
-        qrCode: table.qrCode,
-      });
-      
-      setToastMessage('Session started successfully!');
-      setToastColor('success');
-      setShowToast(true);
-      
-      // Navigate back to dashboard
-      setTimeout(() => {
-        history.push('/app/dashboard');
-      }, 1000);
-      
-    } catch (error) {
-      const message = error instanceof Error ? error.message : 'Failed to start session';
-      setToastMessage(message);
-      setToastColor('danger');
-      setShowToast(true);
-    }
+    const confirmStart = showConfirmation({
+      header: 'Start Study Session',
+      message: `Start study session at Table ${table.tableNumber}?\n\nLocation: ${table.location}\nHourly rate: ${table.hourlyRate} credits\nCurrent balance: ${credits?.balance || 0} credits\n\nYour session will begin and credits will be deducted.`,
+      confirmText: 'Start Session',
+      cancelText: 'Cancel'
+    }, async () => {
+      try {
+        await startSession.mutateAsync({
+          tableId: table.id,
+          qrCode: table.qrCode,
+        });
+        
+        setToastMessage('Session started successfully!');
+        setToastColor('success');
+        setShowToast(true);
+        
+        // Navigate back to dashboard
+        setTimeout(() => {
+          history.push('/app/dashboard');
+        }, 1000);
+        
+      } catch (error) {
+        const message = error instanceof Error ? error.message : 'Failed to start session';
+        setToastMessage(message);
+        setToastColor('danger');
+        setShowToast(true);
+      }
+    });
   };
 
   const handleEndSession = async () => {
     if (!activeSession) return;
 
-    const confirmEnd = window.confirm(
-      `End your current study session?\n\nTable: ${activeSession.table.tableNumber}\nDuration: ${getSessionDuration()}\n\nThis will stop your session and finalize credit charges.`
-    );
-    
-    if (!confirmEnd) return;
-
-    try {
-      await endSession.mutateAsync(activeSession.id);
-      
-      setToastMessage('Session ended successfully!');
-      setToastColor('success');
-      setShowToast(true);
-      setShowEndSessionAlert(false);
-      
-    } catch (error) {
-      const message = error instanceof Error ? error.message : 'Failed to end session';
-      setToastMessage(message);
-      setToastColor('danger');
-      setShowToast(true);
-    }
+    showConfirmation({
+      header: 'End Study Session',
+      message: `End your current study session?\n\nTable: ${activeSession.table.tableNumber}\nDuration: ${getSessionDuration()}\n\nThis will stop your session and finalize credit charges.`,
+      confirmText: 'End Session',
+      cancelText: 'Continue'
+    }, async () => {
+      try {
+        await endSession.mutateAsync(activeSession.id);
+        
+        setToastMessage('Session ended successfully!');
+        setToastColor('success');
+        setShowToast(true);
+        setShowEndSessionAlert(false);
+        
+      } catch (error) {
+        const message = error instanceof Error ? error.message : 'Failed to end session';
+        setToastMessage(message);
+        setToastColor('danger');
+        setShowToast(true);
+      }
+    });
   };
 
   const getSessionDuration = (): string => {
@@ -440,6 +454,18 @@ const TableDetails: React.FC = () => {
           message={toastMessage}
           duration={3000}
           color={toastColor}
+        />
+
+        {/* Confirmation Toast */}
+        <ConfirmToast
+          isOpen={isConfirmOpen}
+          onDidDismiss={dismissConfirm}
+          onConfirm={confirmAction}
+          onCancel={cancelAction}
+          message={confirmOptions.message}
+          header={confirmOptions.header}
+          confirmText={confirmOptions.confirmText}
+          cancelText={confirmOptions.cancelText}
         />
       </IonContent>
     </IonPage>

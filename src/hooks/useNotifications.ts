@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useRef } from "react";
 import { notificationService } from "../services/notification.service";
+import { pushNotificationService } from "../services/push-notification.service";
 import { usePushNotification } from "./usePushNotification";
 
 export interface UseNotificationsReturn {
@@ -50,11 +51,20 @@ export interface UseNotificationsReturn {
 
   clearSessionMonitoring: () => void;
 
-  // Push notification utilities
+    // Push notification properties
   isSupported: boolean;
-  permission: NotificationPermission;
+  permission: NotificationPermission | null;
   isSubscribed: boolean;
   requestPermission: () => Promise<NotificationPermission>;
+
+  // Local notifications with macOS-specific handling
+  showLocalNotification: (
+    title: string,
+    options?: NotificationOptions
+  ) => Promise<void>;
+
+  // Test function for debugging
+  testNotification: () => Promise<void>;
 }
 
 export const useNotifications = (): UseNotificationsReturn => {
@@ -227,6 +237,120 @@ export const useNotifications = (): UseNotificationsReturn => {
     };
   }, []);
 
+  // Enhanced local notification with macOS support
+  const showLocalNotificationEnhanced = useCallback(
+    async (title: string, options?: NotificationOptions) => {
+      // First check if we have permission
+      const currentPermission = Notification.permission;
+      console.log('🔔 Current notification permission:', currentPermission);
+      
+      if (currentPermission === 'denied') {
+        console.warn('❌ Notifications are blocked. Please enable in browser settings.');
+        // Show fallback alert on macOS
+        alert(`${title}: ${options?.body || 'Notification'}`);
+        return;
+      }
+      
+      if (currentPermission === 'default') {
+        console.log('🔔 Requesting notification permission...');
+        const permission = await Notification.requestPermission();
+        if (permission !== 'granted') {
+          console.warn('❌ Notification permission denied');
+          alert(`${title}: ${options?.body || 'Notification'}`);
+          return;
+        }
+      }
+
+      // Enhanced options for macOS
+      const macOSOptions: NotificationOptions = {
+        body: options?.body || 'StudyHub notification',
+        icon: options?.icon || '/icon-192.png',
+        badge: options?.badge || '/badge.png',
+        tag: options?.tag || `notification-${Date.now()}`,
+        requireInteraction: true, // Force interaction on macOS
+        silent: false, // Ensure sound on macOS
+        dir: 'auto',
+        lang: 'en',
+        ...options
+      };
+
+      console.log('🔔 Showing notification on macOS:', { title, options: macOSOptions });
+
+      try {
+        // Try service worker first
+        if ('serviceWorker' in navigator) {
+          const registration = await navigator.serviceWorker.ready;
+          if (registration) {
+            await registration.showNotification(title, macOSOptions);
+            console.log('✅ Notification sent via service worker');
+            return;
+          }
+        }
+        
+        // Fallback to direct notification
+        const notification = new Notification(title, macOSOptions);
+        
+        // Add event handlers for macOS
+        notification.onclick = () => {
+          console.log('🖱️ Notification clicked');
+          notification.close();
+          window.focus(); // Bring window to front on macOS
+        };
+        
+        notification.onshow = () => {
+          console.log('👁️ Notification shown');
+        };
+        
+        notification.onerror = (error) => {
+          console.error('❌ Notification error:', error);
+        };
+        
+        notification.onclose = () => {
+          console.log('❌ Notification closed');
+        };
+        
+        console.log('✅ Direct notification created');
+        
+      } catch (error) {
+        console.error('❌ All notification methods failed:', error);
+        // Ultimate fallback for macOS
+        alert(`${title}: ${macOSOptions.body}`);
+      }
+    },
+    []
+  );
+
+  // Test notification for debugging
+  const testNotification = useCallback(async () => {
+    console.log('🧪 Testing notification system on macOS...');
+    
+    // Check macOS-specific settings
+    console.log('🖥️ macOS Notification Debug Info:');
+    console.log('- Browser:', navigator.userAgent);
+    console.log('- Platform:', navigator.platform);
+    console.log('- Notification API supported:', 'Notification' in window);
+    console.log('- Service Worker supported:', 'serviceWorker' in navigator);
+    console.log('- Current permission:', Notification.permission);
+    console.log('- Document visibility:', document.visibilityState);
+    console.log('- Window focused:', document.hasFocus());
+    
+    // Check for common macOS issues
+    if (navigator.platform.toLowerCase().includes('mac')) {
+      console.log('🍎 macOS detected. Common issues:');
+      console.log('1. Check System Preferences > Notifications > Browser');
+      console.log('2. Disable Do Not Disturb mode');
+      console.log('3. Check Focus/Concentration settings');
+      console.log('4. Ensure browser notifications are enabled');
+    }
+    
+    await showLocalNotificationEnhanced('🧪 macOS Test Notification', {
+      body: 'Testing on macOS...\n\n✅ If you see this, notifications work!\n❌ If not, check System Preferences > Notifications',
+      requireInteraction: true,
+      tag: 'test-notification-macos',
+      dir: 'ltr'
+    });
+  }, []);
+
   return {
     notifyCreditPurchase,
     notifySessionStart,
@@ -235,6 +359,8 @@ export const useNotifications = (): UseNotificationsReturn => {
     notifyCreditApproved,
     setupSessionMonitoring,
     clearSessionMonitoring,
+    showLocalNotification: showLocalNotificationEnhanced,
+    testNotification,
     isSupported,
     permission,
     isSubscribed,

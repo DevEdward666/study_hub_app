@@ -21,7 +21,10 @@ import {
   IonBadge,
   IonHeader,
   IonToolbar,
-  IonTitle
+  IonTitle,
+  IonProgressBar,
+  IonRefresher,
+  IonRefresherContent
 } from '@ionic/react';
 import {
   statsChartOutline,
@@ -30,22 +33,84 @@ import {
   cashOutline,
   trendingUpOutline,
   cardOutline,
-  peopleOutline
+  peopleOutline,
+  timeOutline,
+  checkmarkCircleOutline,
+  hourglassOutline,
+  closeCircleOutline
 } from 'ionicons/icons';
 import { useQuery } from '@tanstack/react-query';
 import { z } from 'zod';
 import { LoadingSpinner } from '../components/common/LoadingSpinner';
 import { ErrorMessage } from '../components/common/ErrorMessage';
-import { apiClient } from '../configs/APIClient';
+import { apiClient } from '../services/api.client';
+import { ApiResponseSchema } from '../schema/api.schema';
 import { PesoFormat } from '../shared/PesoHelper';
 import './ReportsPage.css';
 
 type ReportPeriod = 'Daily' | 'Weekly' | 'Monthly';
 
-// Simple schema for report data
-const ReportSchema = z.any();
+// Enhanced schemas for report data
+const TransactionSummarySchema = z.object({
+  totalTransactions: z.number(),
+  totalAmount: z.number(),
+  approvedCount: z.number(),
+  pendingCount: z.number(),
+  rejectedCount: z.number().optional(),
+  averageAmount: z.number().optional(),
+});
 
- const ReportsPage:React.FC = () => {
+const StatusBreakdownSchema = z.object({
+  status: z.string(),
+  count: z.number(),
+  totalAmount: z.number(),
+  percentage: z.number(),
+});
+
+const TopUserSchema = z.object({
+  userId: z.string(),
+  userName: z.string().nullable(),
+  userEmail: z.string(),
+  transactionCount: z.number(),
+  totalAmount: z.number(),
+});
+
+const TransactionReportSchema = z.object({
+  summary: TransactionSummarySchema,
+  byStatus: z.array(StatusBreakdownSchema),
+  topUsers: z.array(TopUserSchema),
+  period: z.string(),
+  startDate: z.string(),
+  endDate: z.string(),
+});
+
+const TransactionReportResponseSchema = z.object({
+  report: TransactionReportSchema,
+  generatedAt: z.string(),
+});
+
+const QuickStatsSchema = z.object({
+  today: z.object({
+    transactions: z.number(),
+    amount: z.number(),
+    approved: z.number(),
+    pending: z.number(),
+  }),
+  thisWeek: z.object({
+    transactions: z.number(),
+    amount: z.number(),
+    approved: z.number(),
+    pending: z.number(),
+  }),
+  thisMonth: z.object({
+    transactions: z.number(),
+    amount: z.number(),
+    approved: z.number(),
+    pending: z.number(),
+  }),
+});
+
+ const ReportsPage: React.FC = () => {
   const [selectedPeriod, setSelectedPeriod] = useState<ReportPeriod>('Daily');
   const [selectedDate, setSelectedDate] = useState(new Date().toISOString().split('T')[0]);
   const [selectedYear, setSelectedYear] = useState(new Date().getFullYear());
@@ -53,6 +118,7 @@ const ReportSchema = z.any();
   const [showToast, setShowToast] = useState(false);
   const [toastMessage, setToastMessage] = useState('');
   const [toastColor, setToastColor] = useState<'success' | 'danger' | 'warning'>('success');
+  const [isExporting, setIsExporting] = useState(false);
 
   const showMessage = (message: string, color: 'success' | 'danger' | 'warning' = 'success') => {
     setToastMessage(message);
@@ -60,9 +126,19 @@ const ReportSchema = z.any();
     setShowToast(true);
   };
 
+  // Quick stats query
+  const quickStatsQuery = useQuery({
+    queryKey: ['quickStats'],
+    queryFn: async () => {
+      return await apiClient.get('report/transactions/quick-stats', ApiResponseSchema(QuickStatsSchema));
+    },
+    refetchInterval: 30000, // Refresh every 30 seconds
+  });
+
   const handleExport = async (format: 'csv' | 'json') => {
     try {
-      let endpoint;
+      setIsExporting(true);
+      
       let params: any = {
         format,
         period: selectedPeriod
@@ -86,12 +162,23 @@ const ReportSchema = z.any();
         params.endDate = endDate.toISOString().split('T')[0];
       }
 
-      const response = await apiClient.post('/api/report/transactions', ReportSchema, params);
+      // Use the export endpoint
+      const response = await fetch(`${import.meta.env.VITE_API_BASE_URL || 'https://3qrbqpcx-5212.asse.devtunnels.ms/'}api/report/transactions/export`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${localStorage.getItem('auth_token') || ''}`
+        },
+        body: JSON.stringify(params)
+      });
       
-      // Handle the response based on format
+      if (!response.ok) {
+        throw new Error(`Export failed: ${response.statusText}`);
+      }
+
       if (format === 'csv') {
-        // For CSV, the backend returns a file
-        const blob = new Blob([response], { type: 'text/csv' });
+        const csvText = await response.text();
+        const blob = new Blob([csvText], { type: 'text/csv' });
         const url = window.URL.createObjectURL(blob);
         const link = document.createElement('a');
         link.href = url;
@@ -99,8 +186,8 @@ const ReportSchema = z.any();
         link.click();
         window.URL.revokeObjectURL(url);
       } else {
-        // For JSON, create and download the file
-        const blob = new Blob([JSON.stringify(response, null, 2)], { type: 'application/json' });
+        const jsonData = await response.json();
+        const blob = new Blob([JSON.stringify(jsonData, null, 2)], { type: 'application/json' });
         const url = window.URL.createObjectURL(blob);
         const link = document.createElement('a');
         link.href = url;
@@ -113,6 +200,8 @@ const ReportSchema = z.any();
     } catch (error) {
       console.error('Export error:', error);
       showMessage('Export failed', 'danger');
+    } finally {
+      setIsExporting(false);
     }
   };
 
@@ -124,26 +213,26 @@ const ReportSchema = z.any();
 
   const buildEndpoint = useCallback(() => {
     if (selectedPeriod === 'Daily') {
-      return `/api/report/transactions/daily?date=${selectedDate}`;
+      return `report/transactions/daily?date=${selectedDate}`;
     } else if (selectedPeriod === 'Weekly') {
-      return `/api/report/transactions/weekly?weekStartDate=${selectedDate}`;
+      return `report/transactions/weekly?weekStartDate=${selectedDate}`;
     } else if (selectedPeriod === 'Monthly') {
-      return `/api/report/transactions/monthly?year=${selectedYear}&month=${selectedMonth}`;
+      return `report/transactions/monthly?year=${selectedYear}&month=${selectedMonth}`;
     }
-    return '/api/report/transactions/daily';
+    return 'report/transactions/daily';
   }, [selectedPeriod, selectedDate, selectedYear, selectedMonth]);
 
   const reportQuery = useQuery({
     queryKey: ['transactionReport', selectedPeriod, selectedDate, selectedYear, selectedMonth],
     queryFn: async () => {
-      const fullEndpoint = buildEndpoint();
-      const response = await apiClient.get(fullEndpoint, ReportSchema);
-      return response;
+      const endpoint = buildEndpoint();
+      return await apiClient.get(endpoint, ApiResponseSchema(TransactionReportResponseSchema));
     },
     enabled: false,
   });
 
   const { data: report, isLoading, error } = reportQuery;
+  const { data: quickStats, isLoading: statsLoading } = quickStatsQuery;
 
   return (
     <IonPage>
@@ -157,12 +246,160 @@ const ReportSchema = z.any();
       </IonHeader>
 
       <IonContent className="reports-page">
+        <IonRefresher slot="fixed" onIonRefresh={(e) => {
+          quickStatsQuery.refetch();
+          e.detail.complete();
+        }}>
+          <IonRefresherContent />
+        </IonRefresher>
+
         <div className="reports-container">
+          {/* Quick Stats Dashboard */}
+          <IonCard className="quick-stats-card">
+            <IonCardHeader>
+              <IonCardTitle >
+                <IonIcon icon={trendingUpOutline} style={{ marginRight: '8px', color: 'rgb(57, 53, 53)' }} />
+                <strong className='quick-stats-card-title'>Quick Statistics</strong>
+              </IonCardTitle>
+            </IonCardHeader>
+            <IonCardContent>
+              {statsLoading ? (
+                <div style={{ textAlign: 'center', padding: '20px' }}>
+                  <IonSpinner name="crescent" />
+                  <p>Loading statistics...</p>
+                </div>
+              ) : quickStats ? (
+                <IonGrid>
+                  <IonRow>
+                    <IonCol size="12" sizeMd="4">
+                      <div className="stat-period">
+                        <h3>
+                          <IonIcon icon={timeOutline} />
+                          Today
+                        </h3>
+                        <div className="stat-grid">
+                          <div className="stat-item">
+                            <IonIcon icon={cashOutline} />
+                            <div>
+                              <span className="stat-value">{quickStats.today.transactions}</span>
+                              <span className="stat-label">Transactions</span>
+                            </div>
+                          </div>
+                          <div className="stat-item">
+                            <IonIcon icon={trendingUpOutline} />
+                            <div>
+                              <span className="stat-value">{PesoFormat(quickStats.today.amount)}</span>
+                              <span className="stat-label">Total Amount</span>
+                            </div>
+                          </div>
+                          <div className="stat-item">
+                            <IonIcon icon={checkmarkCircleOutline} />
+                            <div>
+                              <span className="stat-value">{quickStats.today.approved}</span>
+                              <span className="stat-label">Approved</span>
+                            </div>
+                          </div>
+                          <div className="stat-item">
+                            <IonIcon icon={hourglassOutline} />
+                            <div>
+                              <span className="stat-value">{quickStats.today.pending}</span>
+                              <span className="stat-label">Pending</span>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    </IonCol>
+                    <IonCol size="12" sizeMd="4">
+                      <div className="stat-period">
+                        <h3>
+                          <IonIcon icon={calendarOutline} />
+                          This Week
+                        </h3>
+                        <div className="stat-grid">
+                          <div className="stat-item">
+                            <IonIcon icon={cashOutline} />
+                            <div>
+                              <span className="stat-value">{quickStats.thisWeek.transactions}</span>
+                              <span className="stat-label">Transactions</span>
+                            </div>
+                          </div>
+                          <div className="stat-item">
+                            <IonIcon icon={trendingUpOutline} />
+                            <div>
+                              <span className="stat-value">{PesoFormat(quickStats.thisWeek.amount)}</span>
+                              <span className="stat-label">Total Amount</span>
+                            </div>
+                          </div>
+                          <div className="stat-item">
+                            <IonIcon icon={checkmarkCircleOutline} />
+                            <div>
+                              <span className="stat-value">{quickStats.thisWeek.approved}</span>
+                              <span className="stat-label">Approved</span>
+                            </div>
+                          </div>
+                          <div className="stat-item">
+                            <IonIcon icon={hourglassOutline} />
+                            <div>
+                              <span className="stat-value">{quickStats.thisWeek.pending}</span>
+                              <span className="stat-label">Pending</span>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    </IonCol>
+                    <IonCol size="12" sizeMd="4">
+                      <div className="stat-period">
+                        <h3>
+                          <IonIcon icon={statsChartOutline} />
+                          This Month
+                        </h3>
+                        <div className="stat-grid">
+                          <div className="stat-item">
+                            <IonIcon icon={cashOutline} />
+                            <div>
+                              <span className="stat-value">{quickStats.thisMonth.transactions}</span>
+                              <span className="stat-label">Transactions</span>
+                            </div>
+                          </div>
+                          <div className="stat-item">
+                            <IonIcon icon={trendingUpOutline} />
+                            <div>
+                              <span className="stat-value">{PesoFormat(quickStats.thisMonth.amount)}</span>
+                              <span className="stat-label">Total Amount</span>
+                            </div>
+                          </div>
+                          <div className="stat-item">
+                            <IonIcon icon={checkmarkCircleOutline} />
+                            <div>
+                              <span className="stat-value">{quickStats.thisMonth.approved}</span>
+                              <span className="stat-label">Approved</span>
+                            </div>
+                          </div>
+                          <div className="stat-item">
+                            <IonIcon icon={hourglassOutline} />
+                            <div>
+                              <span className="stat-value">{quickStats.thisMonth.pending}</span>
+                              <span className="stat-label">Pending</span>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    </IonCol>
+                  </IonRow>
+                </IonGrid>
+              ) : (
+                <div style={{ textAlign: 'center', padding: '20px' }}>
+                  <p>Unable to load quick statistics</p>
+                </div>
+              )}
+            </IonCardContent>
+          </IonCard>
+
           <IonCard className="report-controls-card">
             <IonCardHeader>
               <IonCardTitle>
                 <IonIcon icon={calendarOutline} style={{ marginRight: '8px' }} />
-                Report Configuration
+                Detailed Report Configuration
               </IonCardTitle>
             </IonCardHeader>
             <IonCardContent>
@@ -266,7 +503,7 @@ const ReportSchema = z.any();
           {isLoading ? (
             <IonCard>
               <IonCardContent>
-                <LoadingSpinner message="Generating report..." />
+                <LoadingSpinner message="Generating detailed report..." />
               </IonCardContent>
             </IonCard>
           ) : error ? (
@@ -283,7 +520,10 @@ const ReportSchema = z.any();
               {/* Export buttons */}
               <IonCard>
                 <IonCardHeader>
-                  <IonCardTitle>Export Options</IonCardTitle>
+                  <IonCardTitle>
+                    <IonIcon icon={downloadOutline} style={{ marginRight: '8px' }} />
+                    Export Options
+                  </IonCardTitle>
                 </IonCardHeader>
                 <IonCardContent>
                   <IonGrid>
@@ -293,9 +533,10 @@ const ReportSchema = z.any();
                           expand="block" 
                           fill="outline" 
                           onClick={() => handleExport('csv')}
+                          disabled={isExporting}
                         >
                           <IonIcon icon={downloadOutline} slot="start" />
-                          Export CSV
+                          {isExporting ? 'Exporting...' : 'Export CSV'}
                         </IonButton>
                       </IonCol>
                       <IonCol size="6">
@@ -303,23 +544,28 @@ const ReportSchema = z.any();
                           expand="block" 
                           fill="outline" 
                           onClick={() => handleExport('json')}
+                          disabled={isExporting}
                         >
                           <IonIcon icon={downloadOutline} slot="start" />
-                          Export JSON
+                          {isExporting ? 'Exporting...' : 'Export JSON'}
                         </IonButton>
                       </IonCol>
                     </IonRow>
                   </IonGrid>
+                  {isExporting && <IonProgressBar type="indeterminate" />}
                 </IonCardContent>
               </IonCard>
 
               {/* Report Summary */}
-              {report.data?.report?.summary && (
+              {report.report?.summary && (
                 <IonCard>
                   <IonCardHeader>
                     <IonCardTitle>
                       <IonIcon icon={statsChartOutline} style={{ marginRight: '8px' }} />
                       {selectedPeriod} Report Summary
+                      <IonBadge slot="end" color="primary">
+                        {new Date(report.generatedAt).toLocaleString()}
+                      </IonBadge>
                     </IonCardTitle>
                   </IonCardHeader>
                   <IonCardContent>
@@ -330,7 +576,7 @@ const ReportSchema = z.any();
                             <IonIcon icon={cashOutline} className="summary-icon" />
                             <div className="summary-content">
                               <div className="summary-label">Total Transactions</div>
-                              <div className="summary-value">{report.data.report.summary.totalTransactions}</div>
+                              <div className="summary-value">{report.report.summary.totalTransactions}</div>
                             </div>
                           </div>
                         </IonCol>
@@ -339,28 +585,50 @@ const ReportSchema = z.any();
                             <IonIcon icon={trendingUpOutline} className="summary-icon" />
                             <div className="summary-content">
                               <div className="summary-label">Total Amount</div>
-                              <div className="summary-value">{PesoFormat(report.data.report.summary.totalAmount)}</div>
+                              <div className="summary-value">{PesoFormat(report.report.summary.totalAmount)}</div>
                             </div>
                           </div>
                         </IonCol>
                         <IonCol size="6" sizeMd="3">
                           <div className="summary-item">
-                            <IonIcon icon={cardOutline} className="summary-icon" />
+                            <IonIcon icon={checkmarkCircleOutline} className="summary-icon" color="success" />
                             <div className="summary-content">
                               <div className="summary-label">Approved</div>
-                              <div className="summary-value">{report.data.report.summary.approvedCount}</div>
+                              <div className="summary-value">{report.report.summary.approvedCount}</div>
                             </div>
                           </div>
                         </IonCol>
                         <IonCol size="6" sizeMd="3">
                           <div className="summary-item">
-                            <IonIcon icon={cardOutline} className="summary-icon" />
+                            <IonIcon icon={hourglassOutline} className="summary-icon" color="warning" />
                             <div className="summary-content">
                               <div className="summary-label">Pending</div>
-                              <div className="summary-value">{report.data.report.summary.pendingCount}</div>
+                              <div className="summary-value">{report.report.summary.pendingCount}</div>
                             </div>
                           </div>
                         </IonCol>
+                        {report.report.summary.rejectedCount !== undefined && (
+                          <IonCol size="6" sizeMd="3">
+                            <div className="summary-item">
+                              <IonIcon icon={closeCircleOutline} className="summary-icon" color="danger" />
+                              <div className="summary-content">
+                                <div className="summary-label">Rejected</div>
+                                <div className="summary-value">{report.report.summary.rejectedCount}</div>
+                              </div>
+                            </div>
+                          </IonCol>
+                        )}
+                        {report.report.summary.averageAmount !== undefined && (
+                          <IonCol size="6" sizeMd="3">
+                            <div className="summary-item">
+                              <IonIcon icon={trendingUpOutline} className="summary-icon" color="secondary" />
+                              <div className="summary-content">
+                                <div className="summary-label">Average Amount</div>
+                                <div className="summary-value">{PesoFormat(report.report.summary.averageAmount)}</div>
+                              </div>
+                            </div>
+                          </IonCol>
+                        )}
                       </IonRow>
                     </IonGrid>
                   </IonCardContent>
@@ -368,23 +636,26 @@ const ReportSchema = z.any();
               )}
 
               {/* Status Distribution */}
-              {report.data?.report?.byStatus && report.data.report.byStatus.length > 0 && (
+              {report.report?.byStatus && report.report.byStatus.length > 0 && (
                 <IonCard>
                   <IonCardHeader>
                     <IonCardTitle>
-                      <IonIcon icon={peopleOutline} style={{ marginRight: '8px' }} />
+                      <IonIcon icon={cardOutline} style={{ marginRight: '8px' }} />
                       Status Distribution
                     </IonCardTitle>
                   </IonCardHeader>
                   <IonCardContent>
                     <div className="table-container">
-                      {report.data.report.byStatus.map((status: any, index: number) => (
+                      {report.report.byStatus.map((status, index: number) => (
                         <div key={index} className="table-row">
                           <div className="row-content">
                             <div className="row-main">
                               <IonBadge 
-                                color={status.status.toLowerCase() === 'approved' ? 'success' : 
-                                       status.status.toLowerCase() === 'pending' ? 'warning' : 'danger'}
+                                color={
+                                  status.status.toLowerCase() === 'approved' ? 'success' : 
+                                  status.status.toLowerCase() === 'pending' ? 'warning' : 
+                                  status.status.toLowerCase() === 'rejected' ? 'danger' : 'medium'
+                                }
                               >
                                 {status.status}
                               </IonBadge>
@@ -392,7 +663,7 @@ const ReportSchema = z.any();
                             </div>
                             <div className="row-details">
                               <span className="row-amount">{PesoFormat(status.totalAmount)}</span>
-                              <span className="row-percentage">{status.percentage?.toFixed(1) || '0.0'}%</span>
+                              <span className="row-percentage">{status.percentage.toFixed(1)}%</span>
                             </div>
                           </div>
                         </div>
@@ -403,7 +674,7 @@ const ReportSchema = z.any();
               )}
 
               {/* Top Users */}
-              {report.data?.report?.topUsers && report.data.report.topUsers.length > 0 && (
+              {report.report?.topUsers && report.report.topUsers.length > 0 && (
                 <IonCard>
                   <IonCardHeader>
                     <IonCardTitle>
@@ -413,7 +684,7 @@ const ReportSchema = z.any();
                   </IonCardHeader>
                   <IonCardContent>
                     <div className="top-users-list">
-                      {report.data.report.topUsers.map((user: any, index: number) => (
+                      {report.report.topUsers.map((user, index: number) => (
                         <div key={user.userId} className="user-item">
                           <div className="user-rank">
                             <IonBadge color={index < 3 ? 'primary' : 'medium'}>
@@ -441,13 +712,23 @@ const ReportSchema = z.any();
                 </IonCard>
               )}
 
-              {/* Raw Data Debug */}
+              {/* Report Metadata */}
               <IonCard>
                 <IonCardHeader>
-                  <IonCardTitle>Report Data (Debug)</IonCardTitle>
+                  <IonCardTitle>Report Details</IonCardTitle>
                 </IonCardHeader>
                 <IonCardContent>
-                  <pre style={{fontSize: '12px', overflow: 'auto'}}>{JSON.stringify(report, null, 2)}</pre>
+                  <div className="report-metadata">
+                    <div className="metadata-item">
+                      <strong>Period:</strong> {report.report.period}
+                    </div>
+                    <div className="metadata-item">
+                      <strong>Date Range:</strong> {new Date(report.report.startDate).toLocaleDateString()} - {new Date(report.report.endDate).toLocaleDateString()}
+                    </div>
+                    <div className="metadata-item">
+                      <strong>Generated At:</strong> {new Date(report.generatedAt).toLocaleString()}
+                    </div>
+                  </div>
                 </IonCardContent>
               </IonCard>
             </div>
@@ -457,7 +738,7 @@ const ReportSchema = z.any();
                 <div className="no-report">
                   <IonIcon icon={statsChartOutline} size="large" />
                   <h3>No Report Data</h3>
-                  <p>Select a period and generate a report to view transaction data</p>
+                  <p>Select a period and generate a report to view detailed transaction data</p>
                 </div>
               </IonCardContent>
             </IonCard>

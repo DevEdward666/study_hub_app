@@ -29,7 +29,9 @@ import {
 } from "ionicons/icons";
 import { usePremise } from "../../hooks/PremiseHooks";
 import { useQRScanner } from "../../hooks/QrScannerHooks";
+import { useConfirmation } from "../../hooks/useConfirmation";
 import { LoadingSpinner } from "../../components/common/LoadingSpinner";
+import { ConfirmToast } from "../../components/common/ConfirmToast";
 import "./PremiseAccess.css";
 import { Scanner } from "@yudiel/react-qr-scanner";
 
@@ -39,6 +41,16 @@ const PremiseAccess: React.FC = () => {
   const [toastColor, setToastColor] = useState<
     "success" | "danger" | "warning"
   >("success");
+
+  // Confirmation hook
+  const {
+    isOpen: isConfirmOpen,
+    options: confirmOptions,
+    showConfirmation,
+    handleConfirm: confirmAction,
+    handleCancel: cancelAction,
+    handleDismiss: dismissConfirm
+  } = useConfirmation();
 
   const {
     access,
@@ -64,22 +76,31 @@ const PremiseAccess: React.FC = () => {
     try {
       const result = await startScan();
       if (result) {
-        const confirmActivate = window.confirm(
-          `Activate premise access with code: ${result}?\n\nThis will grant you access to the premise.`
-        );
-        
-        if (!confirmActivate) return;
-        
-        await activateAccess.mutateAsync({
-          activationCode: result,
+        showConfirmation({
+          header: 'Activate Premise Access',
+          message: `Activate premise access with code: ${result}?\n\nThis will grant you access to the premise.`,
+          confirmText: 'Activate',
+          cancelText: 'Cancel'
+        }, async () => {
+          try {
+            await activateAccess.mutateAsync({
+              activationCode: result,
+            });
+            setToastMessage("Premise access activated successfully!");
+            setToastColor("success");
+            setShowToast(true);
+          } catch (error) {
+            const message =
+              error instanceof Error ? error.message : "Failed to activate access";
+            setToastMessage(message);
+            setToastColor("danger");
+            setShowToast(true);
+          }
         });
-        setToastMessage("Premise access activated successfully!");
-        setToastColor("success");
-        setShowToast(true);
       }
     } catch (error) {
       const message =
-        error instanceof Error ? error.message : "Failed to activate access";
+        error instanceof Error ? error.message : "Failed to scan QR code";
       setToastMessage(message);
       setToastColor("danger");
       setShowToast(true);
@@ -87,18 +108,25 @@ const PremiseAccess: React.FC = () => {
   };
 
   const handleCleanupExpired = async () => {
-    const confirmCleanup = window.confirm(
-      "Clean up expired premise access codes?\n\nThis will permanently remove all expired access codes from the system."
-    );
-    
-    if (!confirmCleanup) return;
-    
-    try {
-      await cleanupExpired.mutateAsync();
-      await refetchAccess();
-    } catch (error) {
-      console.error("Failed to cleanup expired access:", error);
-    }
+    showConfirmation({
+      header: 'Clean Up Expired Access',
+      message: "Clean up expired premise access codes?\n\nThis will permanently remove all expired access codes from the system.",
+      confirmText: 'Clean Up',
+      cancelText: 'Cancel'
+    }, async () => {
+      try {
+        await cleanupExpired.mutateAsync();
+        await refetchAccess();
+        setToastMessage("Expired access codes cleaned up successfully!");
+        setToastColor("success");
+        setShowToast(true);
+      } catch (error) {
+        console.error("Failed to cleanup expired access:", error);
+        setToastMessage("Failed to clean up expired access codes");
+        setToastColor("danger");
+        setShowToast(true);
+      }
+    });
   };
 
   const formatTimeRemaining = (milliseconds: number): string => {
@@ -377,6 +405,18 @@ const PremiseAccess: React.FC = () => {
           message={toastMessage}
           duration={3000}
           color={toastColor}
+        />
+
+        {/* Confirmation Toast */}
+        <ConfirmToast
+          isOpen={isConfirmOpen}
+          onDidDismiss={dismissConfirm}
+          onConfirm={confirmAction}
+          onCancel={cancelAction}
+          message={confirmOptions.message}
+          header={confirmOptions.header}
+          confirmText={confirmOptions.confirmText}
+          cancelText={confirmOptions.cancelText}
         />
       </IonContent>
     </IonPage>

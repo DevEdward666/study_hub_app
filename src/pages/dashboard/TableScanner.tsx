@@ -24,7 +24,9 @@ import { useQRScanner } from "../../hooks/QrScannerHooks";
 import { useTableByQR } from "../../hooks/TableHooks";
 import { useTables } from "../../hooks/TableHooks";
 import { useUser } from "../../hooks/UserHooks";
+import { useConfirmation } from "../../hooks/useConfirmation";
 import { LoadingSpinner } from "../../components/common/LoadingSpinner";
+import { ConfirmToast } from "../../components/common/ConfirmToast";
 import { useNotifications } from "../../hooks/useNotifications";
 import "./TableScanner.css";
 import { Scanner } from "@yudiel/react-qr-scanner";
@@ -38,6 +40,16 @@ const TableScanner: React.FC = () => {
   const [selectedHours, setSelectedHours] = useState<number>(1);
   const history = useHistory();
   const { credits } = useUser();
+  
+  // Confirmation hook
+  const {
+    isOpen: isConfirmOpen,
+    options: confirmOptions,
+    showConfirmation,
+    handleConfirm: confirmAction,
+    handleCancel: cancelAction,
+    handleDismiss: dismissConfirm
+  } = useConfirmation();
   
   // Notifications hook
   const {
@@ -137,64 +149,63 @@ const { startSession, activeSession,tables } = useTables();
     if (scannedTable && scannedCode) {
       // Show confirmation dialog
       const totalCredits = scannedTable.hourlyRate * selectedHours;
-      const confirmed = window.confirm(
-        `Start study session at Table ${scannedTable.tableNumber}?\n\n` +
-        `Location: ${scannedTable.location}\n` +
-        `Duration: ${selectedHours} hour${selectedHours > 1 ? 's' : ''}\n` +
-        `Credits needed: ${totalCredits}\n` +
-        `Your balance: ${credits?.balance || 0} credits\n\n` +
-        `Session will start immediately.`
-      );
-      
-      if (!confirmed) {
-        return;
-      }
-
-      try {
-        const endTime = new Date();
-        endTime.setHours(endTime.getHours() + selectedHours);
-        
-        await startSession.mutateAsync({
-          tableId: scannedTable.id,
-          qrCode: scannedCode,
-          hours: selectedHours,
-          endTime: endTime.toISOString(),
-        });
-        
-        // Send session start notification
-        if (isPushSupported && pushPermission === "granted") {
-          try {
-            await notifySessionStart(
-              scannedTable.id, // Will be replaced with actual session ID by service
-              scannedTable.tableNumber,
-              scannedTable.location,
-              scannedTable.hourlyRate * selectedHours
-            );
-            
-            // Setup monitoring for 30-minute warning
-            setupSessionMonitoring(
-              scannedTable.id, // Will be replaced with actual session ID 
-              scannedTable.tableNumber,
-              new Date(),
-              selectedHours * 60 // Convert hours to minutes
-            );
-          } catch (notifError) {
-            console.error("Failed to send notification:", notifError);
+      showConfirmation({
+        header: 'Start Study Session',
+        message: `Start study session at Table ${scannedTable.tableNumber}?\n\n` +
+          `Location: ${scannedTable.location}\n` +
+          `Duration: ${selectedHours} hour${selectedHours > 1 ? 's' : ''}\n` +
+          `Credits needed: ${totalCredits}\n` +
+          `Your balance: ${credits?.balance || 0} credits\n\n` +
+          `Session will start immediately.`,
+        confirmText: 'Start Session',
+        cancelText: 'Cancel'
+      }, async () => {
+        try {
+          const endTime = new Date();
+          endTime.setHours(endTime.getHours() + selectedHours);
+          
+          await startSession.mutateAsync({
+            tableId: scannedTable.id,
+            qrCode: scannedCode,
+            hours: selectedHours,
+            endTime: endTime.toISOString(),
+          });
+          
+          // Send session start notification
+          if (isPushSupported && pushPermission === "granted") {
+            try {
+              await notifySessionStart(
+                scannedTable.id, // Will be replaced with actual session ID by service
+                scannedTable.tableNumber,
+                scannedTable.location,
+                scannedTable.hourlyRate * selectedHours
+              );
+              
+              // Setup monitoring for 30-minute warning
+              setupSessionMonitoring(
+                scannedTable.id, // Will be replaced with actual session ID 
+                scannedTable.tableNumber,
+                new Date(),
+                selectedHours * 60 // Convert hours to minutes
+              );
+            } catch (notifError) {
+              console.error("Failed to send notification:", notifError);
+            }
           }
+          
+          setShowConfirmAlert(false);
+          setSelectedHours(1); // Reset to default
+          history.push("/app/dashboard");
+        } catch (error) {
+          const message =
+            error instanceof Error ? error.message : "Failed to start session";
+          setToastMessage({
+            message: message,
+            color: "danger",
+          });
+          setShowToast(true);
         }
-        
-        setShowConfirmAlert(false);
-        setSelectedHours(1); // Reset to default
-        history.push("/app/dashboard");
-      } catch (error) {
-        const message =
-          error instanceof Error ? error.message : "Failed to start session";
-        setToastMessage({
-          message: message,
-          color: "danger",
-        });
-        setShowToast(true);
-      }
+      });
     }
   };
 
@@ -235,7 +246,6 @@ const { startSession, activeSession,tables } = useTables();
   const handleStartScan = () => {
     setScanning(true);
   };
-console.log(scannedTable)
   return (
     <IonPage>
       <IonHeader>
@@ -563,6 +573,18 @@ console.log(scannedTable)
               </div>
             )}
         </IonModal>
+
+        {/* Confirmation Toast */}
+        <ConfirmToast
+          isOpen={isConfirmOpen}
+          onDidDismiss={dismissConfirm}
+          onConfirm={confirmAction}
+          onCancel={cancelAction}
+          message={confirmOptions.message}
+          header={confirmOptions.header}
+          confirmText={confirmOptions.confirmText}
+          cancelText={confirmOptions.cancelText}
+        />
         </IonContent>
   
     </IonPage>

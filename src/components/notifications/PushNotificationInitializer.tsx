@@ -10,6 +10,9 @@ export const PushNotificationInitializer: React.FC = () => {
     // Initialize push notifications
     const initPushNotifications = async () => {
       try {
+        // Debug service worker status first
+        await pushNotificationService.debugServiceWorker();
+        
         await pushNotificationService.initialize();
         console.log("Push notifications initialized");
       } catch (error) {
@@ -17,7 +20,8 @@ export const PushNotificationInitializer: React.FC = () => {
       }
     };
 
-    initPushNotifications();
+    // Small delay to ensure DOM is ready
+    setTimeout(initPushNotifications, 1000);
   }, []);
 
   return null; // This component doesn't render anything

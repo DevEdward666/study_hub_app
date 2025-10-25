@@ -41,6 +41,7 @@ import { useUser } from "../../hooks/UserHooks";
 import { useConfirmation } from "../../hooks/useConfirmation";
 import { LoadingSpinner } from "../../components/common/LoadingSpinner";
 import { ConfirmToast } from "../../components/common/ConfirmToast";
+import { ServiceWorkerDebug } from "../../components/debug/ServiceWorkerDebug";
 import "./Profile.css";
 import { useHistory } from "react-router-dom";
 
@@ -317,6 +318,11 @@ const Profile: React.FC = () => {
               </IonList>
             </IonCardContent>
           </IonCard>
+
+          {/* Debug Component - Only show in development */}
+          {import.meta.env.DEV && (
+            <ServiceWorkerDebug />
+          )}
 
           {/* Account Actions */}
           <div className="account-actions">

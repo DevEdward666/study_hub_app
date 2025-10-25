@@ -16,6 +16,7 @@ import {
   IonRow,
   IonCol,
   RefresherEventDetail,
+  useIonViewDidEnter,
 } from "@ionic/react";
 import {
   qrCodeOutline,
@@ -37,6 +38,7 @@ import { useConfirmation } from "../../hooks/useConfirmation";
 import { LoadingSpinner } from "../../components/common/LoadingSpinner";
 import { ConfirmToast } from "../../components/common/ConfirmToast";
 import "./Dashboard.css";
+import { is } from "zod/v4/locales";
 
 const Dashboard: React.FC = () => {
   const history = useHistory();
@@ -50,6 +52,7 @@ const Dashboard: React.FC = () => {
     notifySessionEnd,
     isSupported: isPushSupported,
     permission: pushPermission,
+    requestPermission: requestPushPermission
   } = useNotifications();
 
   // Confirmation toast hook
@@ -61,7 +64,11 @@ const Dashboard: React.FC = () => {
     handleCancel: cancelAction,
     handleDismiss: dismissConfirm
   } = useConfirmation();
-
+  useIonViewDidEnter(()=>{
+  if( pushPermission !== "granted"){
+      requestPushPermission();
+    }
+  })
   const handleRefresh = async (event: CustomEvent<RefresherEventDetail>) => {
     await Promise.all([refetchCredits(), refetchAccess()]);
     event.detail.complete();

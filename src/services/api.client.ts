@@ -4,11 +4,8 @@ import { ApiResponse } from "../schema/api.schema";
 
 class ApiClient {
   private client: AxiosInstance;
-
-  // constructor(baseURL: string = "https://studyhubapi-i0o7.onrender.com/api/") {
   constructor(
-  // baseURL: string = "https://3qrbqpcx-5212.asse.devtunnels.ms/api/"
-    baseURL:string = "https://studyhubapi-i0o7.onrender.com/api/"
+  baseURL: string = import.meta.env.VITE_API_BASE_URL || "https://3qrbqpcx-5212.asse.devtunnels.ms/"
 ) {
     this.client = axios.create({
       baseURL,
