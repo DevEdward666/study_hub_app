@@ -43,6 +43,7 @@ export const StartSessionRequestSchema = z.object({
   userId: z.string().optional(),
   hours: z.number().optional(),
   endTime: z.string().optional(),
+  promoId: z.string().optional(),
 });
 
 export const EndSessionResponseSchema = z.object({

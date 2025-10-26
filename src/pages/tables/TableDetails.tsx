@@ -22,6 +22,7 @@ import {
   IonRefresher,
   IonRefresherContent,
   RefresherEventDetail,
+  IonModal,
 } from '@ionic/react';
 import {
   locationOutline,
@@ -41,6 +42,7 @@ import { useConfirmation } from '../../hooks/useConfirmation';
 import { LoadingSpinner } from '../../components/common/LoadingSpinner';
 import { ErrorMessage } from '../../components/common/ErrorMessage';
 import { ConfirmToast } from '../../components/common/ConfirmToast';
+import PromoSelector from '../../components/common/PromoSelector';
 import './TableDetails.css';
 
 interface TableParams {
@@ -55,6 +57,9 @@ const TableDetails: React.FC = () => {
   const [toastMessage, setToastMessage] = useState('');
   const [toastColor, setToastColor] = useState<'success' | 'danger' | 'warning'>('success');
   const [showEndSessionAlert, setShowEndSessionAlert] = useState(false);
+  const [showPromoModal, setShowPromoModal] = useState(false);
+  const [selectedPromoId, setSelectedPromoId] = useState<string | null>(null);
+  const [promoDiscount, setPromoDiscount] = useState<number>(0);
 
   // Confirmation hook
   const {
@@ -91,6 +96,11 @@ const TableDetails: React.FC = () => {
     event.detail.complete();
   };
 
+  const handlePromoSelect = (promoId: string | null, discount: number) => {
+    setSelectedPromoId(promoId);
+    setPromoDiscount(discount);
+  };
+
   const handleStartSession = async () => {
     if (!table) return;
 
@@ -108,9 +118,19 @@ const TableDetails: React.FC = () => {
       return;
     }
 
+    // Show promo selection modal first
+    setShowPromoModal(true);
+  };
+
+  const confirmStartSession = async () => {
+    if (!table) return;
+
+    const finalCredits = table.hourlyRate - promoDiscount;
+    const promoText = selectedPromoId ? `\nPromo Applied: -${promoDiscount} credits\nFinal Credits: ${finalCredits}` : '';
+
     const confirmStart = showConfirmation({
       header: 'Start Study Session',
-      message: `Start study session at Table ${table.tableNumber}?\n\nLocation: ${table.location}\nHourly rate: ${table.hourlyRate} credits\nCurrent balance: ${credits?.balance || 0} credits\n\nYour session will begin and credits will be deducted.`,
+      message: `Start study session at Table ${table.tableNumber}?\n\nLocation: ${table.location}\nHourly rate: ${table.hourlyRate} credits${promoText}\nCurrent balance: ${credits?.balance || 0} credits\n\nYour session will begin and credits will be deducted.`,
       confirmText: 'Start Session',
       cancelText: 'Cancel'
     }, async () => {
@@ -118,11 +138,13 @@ const TableDetails: React.FC = () => {
         await startSession.mutateAsync({
           tableId: table.id,
           qrCode: table.qrCode,
+          promoId: selectedPromoId || undefined,
         });
         
         setToastMessage('Session started successfully!');
         setToastColor('success');
         setShowToast(true);
+        setShowPromoModal(false);
         
         // Navigate back to dashboard
         setTimeout(() => {
@@ -447,6 +469,106 @@ const TableDetails: React.FC = () => {
             },
           ]}
         />
+
+        {/* Promo Selection Modal */}
+        <IonModal
+          isOpen={showPromoModal}
+          onDidDismiss={() => {
+            setShowPromoModal(false);
+            setSelectedPromoId(null);
+            setPromoDiscount(0);
+          }}
+        >
+          <IonHeader>
+            <IonToolbar>
+              <IonTitle>Select Promo</IonTitle>
+              <IonButton
+                slot="end"
+                fill="clear"
+                onClick={() => {
+                  setShowPromoModal(false);
+                  setSelectedPromoId(null);
+                  setPromoDiscount(0);
+                }}
+              >
+                Cancel
+              </IonButton>
+            </IonToolbar>
+          </IonHeader>
+
+          <IonContent className="promo-modal-content">
+            {table && (
+              <div style={{ padding: '16px' }}>
+                <IonCard>
+                  <IonCardHeader>
+                    <IonCardTitle>Table {table.tableNumber}</IonCardTitle>
+                  </IonCardHeader>
+                  <IonCardContent>
+                    <div style={{ marginBottom: '16px' }}>
+                      <p><strong>Location:</strong> {table.location}</p>
+                      <p><strong>Hourly Rate:</strong> {table.hourlyRate} credits</p>
+                      <p><strong>Your Balance:</strong> {credits?.balance || 0} credits</p>
+                    </div>
+
+                    <PromoSelector
+                      sessionCost={table.hourlyRate}
+                      selectedPromoId={selectedPromoId}
+                      onPromoSelect={handlePromoSelect}
+                      disabled={false}
+                    />
+
+                    <div style={{ 
+                      marginTop: '20px',
+                      padding: '16px',
+                      backgroundColor: '#f5f5f5',
+                      borderRadius: '8px'
+                    }}>
+                      <div style={{
+                        display: 'flex',
+                        justifyContent: 'space-between',
+                        marginBottom: '8px'
+                      }}>
+                        <span>Hourly Rate:</span>
+                        <span>{table.hourlyRate} credits</span>
+                      </div>
+                      {promoDiscount > 0 && (
+                        <div style={{
+                          display: 'flex',
+                          justifyContent: 'space-between',
+                          marginBottom: '8px',
+                          color: '#28a745'
+                        }}>
+                          <span>Promo Discount:</span>
+                          <span>-{promoDiscount} credits</span>
+                        </div>
+                      )}
+                      <div style={{
+                        display: 'flex',
+                        justifyContent: 'space-between',
+                        fontWeight: 'bold',
+                        fontSize: '1.1em',
+                        borderTop: '1px solid #ddd',
+                        paddingTop: '8px'
+                      }}>
+                        <span>Total per Hour:</span>
+                        <span>{table.hourlyRate - promoDiscount} credits</span>
+                      </div>
+                    </div>
+
+                    <IonButton
+                      expand="block"
+                      onClick={confirmStartSession}
+                      disabled={startSession.isPending}
+                      style={{ marginTop: '20px' }}
+                    >
+                      {startSession.isPending ? 'Starting Session...' : 'Start Session'}
+                    </IonButton>
+                  </IonCardContent>
+                </IonCard>
+              </div>
+            )}
+          </IonContent>
+        </IonModal>
 
         <IonToast
           isOpen={showToast}

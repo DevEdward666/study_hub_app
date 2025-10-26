@@ -149,6 +149,7 @@ const { startSession, activeSession,tables } = useTables();
     if (scannedTable && scannedCode) {
       // Show confirmation dialog
       const totalCredits = scannedTable.hourlyRate * selectedHours;
+      
       showConfirmation({
         header: 'Start Study Session',
         message: `Start study session at Table ${scannedTable.tableNumber}?\n\n` +

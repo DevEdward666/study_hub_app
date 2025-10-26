@@ -40,12 +40,18 @@ import History from "./pages/history/History";
 import { AuthGuard } from "./components/guards/AuthGuard";
 import { TabsLayout } from "./components/Layout/TabsLayout";
 import { PushNotificationInitializer } from "./components/notifications/PushNotificationInitializer";
+
+/* Admin Components */
+import { AdminLogin } from "./Admin/AdminLogin";
+import { PremiseManagement } from "./Admin/PremiseManagement";
+
+/* Admin Pages */
+import TableDashboard from "./pages/TableDashboard";
 import TablesManagement from "./pages/TableManagement";
 import TransactionsManagement from "./pages/TransactionManagement";
 import UsersManagement from "./pages/UserManagement";
+import CreditsManagement from "./pages/CreditsManagement";
 import ReportsPage from "./pages/ReportsPage";
-import { AdminLogin } from "./Admin/AdminLogin";
-import { PremiseManagement } from "./Admin/PremiseManagement";
 setupIonicReact();
 
 const App: React.FC = () => (
@@ -56,13 +62,9 @@ const App: React.FC = () => (
         {/* Public Routes */}
         <Route exact path="/login" component={Login} />
         <Route exact path="/register" component={Register} />
-        <Route
-          exact
-          path="/admin/login"
-         component={AdminLogin}
-        />
+        <Route exact path="/admin/login" component={AdminLogin} />
 
-        {/* Protected Routes with Tabs */}
+        {/* Protected Routes with Regular Tabs */}
         <Route path="/app">
           <AuthGuard>
             <TabsLayout>
@@ -73,26 +75,14 @@ const App: React.FC = () => (
               <Route exact path="/app/premise" component={PremiseAccess} />
               <Route exact path="/app/history" component={History} />
               <Route exact path="/app/profile" component={Profile} />
-              <Route
-                exact
-                path="/app/admin/premise"
-                component={PremiseManagement}
-              />
-              <Route
-                exact
-                path="/app/admin/tables"
-                component={TablesManagement}
-              />
-              <Route
-                exact
-                path="/app/admin/transactions"
-                component={TransactionsManagement}
-              />
-              <Route
-                exact
-                path="/app/admin/users"
-                component={UsersManagement}
-              />
+              
+              {/* Admin Routes */}
+              <Route exact path="/app/admin/premise" component={PremiseManagement} />
+              <Route exact path="/app/admin/dashboard" component={TableDashboard} />
+              <Route exact path="/app/admin/tables" component={TablesManagement} />
+              <Route exact path="/app/admin/transactions" component={TransactionsManagement} />
+              <Route exact path="/app/admin/users" component={UsersManagement} />
+              <Route exact path="/app/admin/credits" component={CreditsManagement} />
               <Route exact path="/app/admin/reports" component={ReportsPage} />
               <Route exact path="/app/admin/profile" component={Profile} />
 

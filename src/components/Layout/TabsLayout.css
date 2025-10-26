@@ -7,6 +7,7 @@
   height: 100vh;
   width: 100vw;
   overflow: hidden;
+  position: relative;
 }
 
 /* User layout - always uses bottom navigation */
@@ -24,6 +25,78 @@
 }
 
 /* ============================================
+   MOBILE MENU BUTTON & OVERLAY
+   ============================================ */
+.mobile-menu-btn {
+  display: none;
+  position: fixed;
+  top: 50%;
+  left: 0;
+  transform: translateY(-50%);
+  z-index: 1001;
+  --background: var(--ion-color-primary);
+  --background-hover: var(--ion-color-primary-shade);
+  --background-activated: var(--ion-color-primary-tint);
+  --color: white;
+  --border-radius: 0 12px 12px 0;
+  --padding-start: 0;
+  --padding-end: 0;
+  width: 40px;
+  height: 60px;
+  min-height: 60px;
+  box-shadow: 2px 0 12px rgba(0, 0, 0, 0.15);
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  backdrop-filter: blur(10px);
+  border-radius: 0 12px 12px 0;
+  border-left: none;
+}
+
+.mobile-menu-btn.sidebar-open {
+  left: 280px;
+  --border-radius: 12px 0 0 12px;
+  border-radius: 12px 0 0 12px;
+  box-shadow: -2px 0 12px rgba(0, 0, 0, 0.15);
+}
+
+.mobile-menu-btn:hover {
+  left: 8px;
+  box-shadow: 4px 0 16px rgba(0, 0, 0, 0.2);
+  transform: translateY(-50%) scale(1.05);
+}
+
+.mobile-menu-btn.sidebar-open:hover {
+  left: 272px;
+  box-shadow: -4px 0 16px rgba(0, 0, 0, 0.2);
+  transform: translateY(-50%) scale(1.05);
+}
+
+.mobile-menu-btn ion-icon {
+  font-size: 20px;
+  transition: transform 0.2s ease;
+}
+
+.mobile-menu-btn:active ion-icon {
+  transform: scale(0.95);
+}
+
+.sidebar-overlay {
+  display: none;
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.5);
+  z-index: 999;
+}
+
+.sidebar-close-btn {
+  display: none;
+  --color: white;
+  --background: transparent;
+}
+
+/* ============================================
    SIDEBAR - ADMIN ONLY, DESKTOP/TABLET
    ============================================ */
 .sidebar {
@@ -33,20 +106,24 @@
   background: linear-gradient(180deg, var(--ion-color-primary) 0%, var(--ion-color-primary-shade) 100%);
   color: white;
   box-shadow: 2px 0 12px rgba(0, 0, 0, 0.1);
-  z-index: 100;
+  z-index: 1000;
   overflow-y: auto;
   flex-shrink: 0;
+  transition: transform 0.3s ease;
 }
 
 .sidebar-header {
-  padding: 28px 24px;
+  padding: 20px 24px;
   border-bottom: 1px solid rgba(255, 255, 255, 0.1);
   background: rgba(0, 0, 0, 0.1);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
 }
 
 .sidebar-header h2 {
   margin: 0;
-  font-size: 24px;
+  font-size: 20px;
   font-weight: 700;
   color: white;
   letter-spacing: 0.5px;
@@ -55,23 +132,23 @@
 .sidebar-menu {
   display: flex;
   flex-direction: column;
-  padding: 16px 12px;
-  gap: 8px;
+  padding: 12px 8px;
+  gap: 6px;
 }
 
 .sidebar-item {
   display: flex;
   align-items: center;
-  padding: 16px 20px;
-  border-radius: 12px;
+  padding: 12px 16px;
+  border-radius: 8px;
   color: rgba(255, 255, 255, 0.85);
   text-decoration: none;
-  font-size: 15px;
+  font-size: 14px;
   font-weight: 500;
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   position: relative;
   overflow: hidden;
-  gap: 16px;
+  gap: 12px;
   /* Button-specific styles */
   background: none;
   border: none;
@@ -127,7 +204,7 @@
 }
 
 .sidebar-item ion-icon {
-  font-size: 24px;
+  font-size: 20px;
   flex-shrink: 0;
 }
 
@@ -188,6 +265,129 @@
   font-size: 11px;
   font-weight: 500;
   margin-top: 2px;
+}
+
+/* ============================================
+   MOBILE (below 768px) - COLLAPSIBLE SIDEBAR
+   ============================================ */
+@media (max-width: 767px) {
+  /* Show mobile menu button for admin */
+  .admin-layout .mobile-menu-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  /* Mobile sidebar positioning */
+  .admin-layout .sidebar {
+    position: fixed;
+    top: 0;
+    left: 0;
+    height: 100vh;
+    width: 280px;
+    transform: translateX(-100%);
+    z-index: 1000;
+    transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    box-shadow: 2px 0 8px rgba(0, 0, 0, 0.1);
+  }
+
+  .admin-layout .sidebar.sidebar-open {
+    display: flex;
+    transform: translateX(0);
+  }
+
+  .admin-layout .sidebar-overlay {
+    display: block;
+    background: rgba(0, 0, 0, 0.4);
+    backdrop-filter: blur(4px);
+    animation: fadeIn 0.3s ease;
+  }
+
+  @keyframes fadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
+  }
+
+  .admin-layout .sidebar-close-btn {
+    display: block;
+    position: absolute;
+    top: 16px;
+    right: 16px;
+    --background: transparent;
+    --color: var(--ion-color-medium);
+    --border-radius: 8px;
+    width: 32px;
+    height: 32px;
+    min-height: 32px;
+  }
+
+  .admin-layout .sidebar-close-btn:hover {
+    --background: var(--ion-color-light);
+    --color: var(--ion-color-dark);
+  }
+
+  /* Ensure main content doesn't get covered by the toggle button */
+  .admin-layout .main-content {
+    padding-left: 0;
+  }
+
+  /* Add padding to content when sidebar is closed to avoid overlap with button */
+  .admin-layout .tables-management {
+    margin-left: 45px;
+    transition: margin-left 0.3s ease;
+    padding-bottom: 20px; /* Add bottom padding since no tabs */
+  }
+
+  .admin-layout.sidebar-open .tables-management {
+    margin-left: 0;
+    padding-bottom: 20px; /* Consistent bottom padding */
+  }
+
+  /* Ensure button doesn't conflict with bottom tabs */
+  .admin-layout .mobile-menu-btn {
+    bottom: auto;
+    top: 50%;
+    transform: translateY(-50%);
+  }
+
+  /* When sidebar is open, adjust button position */
+  .admin-layout .mobile-menu-btn.sidebar-open {
+    left: 280px;
+  }
+
+  /* Compact mobile styles */
+  .admin-layout .sidebar-header {
+    padding: 16px 20px;
+  }
+
+  .admin-layout .sidebar-header h2 {
+    font-size: 18px;
+  }
+
+  .admin-layout .sidebar-menu {
+    padding: 12px 8px;
+    gap: 4px;
+  }
+
+  .admin-layout .sidebar-item {
+    padding: 10px 12px;
+    font-size: 13px;
+    gap: 10px;
+  }
+
+  .admin-layout .sidebar-item ion-icon {
+    font-size: 18px;
+  }
+
+  /* Show bottom tabs for admin on mobile */
+  .admin-layout .tabs-bar.mobile-only {
+    display: flex !important;
+  }
+
+  .admin-layout .main-content {
+    margin-left: 0;
+    padding-top: 60px; /* Space for menu button */
+  }
 }
 
 /* ============================================

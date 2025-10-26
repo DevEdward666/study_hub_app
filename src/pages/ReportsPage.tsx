@@ -24,7 +24,12 @@ import {
   IonTitle,
   IonProgressBar,
   IonRefresher,
-  IonRefresherContent
+  IonRefresherContent,
+  IonSegment,
+  IonSegmentButton,
+  IonNote,
+  IonChip,
+  RefresherEventDetail
 } from '@ionic/react';
 import {
   statsChartOutline,
@@ -37,7 +42,12 @@ import {
   timeOutline,
   checkmarkCircleOutline,
   hourglassOutline,
-  closeCircleOutline
+  closeCircleOutline,
+  barChartOutline,
+  pieChartOutline,
+  analyticsOutline,
+  starOutline,
+  refreshOutline
 } from 'ionicons/icons';
 import { useQuery } from '@tanstack/react-query';
 import { z } from 'zod';
@@ -49,6 +59,7 @@ import { PesoFormat } from '../shared/PesoHelper';
 import './ReportsPage.css';
 
 type ReportPeriod = 'Daily' | 'Weekly' | 'Monthly';
+type ReportView = 'overview' | 'detailed' | 'recommended';
 
 // Enhanced schemas for report data
 const TransactionSummarySchema = z.object({
@@ -112,6 +123,7 @@ const QuickStatsSchema = z.object({
 
  const ReportsPage: React.FC = () => {
   const [selectedPeriod, setSelectedPeriod] = useState<ReportPeriod>('Daily');
+  const [selectedView, setSelectedView] = useState<ReportView>('overview');
   const [selectedDate, setSelectedDate] = useState(new Date().toISOString().split('T')[0]);
   const [selectedYear, setSelectedYear] = useState(new Date().getFullYear());
   const [selectedMonth, setSelectedMonth] = useState(new Date().getMonth() + 1);

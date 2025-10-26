@@ -51,7 +51,7 @@ export const AdminLogin: React.FC = () => {
       // Check if user is admin after login
       const adminStatus = await refetchAdminStatus();
       if (adminStatus.data) {
-        history.replace("/app/admin/premise");
+        history.replace("/app/admin/dashboard");
       } else {
         setErrorMessage("Access denied. Admin privileges required.");
         setShowError(true);

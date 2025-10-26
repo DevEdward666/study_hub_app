@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState } from "react";
 import {
   IonTabs,
   IonRouterOutlet,
@@ -7,6 +7,7 @@ import {
   IonIcon,
   IonLabel,
   useIonViewDidEnter,
+  IonButton,
 } from "@ionic/react";
 import { useHistory, useLocation } from "react-router-dom";
 import {
@@ -23,6 +24,11 @@ import {
   listSharp,
   tabletPortraitSharp,
   statsChartOutline,
+  menuOutline,
+  closeOutline,
+  walletOutline,
+  chevronForwardOutline,
+  chevronBackOutline,
 } from "ionicons/icons";
 import "./TabsLayout.css";
 import { useAdminStatus } from "@/hooks/AdminHooks";
@@ -34,6 +40,7 @@ interface TabsLayoutProps {
 
 export const TabsLayout: React.FC<TabsLayoutProps> = ({ children }) => {
   const { refetch: refetchAdminStatus, isAdmin } = useAdminStatus();
+  const [sidebarOpen, setSidebarOpen] = useState(false);
   const history = useHistory();
   const location = useLocation();
   const isAdminPath = window.location.pathname.includes("/admin");
@@ -45,33 +52,75 @@ export const TabsLayout: React.FC<TabsLayoutProps> = ({ children }) => {
     } = useNotifications();
 
 useIonViewDidEnter(()=>{
-  console.log(pushPermission)
     if( pushPermission !== "granted"){
       requestPushPermission();
     }
   })
   const navigateTo = (path: string) => {
     history.push(path);
+    setSidebarOpen(false); // Close sidebar after navigation on mobile
+  };
+
+  const toggleSidebar = () => {
+    setSidebarOpen(!sidebarOpen);
   };
 
   const isActiveRoute = (path: string) => {
     return location.pathname === path;
   };
   return (
-    <div className={`app-layout ${isAdmin && isAdminPath ? 'admin-layout' : 'user-layout'}`}>
+    <div className={`app-layout ${isAdmin && isAdminPath ? 'admin-layout' : 'user-layout'} ${sidebarOpen ? 'sidebar-open' : ''}`}>
       {isAdmin && isAdminPath && (
-        <nav className="sidebar">
-          <div className="sidebar-header">
-            <h2>StudyHub Admin</h2>
-          </div>
+        <>
+          {/* Mobile Menu Button */}
+          <IonButton
+            fill="clear"
+            className={`mobile-menu-btn ${sidebarOpen ? 'sidebar-open' : ''}`}
+            onClick={toggleSidebar}
+            title={sidebarOpen ? "Hide sidebar" : "Show sidebar"}
+          >
+            <IonIcon 
+              icon={sidebarOpen ? chevronBackOutline : chevronForwardOutline} 
+              style={{ 
+                transition: 'transform 0.2s ease'
+              }}
+            />
+          </IonButton>
+
+          {/* Sidebar Overlay for mobile */}
+          {sidebarOpen && <div className="sidebar-overlay" onClick={() => setSidebarOpen(false)} />}
+
+          <nav className={`sidebar ${sidebarOpen ? 'sidebar-open' : ''}`}>
+            <div className="sidebar-header">
+              <h2>StudyHub Admin</h2>
+              <IonButton
+                fill="clear"
+                className="sidebar-close-btn"
+                onClick={() => setSidebarOpen(false)}
+                title="Close menu"
+              >
+                <IonIcon 
+                  icon={closeOutline} 
+                  style={{ fontSize: '20px' }}
+                />
+              </IonButton>
+            </div>
           <div className="sidebar-menu">
+            <button 
+              onClick={() => navigateTo('/app/admin/dashboard')} 
+              className={`sidebar-item ${isActiveRoute('/app/admin/dashboard') ? 'active' : ''}`}
+            >
+              <IonIcon icon={statsChartOutline} />
+              <span>Dashboard</span>
+            </button>
+{/* 
             <button 
               onClick={() => navigateTo('/app/admin/premise')} 
               className={`sidebar-item ${isActiveRoute('/app/admin/premise') ? 'active' : ''}`}
             >
               <IonIcon icon={homeOutline} />
               <span>Premise Management</span>
-            </button>
+            </button> */}
 
             <button 
               onClick={() => navigateTo('/app/admin/tables')} 
@@ -98,10 +147,18 @@ useIonViewDidEnter(()=>{
             </button>
 
             <button 
+              onClick={() => navigateTo('/app/admin/credits')} 
+              className={`sidebar-item ${isActiveRoute('/app/admin/credits') ? 'active' : ''}`}
+            >
+              <IonIcon icon={walletOutline} />
+              <span>Credits & Promos</span>
+            </button>
+
+            <button 
               onClick={() => navigateTo('/app/admin/reports')} 
               className={`sidebar-item ${isActiveRoute('/app/admin/reports') ? 'active' : ''}`}
             >
-              <IonIcon icon={statsChartOutline} />
+              <IonIcon icon={listCircleOutline} />
               <span>Reports</span>
             </button>
 
@@ -114,45 +171,19 @@ useIonViewDidEnter(()=>{
             </button>
           </div>
         </nav>
+        </>
       )}
 
       <main className="main-content">
-        <IonTabs>
-          <IonRouterOutlet>{children}</IonRouterOutlet>
-
-          {isAdmin && isAdminPath ? (
-            <IonTabBar slot="bottom" className="tabs-bar mobile-only">
-              <IonTabButton tab="dashboard" href="/app/admin/premise">
-                <IonIcon icon={homeOutline} />
-                <IonLabel>Premise</IonLabel>
-              </IonTabButton>
-
-              <IonTabButton tab="scanner" href="/app/admin/tables">
-                <IonIcon icon={tabletPortraitSharp} />
-                <IonLabel>Tables</IonLabel>
-              </IonTabButton>
-
-              <IonTabButton tab="credits" href="/app/admin/transactions">
-                <IonIcon icon={listOutline} />
-                <IonLabel>Transactions</IonLabel>
-              </IonTabButton>
-
-              <IonTabButton tab="premise" href="/app/admin/users">
-                <IonIcon icon={peopleCircle} />
-                <IonLabel>Users</IonLabel>
-              </IonTabButton>
-
-              <IonTabButton tab="reports" href="/app/admin/reports">
-                <IonIcon icon={statsChartOutline} />
-                <IonLabel>Reports</IonLabel>
-              </IonTabButton>
-
-              <IonTabButton tab="profile" href="/app/admin/profile">
-                <IonIcon icon={personOutline} />
-                <IonLabel>Profile</IonLabel>
-              </IonTabButton>
-            </IonTabBar>
-          ) : (
+        {isAdmin && isAdminPath ? (
+          // For admin, use simple router outlet without tabs
+          <div style={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
+            {children}
+          </div>
+        ) : (
+          // For users, use the tab system
+          <IonTabs>
+            <IonRouterOutlet>{children}</IonRouterOutlet>
             <IonTabBar slot="bottom" className="tabs-bar mobile-only">
               <IonTabButton tab="dashboard" href="/app/dashboard">
                 <IonIcon icon={homeOutline} />
@@ -184,8 +215,8 @@ useIonViewDidEnter(()=>{
                 <IonLabel>Profile</IonLabel>
               </IonTabButton>
             </IonTabBar>
-          )}
-        </IonTabs>
+          </IonTabs>
+        )}
       </main>
     </div>
   );

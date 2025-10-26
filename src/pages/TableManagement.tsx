@@ -10,6 +10,7 @@ import { ErrorMessage } from "../components/common/ErrorMessage";
 import { useConfirmation } from "../hooks/useConfirmation";
 import { ConfirmToast } from "../components/common/ConfirmToast";
 import { useNotifications } from "../hooks/useNotifications";
+import PromoSelector from "../components/common/PromoSelector";
 import "../Admin/styles/admin.css";
 import "../Admin/styles/admin-responsive.css";
 import QRCode from "react-qr-code";
@@ -98,6 +99,8 @@ const TablesManagement: React.FC = () => {
   const [selectedTableForSession, setSelectedTableForSession] = useState<any>(null);
   const [selectedUserId, setSelectedUserId] = useState<string>("");
   const [sessionHours, setSessionHours] = useState<number>(1);
+  const [selectedPromoId, setSelectedPromoId] = useState<string | null>(null);
+  const [promoDiscount, setPromoDiscount] = useState<number>(0);
   const [formData, setFormData] = useState({
     tableID: "",
     tableNumber: "",
@@ -112,7 +115,7 @@ const TablesManagement: React.FC = () => {
   const { users } = useUsersManagement();
 
   const startSessionMutation = useMutation({
-    mutationFn: async (data: { tableId: string; userId: string; hours: number; qrCode: string }) => {
+    mutationFn: async (data: { tableId: string; userId: string; hours: number; qrCode: string; promoId?: string }) => {
       const endTime = new Date();
       endTime.setHours(endTime.getHours() + data.hours);
       
@@ -122,6 +125,7 @@ const TablesManagement: React.FC = () => {
         qrCode: data.qrCode, // Use table's QR code for admin-initiated sessions
         hours: data.hours,
         endTime: endTime.toISOString(),
+        promoId: data.promoId,
       });
     },
     onSuccess: async (result, variables) => {
@@ -130,6 +134,8 @@ const TablesManagement: React.FC = () => {
       setSelectedTableForSession(null);
       setSelectedUserId("");
       setSessionHours(1);
+      setSelectedPromoId(null);
+      setPromoDiscount(0);
       setToastMessage("🎉 Session started successfully!");
       setToastColor("success");
       setShowToast(true);
@@ -231,10 +237,10 @@ const TablesManagement: React.FC = () => {
     if (sessionData?.currentSession) {
       showLocalNotification('🔔 Session Timeout', {
         body: `Time expired! Session for Table ${tableNumber} automatically ended.\n` +
-              `User: ${sessionData.currentSession.user.firstName} ${sessionData.currentSession.user.lastName}\n` +
+              `User: ${sessionData.currentSession.user?.firstName} ${sessionData.currentSession.user?.lastName}\n` +
               `Location: ${sessionData.location}\n` +
-              `Duration: ${sessionData.currentSession.duration}h\n` +
-              `Credits Used: ${sessionData.currentSession.totalCost}`,
+              `Duration: ${sessionData.currentSession?.duration}h\n` +
+              `Credits Used: ${sessionData.currentSession?.totalCost}`,
         icon: '/icon-192.png',
         tag: `timeout-${sessionId}`,
         requireInteraction: true
@@ -475,6 +481,11 @@ const TablesManagement: React.FC = () => {
     setShowStartSessionModal(true);
   };
 
+  const handlePromoSelect = (promoId: string | null, discount: number) => {
+    setSelectedPromoId(promoId);
+    setPromoDiscount(discount);
+  };
+
   const handleConfirmStartSession = () => {
     if (!selectedUserId) {
       showConfirmation({
@@ -500,6 +511,7 @@ const TablesManagement: React.FC = () => {
       userId: selectedUserId,
       hours: sessionHours,
       qrCode: selectedTableForSession.qrCode, // Include table's QR code
+      promoId: selectedPromoId || undefined,
     });
   };
   // const handleShowQR = (val: any) => {
@@ -583,7 +595,7 @@ const TablesManagement: React.FC = () => {
     <IonContent>
       <div className="tables-management">
         <div className="page-header">
-          <h1>Table Management</h1>
+          <h1 style={{ color: 'var(--ion-color-primary)' }}>🔧 Table Management</h1>
           <p>Create and manage study tables</p>
           <button
             className="btn btn-primary"
@@ -775,7 +787,7 @@ const TablesManagement: React.FC = () => {
             <p>Create your first study table to get started</p>
           </div>
         )}
-      </div>
+      </div> {/* End tables-management */}
       <SlideoutModal
         isOpen={openSelectedRow.open}
         onClose={() => handleCloseSelectedCollectionModal()}
@@ -885,8 +897,24 @@ const TablesManagement: React.FC = () => {
             />
           </IonItem>
 
+          {/* Promo Selection */}
+          {selectedTableForSession && (
+            <div style={{ marginTop: "20px" }}>
+              <PromoSelector
+                sessionCost={(selectedTableForSession?.hourlyRate || 0) * sessionHours}
+                selectedPromoId={selectedPromoId}
+                onPromoSelect={handlePromoSelect}
+                disabled={false}
+              />
+            </div>
+          )}
+
           <div style={{ marginTop: "20px", padding: "15px", background: "#f5f5f5", borderRadius: "8px" }}>
-            <p><strong>Total Credits:</strong> {(selectedTableForSession?.hourlyRate || 0) * sessionHours}</p>
+            <p><strong>Subtotal:</strong> {(selectedTableForSession?.hourlyRate || 0) * sessionHours} credits</p>
+            {promoDiscount > 0 && (
+              <p style={{ color: "#28a745" }}><strong>Promo Discount:</strong> -{promoDiscount} credits</p>
+            )}
+            <p><strong>Total Credits:</strong> {((selectedTableForSession?.hourlyRate || 0) * sessionHours) - promoDiscount} credits</p>
             <p><strong>End Time:</strong> {new Date(Date.now() + sessionHours * 60 * 60 * 1000).toLocaleString()}</p>
           </div>
         </div>
@@ -900,6 +928,8 @@ const TablesManagement: React.FC = () => {
                   setSelectedTableForSession(null);
                   setSelectedUserId("");
                   setSessionHours(1);
+                  setSelectedPromoId(null);
+                  setPromoDiscount(0);
                 }}
               >
                 Cancel

@@ -9,6 +9,8 @@ import "../Admin/styles/admin-responsive.css";
 import { useAdminStatus } from "@/hooks/AdminHooks";
 import DynamicTable, { useTable } from "@/shared/DynamicTable/DynamicTable";
 import { TableColumn } from "@/shared/DynamicTable/Interface/TableInterface";
+import { RegisterRequestSchema } from "@/schema/auth.schema";
+import { z } from "zod";
 import { 
   IonButton, 
   IonIcon, 
@@ -26,18 +28,20 @@ import {
   IonCardContent, 
   IonCardHeader, 
   IonCardTitle,
-  IonToast
+  IonToast,
+  IonText
 } from "@ionic/react";
 import { 
   checkmarkCircleOutline, 
   closeCircleOutline, 
   arrowUpOutline, 
   arrowDownOutline, 
-  addCircleOutline 
+  addCircleOutline,
+  personAddOutline
 } from "ionicons/icons";
 
 const UsersManagement: React.FC = () => {
-  const { users, isLoading, error, toggleAdmin, addCredits, refetch } =
+  const { users, isLoading, error, toggleAdmin, addCredits, createUser, refetch } =
     useUsersManagement();
   const { refetch: refetchAdminStatus, isAdmin } = useAdminStatus();
   const [filterType, setFilterType] = useState<"all" | "admin" | "user">("all");
@@ -48,6 +52,17 @@ const UsersManagement: React.FC = () => {
   const [selectedUserName, setSelectedUserName] = useState<string>("");
   const [creditAmount, setCreditAmount] = useState<number>(100);
   const [creditType, setCreditType] = useState<string>("basic");
+  
+  // Add User Modal State
+  const [isAddUserModalOpen, setIsAddUserModalOpen] = useState(false);
+  const [newUserData, setNewUserData] = useState({
+    name: "",
+    email: "",
+    password: "",
+    confirmPassword: ""
+  });
+  const [userFormErrors, setUserFormErrors] = useState<{[key: string]: string}>({});
+  
   const [showToast, setShowToast] = useState(false);
   const [toastMessage, setToastMessage] = useState("");
   const [toastColor, setToastColor] = useState<"success" | "danger">("success");
@@ -147,6 +162,83 @@ const UsersManagement: React.FC = () => {
       refetch();
     } catch (error) {
       const message = error instanceof Error ? error.message : "Failed to add credits";
+      setToastMessage(message);
+      setToastColor("danger");
+      setShowToast(true);
+    }
+  };
+
+  // User Creation Functions
+  const validateUserForm = (): boolean => {
+    try {
+      RegisterRequestSchema.parse({
+        name: newUserData.name,
+        email: newUserData.email,
+        password: newUserData.password
+      });
+      
+      // Additional password confirmation check
+      if (newUserData.password !== newUserData.confirmPassword) {
+        setUserFormErrors({ confirmPassword: 'Passwords do not match' });
+        return false;
+      }
+      
+      setUserFormErrors({});
+      return true;
+    } catch (error) {
+      if (error instanceof z.ZodError) {
+        const newErrors: {[key: string]: string} = {};
+        error.issues.forEach((err) => {
+          if (err.path[0]) {
+            newErrors[err.path[0].toString()] = err.message;
+          }
+        });
+        setUserFormErrors(newErrors);
+      }
+      return false;
+    }
+  };
+
+  const handleCreateUser = async () => {
+    if (!validateUserForm()) {
+      return;
+    }
+
+    showConfirmation({
+      header: 'Create New User',
+      message: `Are you sure you want to create a new user account?\n\nName: ${newUserData.name}\nEmail: ${newUserData.email}\n\nThe user will be able to log in immediately with the provided credentials.`,
+      confirmText: 'Create User',
+      cancelText: 'Cancel'
+    }, async () => {
+      await performCreateUser();
+    });
+  };
+
+  const performCreateUser = async () => {
+    try {
+      await createUser.mutateAsync({
+        name: newUserData.name,
+        email: newUserData.email,
+        password: newUserData.password
+      });
+      
+      setToastMessage(`Successfully created user: ${newUserData.name}`);
+      setToastColor("success");
+      setShowToast(true);
+      setIsAddUserModalOpen(false);
+      
+      // Reset form
+      setNewUserData({
+        name: "",
+        email: "",
+        password: "",
+        confirmPassword: ""
+      });
+      setUserFormErrors({});
+      
+      refetch();
+    } catch (error) {
+      const message = error instanceof Error ? error.message : "Failed to create user";
       setToastMessage(message);
       setToastColor("danger");
       setShowToast(true);
@@ -263,6 +355,15 @@ const UsersManagement: React.FC = () => {
       <div className="page-header">
         <h1>User Management</h1>
         <p>Manage users and admin permissions</p>
+        <div className="header-actions">
+          <IonButton
+            color="primary"
+            onClick={() => setIsAddUserModalOpen(true)}
+          >
+            <IonIcon icon={personAddOutline} slot="start" />
+            Add New User
+          </IonButton>
+        </div>
       </div>
 
       {/* Filter Buttons */}
@@ -442,6 +543,170 @@ const UsersManagement: React.FC = () => {
                   <p>
                     <small>
                       Note: Credits will be added immediately to the user's account.
+                    </small>
+                  </p>
+                </div>
+              </IonCardContent>
+            </IonCard>
+          </div>
+        </IonContent>
+      </IonModal>
+
+      {/* Create User Modal */}
+      <IonModal
+        isOpen={isAddUserModalOpen}
+        onDidDismiss={() => setIsAddUserModalOpen(false)}
+      >
+        <IonHeader>
+          <IonToolbar>
+            <IonTitle>Create New User</IonTitle>
+            <IonButton
+              slot="end"
+              fill="clear"
+              onClick={() => setIsAddUserModalOpen(false)}
+            >
+              Close
+            </IonButton>
+          </IonToolbar>
+        </IonHeader>
+
+        <IonContent className="create-user-modal-content">
+          <div className="create-user-form">
+            <IonCard>
+              <IonCardHeader>
+                <IonCardTitle>User Details</IonCardTitle>
+              </IonCardHeader>
+              <IonCardContent>
+                <div className="form-section">
+                  <IonItem className={userFormErrors.name ? 'ion-invalid' : ''}>
+                    <IonLabel position="stacked">Full Name *</IonLabel>
+                    <IonInput
+                      type="text"
+                      value={newUserData.name}
+                      placeholder="Enter full name"
+                      onIonInput={(e) => setNewUserData({...newUserData, name: e.detail.value!})}
+                      required
+                    />
+                  </IonItem>
+                  {userFormErrors.name && (
+                    <IonText color="danger" className="error-text">
+                      {userFormErrors.name}
+                    </IonText>
+                  )}
+                </div>
+
+                <div className="form-section">
+                  <IonItem className={userFormErrors.email ? 'ion-invalid' : ''}>
+                    <IonLabel position="stacked">Email Address *</IonLabel>
+                    <IonInput
+                      type="email"
+                      value={newUserData.email}
+                      placeholder="Enter email address"
+                      onIonInput={(e) => setNewUserData({...newUserData, email: e.detail.value!})}
+                      required
+                    />
+                  </IonItem>
+                  {userFormErrors.email && (
+                    <IonText color="danger" className="error-text">
+                      {userFormErrors.email}
+                    </IonText>
+                  )}
+                </div>
+
+                <div className="form-section">
+                  <IonItem className={userFormErrors.password ? 'ion-invalid' : ''}>
+                    <IonLabel position="stacked">Password *</IonLabel>
+                    <IonInput
+                      type="password"
+                      value={newUserData.password}
+                      placeholder="Create a password"
+                      onIonInput={(e) => setNewUserData({...newUserData, password: e.detail.value!})}
+                      required
+                    />
+                  </IonItem>
+                  {userFormErrors.password && (
+                    <IonText color="danger" className="error-text">
+                      {userFormErrors.password}
+                    </IonText>
+                  )}
+                </div>
+
+                <div className="form-section">
+                  <IonItem className={userFormErrors.confirmPassword ? 'ion-invalid' : ''}>
+                    <IonLabel position="stacked">Confirm Password *</IonLabel>
+                    <IonInput
+                      type="password"
+                      value={newUserData.confirmPassword}
+                      placeholder="Confirm password"
+                      onIonInput={(e) => setNewUserData({...newUserData, confirmPassword: e.detail.value!})}
+                      required
+                    />
+                  </IonItem>
+                  {userFormErrors.confirmPassword && (
+                    <IonText color="danger" className="error-text">
+                      {userFormErrors.confirmPassword}
+                    </IonText>
+                  )}
+                </div>
+
+                <div className="create-user-summary" style={{
+                  marginTop: "20px",
+                  padding: "16px",
+                  backgroundColor: "#f5f5f5",
+                  borderRadius: "8px"
+                }}>
+                  <h4 style={{ margin: "0 0 12px 0", color: "var(--ion-color-primary)" }}>User Summary</h4>
+                  <div className="summary-row" style={{
+                    display: "flex",
+                    justifyContent: "space-between",
+                    marginBottom: "8px"
+                  }}>
+                    <span><strong>Name:</strong></span>
+                    <span>{newUserData.name || "Not set"}</span>
+                  </div>
+                  <div className="summary-row" style={{
+                    display: "flex",
+                    justifyContent: "space-between",
+                    marginBottom: "8px"
+                  }}>
+                    <span><strong>Email:</strong></span>
+                    <span>{newUserData.email || "Not set"}</span>
+                  </div>
+                  <div className="summary-row" style={{
+                    display: "flex",
+                    justifyContent: "space-between",
+                    marginBottom: "8px"
+                  }}>
+                    <span><strong>Role:</strong></span>
+                    <span>User (can be changed later)</span>
+                  </div>
+                  <div className="summary-row" style={{
+                    display: "flex",
+                    justifyContent: "space-between"
+                  }}>
+                    <span><strong>Initial Credits:</strong></span>
+                    <span>0 (can be added later)</span>
+                  </div>
+                </div>
+
+                <IonButton
+                  expand="block"
+                  onClick={handleCreateUser}
+                  disabled={createUser.isPending || !newUserData.name || !newUserData.email || !newUserData.password}
+                  style={{ marginTop: "20px" }}
+                >
+                  {createUser.isPending
+                    ? "Creating User..."
+                    : "Create User"}
+                </IonButton>
+
+                <div className="create-user-note" style={{
+                  marginTop: "16px",
+                  textAlign: "center"
+                }}>
+                  <p>
+                    <small>
+                      Note: The user will be able to log in immediately with these credentials.
                     </small>
                   </p>
                 </div>

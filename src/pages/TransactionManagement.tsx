@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState } from "react";
 import {
   TransactionManagementServiceAPI,
   useTransactionsManagement,
@@ -18,12 +18,13 @@ import {
   createTableStatusChip,
   formatDate,
 } from "@/shared/DynamicTable/Utls/TableUtils";
-import { IonButton } from "@ionic/react";
+import { IonButton, IonSegment, IonSegmentButton, IonLabel } from "@ionic/react";
 import { PesoFormat } from "@/shared/PesoHelper";
 const TransactionsManagement: React.FC = () => {
   const { isLoading, error, approve, reject, refetch } =
     useTransactionsManagement();
   const { notifyCreditApproved } = useNotifications();
+  const [selectedTab, setSelectedTab] = useState<"pending" | "all">("pending");
 
   // Confirmation hook
   const {
@@ -34,23 +35,40 @@ const TransactionsManagement: React.FC = () => {
     handleCancel: cancelAction,
     handleDismiss: dismissConfirm
   } = useConfirmation();
+  
   const {
-    tableState,
-    updateState,
-    data,
-    isLoading: IsLoadingtable,
-    isError,
-    error: IsErrorTable,
-    refetch: RefetchTable,
-    isFetching,
+    tableState: pendingTableState,
+    updateState: updatePendingState,
+    data: pendingData,
+    isLoading: isLoadingPending,
+    isError: isErrorPending,
+    error: errorPending,
+    refetch: refetchPendingTable,
+    isFetching: isFetchingPending,
   } = useTable({
-    queryKey: "transactions-table",
+    queryKey: "transactions-pending-table",
     fetchFn: TransactionManagementServiceAPI.fetchTransactions,
+    initialState: { pageSize: 10 },
+  });
+
+  const {
+    tableState: allTableState,
+    updateState: updateAllState,
+    data: allData,
+    isLoading: isLoadingAll,
+    isError: isErrorAll,
+    error: errorAll,
+    refetch: refetchAllTable,
+    isFetching: isFetchingAll,
+  } = useTable({
+    queryKey: "transactions-all-table",
+    fetchFn: TransactionManagementServiceAPI.fetchAllTransactions,
     initialState: { pageSize: 10 },
   });
   const handleApprove = async (transactionId: string) => {
     // Find the transaction details to get user info and amount
-    const transaction = data?.data.find(t => t.id === transactionId);
+    const currentData = selectedTab === "pending" ? pendingData : allData;
+    const transaction = currentData?.data.find((t: any) => t.id === transactionId);
     
     // Show confirmation dialog
     showConfirmation({
@@ -85,7 +103,8 @@ const TransactionsManagement: React.FC = () => {
           }
         }
         
-        RefetchTable();
+        refetchPendingTable();
+        refetchAllTable();
       } catch (error) {
         console.error("Failed to approve transaction:", error);
       }
@@ -104,7 +123,8 @@ const TransactionsManagement: React.FC = () => {
     }, async () => {
       try {
         await reject.mutateAsync(transactionId);
-        RefetchTable();
+        refetchPendingTable();
+        refetchAllTable();
       } catch (error) {
         console.error("Failed to reject transaction:", error);
       }
@@ -121,7 +141,8 @@ const TransactionsManagement: React.FC = () => {
     );
   }
   const handleRowClick = () => {};
-  const columns: TableColumn<GetTransactionWithUserTableColumn>[] = [
+  
+  const pendingColumns: TableColumn<GetTransactionWithUserTableColumn>[] = [
     {
       key: "user",
       label: "User",
@@ -184,80 +205,113 @@ const TransactionsManagement: React.FC = () => {
       ),
     },
   ];
+
+  const allColumns: TableColumn<GetTransactionWithUserTableColumn>[] = [
+    {
+      key: "user",
+      label: "User",
+      sortable: true,
+      render: (value) => value.name,
+    },
+    {
+      key: "amount",
+      label: "Amount",
+      sortable: false,
+      render: (value) => PesoFormat(value),
+    },
+    {
+      key: "cost",
+      label: "Cost",
+      sortable: true,
+      render: (value) => PesoFormat(value),
+    },
+    {
+      key: "paymentMethod",
+      label: "Payment Method",
+      sortable: true,
+      render: (value) => value,
+    },
+    {
+      key: "status",
+      label: "Status",
+      sortable: true,
+      render: (value) => createStatusChip(value),
+    },
+    {
+      key: "createdAt",
+      label: "Date",
+      sortable: true,
+      render: (value) => formatDate(value),
+    },
+  ];
+  
+  const currentData = selectedTab === "pending" ? pendingData : allData;
+  const currentColumns = selectedTab === "pending" ? pendingColumns : allColumns;
+  const currentTableState = selectedTab === "pending" ? pendingTableState : allTableState;
+  const currentUpdateState = selectedTab === "pending" ? updatePendingState : updateAllState;
+  const currentIsLoading = selectedTab === "pending" ? isLoadingPending : isLoadingAll;
+  const currentIsFetching = selectedTab === "pending" ? isFetchingPending : isFetchingAll;
+  const currentIsError = selectedTab === "pending" ? isErrorPending : isErrorAll;
+  const currentError = selectedTab === "pending" ? errorPending : errorAll;
+  const currentRefetch = selectedTab === "pending" ? refetchPendingTable : refetchAllTable;
+
+  if (isLoading) {
+    return <LoadingSpinner message="Loading transactions..." />;
+  }
+
+  if (error) {
+    return (
+      <ErrorMessage message="Failed to load transactions" onRetry={refetch} />
+    );
+  }
+  
   return (
     <div className="transactions-management">
       <div className="page-header">
         <h1>Transaction Management</h1>
-        <p>Review and approve credit purchase requests</p>
+        <p>Review credit purchase requests and transaction history</p>
       </div>
 
-      {data?.data.length === 0 ? (
+      {/* Tab Segment */}
+      <div className="transaction-tabs" style={{ marginBottom: '20px' }}>
+        <IonSegment
+          value={selectedTab}
+          onIonChange={(e) => setSelectedTab(e.detail.value as "pending" | "all")}
+        >
+          <IonSegmentButton value="pending">
+            <IonLabel>Pending Transactions</IonLabel>
+          </IonSegmentButton>
+          <IonSegmentButton value="all">
+            <IonLabel>All Transactions</IonLabel>
+          </IonSegmentButton>
+        </IonSegment>
+      </div>
+
+      {currentData?.data.length === 0 ? (
         <div className="empty-state">
-          <h3>No pending transactions</h3>
-          <p>All transactions have been processed</p>
+          <h3>{selectedTab === "pending" ? "No pending transactions" : "No transactions found"}</h3>
+          <p>{selectedTab === "pending" ? "All transactions have been processed" : "No transaction history available"}</p>
         </div>
       ) : (
         <div className="transactions-table">
           <div className="table-body">
             <DynamicTable
-              columns={columns}
-              data={data?.data}
-              total={data?.total}
-              totalPages={data?.totalPages}
-              isLoading={isLoading || isFetching}
-              isError={isError}
-              error={error}
-              onRefetch={refetch}
-              tableState={tableState}
-              onStateChange={updateState}
+              columns={currentColumns}
+              data={currentData?.data}
+              total={currentData?.total}
+              totalPages={currentData?.totalPages}
+              isLoading={currentIsLoading || currentIsFetching}
+              isError={currentIsError}
+              error={currentError}
+              onRefetch={currentRefetch}
+              tableState={currentTableState}
+              onStateChange={currentUpdateState}
               onRowClick={handleRowClick}
-              searchPlaceholder="Search entries..."
-              emptyMessage="No entries found"
-              loadingMessage="Loading entries..."
+              searchPlaceholder="Search transactions..."
+              emptyMessage="No transactions found"
+              loadingMessage="Loading transactions..."
               pageSizeOptions={[10, 20, 50, 100]}
             />
-            {/* {transactions.map((transaction) => (
-              <div key={transaction.id} className="table-row">
-                <div className="col-user">
-                  <div className="user-cell">
-                    <strong>{transaction.user.name}</strong>
-                    <span>{transaction.user.email}</span>
-                  </div>
-                </div>
-                <div className="col-amount">
-                  <span className="amount">{transaction.amount} credits</span>
-                </div>
-                <div className="col-cost">
-                  <span className="cost">${transaction.cost.toFixed(2)}</span>
-                </div>
-                <div className="col-method">
-                  <span className="method">
-                    {transaction.paymentMethod.replace("_", " ").toUpperCase()}
-                  </span>
-                </div>
-                <div className="col-date">
-                  <span className="date">
-                    {new Date(transaction.createdAt).toLocaleDateString()}
-                  </span>
-                </div>
-                <div className="col-actions">
-                  <button
-                    className="btn btn-success"
-                    onClick={() => handleApprove(transaction.id)}
-                    disabled={approve.isPending || reject.isPending}
-                  >
-                    Approve
-                  </button>
-                  <button
-                    className="btn btn-danger"
-                    onClick={() => handleReject(transaction.id)}
-                    disabled={approve.isPending || reject.isPending}
-                  >
-                    Reject
-                  </button>
-                </div>
-              </div>
-            ))} */}
           </div>
         </div>
       )}

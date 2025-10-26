@@ -61,12 +61,25 @@ export const useUsersManagement = () => {
     },
   });
 
+  const createUserMutation = useMutation({
+    mutationFn: ({ name, email, password }: { name: string; email: string; password: string }) =>
+      apiClient.post(
+        "/admin/users/create",
+        ApiResponseSchema(UserWithInfoSchema),
+        { name, email, password }
+      ),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["admin", "users"] });
+    },
+  });
+
   return {
     users: usersQuery.data || [],
     isLoading: usersQuery.isLoading,
     error: usersQuery.error,
     toggleAdmin: toggleAdminMutation,
     addCredits: addCreditsMutation,
+    createUser: createUserMutation,
     refetch: usersQuery.refetch,
   };
 };
@@ -82,6 +95,16 @@ export const useTransactionsManagement = () => {
         ApiResponseSchema(z.array(TransactionWithUserSchema))
       ),
     refetchInterval: 30000, // Refresh every 30 seconds
+  });
+
+  const allTransactionsQuery = useQuery({
+    queryKey: ["admin", "transactions", "all"],
+    queryFn: () =>
+      apiClient.get(
+        "/admin/transactions/all",
+        ApiResponseSchema(z.array(TransactionWithUserSchema))
+      ),
+    refetchInterval: 60000, // Refresh every 60 seconds
   });
 
   const approveMutation = useMutation({
@@ -111,11 +134,14 @@ export const useTransactionsManagement = () => {
 
   return {
     transactions: transactionsQuery.data || [],
+    allTransactions: allTransactionsQuery.data || [],
     isLoading: transactionsQuery.isLoading,
+    isLoadingAll: allTransactionsQuery.isLoading,
     error: transactionsQuery.error,
     approve: approveMutation,
     reject: rejectMutation,
     refetch: transactionsQuery.refetch,
+    refetchAll: allTransactionsQuery.refetch,
   };
 };
 export class TransactionManagementServiceAPI {
@@ -144,6 +170,82 @@ export class TransactionManagementServiceAPI {
             val.cost.toString()?.toLowerCase().includes(searchTerm) ||
             val.paymentMethod?.toString().toLowerCase().includes(searchTerm) ||
             val.user.toString()?.toLowerCase().includes(searchTerm)
+        );
+    }
+
+    const sortBy: GetTransactionWithUserTableKeys =
+      state.sortBy as GetTransactionWithUserTableKeys;
+    filteredTransactionWithUserTable.sort((a, b) => {
+      const aVal = a[sortBy];
+      const bVal = b[sortBy];
+
+      if (aVal == null) return 1;
+      if (bVal == null) return -1;
+
+      if (typeof aVal === "string" && typeof bVal === "string") {
+        return state.sortOrder === "asc"
+          ? aVal.localeCompare(bVal)
+          : bVal.localeCompare(aVal);
+      }
+
+      if (typeof aVal === "number" && typeof bVal === "number") {
+        return state.sortOrder === "asc" ? aVal - bVal : bVal - aVal;
+      }
+
+      return 0;
+    });
+
+    const total = filteredTransactionWithUserTable.length;
+    const totalPages = Math.ceil(total / state.pageSize);
+    const safePage = Math.min(state.page, totalPages || 1);
+    const startIndex = (safePage - 1) * state.pageSize;
+    const paginatedUsers = filteredTransactionWithUserTable.slice(
+      startIndex,
+      startIndex + state.pageSize
+    );
+    const response = {
+      data: paginatedUsers,
+      total,
+      page: safePage,
+      pageSize: state.pageSize,
+      totalPages,
+    };
+    const GetfilteredeTransactionWithUserTableSchema = PaginatedResponseSchema(
+      getTransactionWithUserSchema
+    );
+    const parsedResponse =
+      GetfilteredeTransactionWithUserTableSchema.parse(response);
+
+    return parsedResponse;
+  }
+
+  static async fetchAllTransactions(state: TableState) {
+    await new Promise((resolve) => setTimeout(resolve, 800));
+
+    const fetchAllTransactions = await apiClient.get(
+      "/admin/transactions/all",
+      ApiResponseSchema(z.array(TransactionWithUserSchema))
+    );
+    console.log(fetchAllTransactions);
+    const parsed = getTransactionWithUserTableSchema.parse({
+      data: Array.isArray(fetchAllTransactions)
+        ? fetchAllTransactions
+        : [fetchAllTransactions],
+    });
+
+    let filteredTransactionWithUserTable = [...parsed.data];
+    if (state.search) {
+      const searchTerm = state.search.toLowerCase();
+      filteredTransactionWithUserTable =
+        filteredTransactionWithUserTable.filter(
+          (val) =>
+            val.id?.toString()?.toLowerCase().includes(searchTerm) ||
+            val.amount?.toString().toLowerCase().includes(searchTerm) ||
+            val.cost.toString()?.toLowerCase().includes(searchTerm) ||
+            val.paymentMethod?.toString().toLowerCase().includes(searchTerm) ||
+            val.status?.toString().toLowerCase().includes(searchTerm) ||
+            val.user.name?.toString().toLowerCase().includes(searchTerm) ||
+            val.user.email?.toString().toLowerCase().includes(searchTerm)
         );
     }
 
