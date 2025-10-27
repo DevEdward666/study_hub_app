@@ -67,15 +67,7 @@ class ApiClient {
           url,
           data,
         }
-      );
-
-      // Log the actual response for debugging
-      console.log('API Response:', {
-        url,
-        method,
-        status: response.status,
-        data: response.data
-      });
+    );
 
       const validatedResponse = schema.parse(response.data);
 

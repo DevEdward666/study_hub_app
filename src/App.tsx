@@ -52,6 +52,8 @@ import TransactionsManagement from "./pages/TransactionManagement";
 import UsersManagement from "./pages/UserManagement";
 import CreditsManagement from "./pages/CreditsManagement";
 import ReportsPage from "./pages/ReportsPage";
+import WiFiPortal from "./pages/WiFiPortal";
+import PublicWiFiPortal from "./pages/PublicWiFiPortal";
 setupIonicReact();
 
 const App: React.FC = () => (
@@ -63,6 +65,7 @@ const App: React.FC = () => (
         <Route exact path="/login" component={Login} />
         <Route exact path="/register" component={Register} />
         <Route exact path="/admin/login" component={AdminLogin} />
+        <Route exact path="/wifi" component={PublicWiFiPortal} />
 
         {/* Protected Routes with Regular Tabs */}
         <Route path="/app">
@@ -84,6 +87,7 @@ const App: React.FC = () => (
               <Route exact path="/app/admin/users" component={UsersManagement} />
               <Route exact path="/app/admin/credits" component={CreditsManagement} />
               <Route exact path="/app/admin/reports" component={ReportsPage} />
+              <Route exact path="/app/admin/wifi" component={WiFiPortal} />
               <Route exact path="/app/admin/profile" component={Profile} />
 
               <Route exact path="/app">

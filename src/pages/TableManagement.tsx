@@ -378,12 +378,6 @@ const TablesManagement: React.FC = () => {
   const columns: TableColumn<GetTablesTableColumn>[] = [
     { key: "tableNumber", label: "Table Number", sortable: false },
     {
-      key: "location",
-      label: "Location",
-      sortable: true,
-      render: (value) => value,
-    },
-    {
       key: "capacity",
       label: "Capacity",
       sortable: true,
@@ -421,17 +415,16 @@ const TablesManagement: React.FC = () => {
         <>
           <IonButton
             size="small"
-            fill="clear"
-            color="dark"
+            fill="solid"
             onClick={() => handleSetUpdate(value)}
-            title="Update Table"
+            title="Edit Table"
           >
-            <IonIcon slot="icon-only" icon={playCircleOutline} style={{ transform: 'rotate(-90deg)' }} />
+            Edit
           </IonButton>
           {row.isOccupied && row.currentSession ? (
             <IonButton
               size="small"
-              fill="clear"
+              fill="solid"
               color="danger"
               onClick={(e) => {
                 e.stopPropagation();
@@ -441,20 +434,20 @@ const TablesManagement: React.FC = () => {
               }}
               title="End Session"
             >
-              <IonIcon slot="icon-only" icon={stopCircleOutline} />
+              Stop
             </IonButton>
           ) : (
             <IonButton
               size="small"
-              fill="clear"
-              color="dark"
+              fill="solid"
+              color="success"
               onClick={(e) => {
                 e.stopPropagation();
                 handleStartSession(row);
               }}
               title="Start Session"
             >
-              <IonIcon slot="icon-only" icon={playCircleOutline} />
+              Start
             </IonButton>
           )}
         </>

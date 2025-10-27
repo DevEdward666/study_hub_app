@@ -1,0 +1,401 @@
+/* Public WiFi Captive Portal Styles */
+
+.public-wifi-portal {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  --background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+}
+
+.portal-container {
+  max-width: 500px;
+  margin: 0 auto;
+  padding: 20px;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+}
+
+/* Header */
+.portal-header {
+  text-align: center;
+  margin-bottom: 30px;
+}
+
+.portal-header .logo h1 {
+  color: white;
+  font-size: 48px;
+  margin: 0;
+  font-weight: bold;
+  text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3);
+}
+
+.portal-header .tagline {
+  color: rgba(255, 255, 255, 0.9);
+  font-size: 18px;
+  margin: 10px 0 0 0;
+  font-weight: 300;
+}
+
+/* Cards */
+.access-card,
+.success-card {
+  border-radius: 16px;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
+  margin-bottom: 20px;
+}
+
+.access-card ion-card-header {
+  text-align: center;
+  padding-bottom: 10px;
+}
+
+.access-card ion-card-title {
+  font-size: 24px;
+  font-weight: 600;
+  color: var(--ion-color-primary);
+}
+
+/* Form Content */
+.form-content {
+  padding: 10px 0;
+}
+
+.form-content > p {
+  text-align: center;
+  font-size: 14px;
+  margin-bottom: 20px;
+}
+
+.input-wrapper {
+  margin: 20px 0;
+}
+
+.access-input {
+  --background: #f5f5f5;
+  --padding-start: 16px;
+  --padding-end: 16px;
+  border-radius: 8px;
+  font-size: 18px;
+  text-align: center;
+  border: 2px solid #e0e0e0;
+  transition: border-color 0.3s;
+}
+
+.access-input:focus-within {
+  border-color: var(--ion-color-primary);
+}
+
+.error-message {
+  text-align: center;
+  font-size: 14px;
+  margin: 10px 0;
+  padding: 10px;
+  background: rgba(var(--ion-color-danger-rgb), 0.1);
+  border-radius: 8px;
+}
+
+/* Buttons */
+.connect-button {
+  margin-top: 20px;
+  --border-radius: 12px;
+  height: 52px;
+  font-size: 16px;
+  font-weight: 600;
+  text-transform: none;
+}
+
+.close-button {
+  margin-top: 20px;
+  --border-radius: 12px;
+  height: 48px;
+  font-size: 16px;
+  font-weight: 600;
+  text-transform: none;
+}
+
+.help-text {
+  text-align: center;
+  margin-top: 20px;
+}
+
+.help-text p {
+  margin: 0;
+}
+
+/* Success Screen */
+.success-content {
+  text-align: center;
+  padding: 20px;
+}
+
+.success-icon {
+  font-size: 72px;
+  margin-bottom: 20px;
+  animation: scaleIn 0.5s ease-out;
+}
+
+@keyframes scaleIn {
+  from {
+    transform: scale(0);
+    opacity: 0;
+  }
+  to {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+
+.success-content h2 {
+  color: var(--ion-color-success);
+  font-size: 32px;
+  margin: 0 0 15px 0;
+  font-weight: bold;
+}
+
+.success-content p {
+  font-size: 16px;
+  margin: 8px 0;
+}
+
+.wifi-info {
+  margin: 30px 0;
+  padding: 20px;
+  background: rgba(var(--ion-color-medium-rgb), 0.1);
+  border-radius: 12px;
+}
+
+.wifi-info p {
+  margin: 0;
+  line-height: 1.6;
+}
+
+/* Terms & Footer */
+.terms {
+  text-align: center;
+  margin: 20px 0;
+}
+
+.terms p {
+  margin: 0;
+  color: rgba(255, 255, 255, 0.8);
+}
+
+.terms a {
+  color: rgba(255, 255, 255, 0.9);
+  text-decoration: underline;
+}
+
+.portal-footer {
+  text-align: center;
+  margin-top: 20px;
+  padding: 20px 0;
+}
+
+.portal-footer p {
+  margin: 0;
+  color: rgba(255, 255, 255, 0.7);
+}
+
+/* Mobile Responsive */
+@media (max-width: 576px) {
+  .portal-container {
+    padding: 15px;
+  }
+
+  .portal-header .logo h1 {
+    font-size: 36px;
+  }
+
+  .portal-header .tagline {
+    font-size: 16px;
+  }
+
+  .access-card ion-card-title {
+    font-size: 20px;
+  }
+
+  .success-content h2 {
+    font-size: 28px;
+  }
+
+  .success-icon {
+    font-size: 64px;
+  }
+}
+
+/* Loading State */
+.connect-button ion-spinner {
+  width: 20px;
+  height: 20px;
+}
+
+/* Focus States for Accessibility */
+.access-input:focus,
+.connect-button:focus,
+.close-button:focus {
+  outline: 2px solid rgba(255, 255, 255, 0.5);
+  outline-offset: 2px;
+}
+
+/* Animation for Card Entry */
+.access-card,
+.success-card,
+.expired-card {
+  animation: slideUp 0.4s ease-out;
+}
+
+@keyframes slideUp {
+  from {
+    transform: translateY(30px);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+/* Countdown Timer Styles */
+.countdown-wrapper {
+  margin: 30px 0;
+  padding: 20px;
+  background: linear-gradient(135deg, rgba(102, 126, 234, 0.1), rgba(118, 75, 162, 0.1));
+  border-radius: 16px;
+  border: 2px solid rgba(var(--ion-color-primary-rgb), 0.2);
+}
+
+.countdown-display {
+  text-align: center;
+}
+
+.countdown-display h3 {
+  font-size: 16px;
+  margin: 0 0 15px 0;
+  color: var(--ion-color-dark);
+  font-weight: 600;
+}
+
+.time-badge {
+  margin: 15px 0;
+}
+
+.time-remaining-badge {
+  font-size: 32px;
+  padding: 15px 30px;
+  border-radius: 12px;
+  font-weight: bold;
+  letter-spacing: 1px;
+}
+
+.countdown-wrapper ion-progress-bar {
+  margin-top: 15px;
+  height: 8px;
+  border-radius: 4px;
+}
+
+/* Warning Box */
+.warning-box {
+  margin: 20px 0;
+  padding: 15px;
+  background: rgba(var(--ion-color-warning-rgb), 0.1);
+  border: 2px solid var(--ion-color-warning);
+  border-radius: 12px;
+  animation: pulse 2s infinite;
+}
+
+.warning-box p {
+  margin: 0;
+  text-align: center;
+}
+
+@keyframes pulse {
+  0%, 100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.8;
+  }
+}
+
+/* Expired Card */
+.expired-card {
+  border-radius: 16px;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
+  margin-bottom: 20px;
+}
+
+.expired-content {
+  text-align: center;
+  padding: 20px;
+}
+
+.expired-icon {
+  font-size: 72px;
+  margin-bottom: 20px;
+  animation: fadeIn 0.5s ease-out;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: scale(0.8);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+.expired-content h2 {
+  color: var(--ion-color-warning);
+  font-size: 32px;
+  margin: 0 0 15px 0;
+  font-weight: bold;
+}
+
+.expired-info {
+  margin: 30px 0;
+  padding: 20px;
+  background: rgba(var(--ion-color-medium-rgb), 0.1);
+  border-radius: 12px;
+}
+
+.expired-info p {
+  margin: 0;
+  line-height: 1.6;
+}
+
+.renew-button,
+.extend-button {
+  margin-top: 20px;
+  --border-radius: 12px;
+  height: 48px;
+  font-size: 16px;
+  font-weight: 600;
+  text-transform: none;
+}
+
+/* Mobile responsive adjustments */
+@media (max-width: 576px) {
+  .time-remaining-badge {
+    font-size: 24px;
+    padding: 12px 20px;
+  }
+
+  .countdown-display h3 {
+    font-size: 14px;
+  }
+
+  .warning-box {
+    padding: 12px;
+  }
+
+  .expired-icon {
+    font-size: 64px;
+  }
+
+  .expired-content h2 {
+    font-size: 28px;
+  }
+}
+

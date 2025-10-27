@@ -31,6 +31,18 @@
     transform-origin: right;
   }
 
+  /* Admin layout adjustments - avoid sidebar overlap */
+  .admin-layout .slideout-end {
+    right: 0;
+  }
+
+  /* Desktop admin sidebar adjustment */
+  @media (min-width: 768px) {
+    .admin-layout .slideout-end {
+      right: 280px;
+    }
+  }
+
   .slideout-small {
     width: 380px;
   }
