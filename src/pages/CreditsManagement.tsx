@@ -1,4 +1,5 @@
 import React, { useState, useMemo } from "react";
+import { useHistory } from "react-router-dom";
 import {
   IonButton,
   IonIcon,
@@ -77,6 +78,7 @@ const CreditsManagement: React.FC = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
+  const history = useHistory();
   // Package Modal State
   const [isPackageModalOpen, setIsPackageModalOpen] = useState(false);
   const [editingPackage, setEditingPackage] = useState<CreditPackage | null>(null);
@@ -513,7 +515,14 @@ const CreditsManagement: React.FC = () => {
       <div className="credits-tabs" style={{ marginBottom: '20px' }}>
         <IonSegment
           value={selectedTab}
-          onIonChange={(e) => setSelectedTab(e.detail.value as "packages" | "promos")}
+          onIonChange={(e) => {
+            const value = e.detail.value as "packages" | "promos";
+            if (value === "promos") {
+              history.push('/app/admin/credits/promos');
+            } else {
+              setSelectedTab(value);
+            }
+          }}
         >
           <IonSegmentButton value="packages">
             <IonIcon icon={cardOutline} />

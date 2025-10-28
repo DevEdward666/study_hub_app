@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import {
   IonTabs,
   IonRouterOutlet,
@@ -40,7 +40,7 @@ interface TabsLayoutProps {
 }
 
 export const TabsLayout: React.FC<TabsLayoutProps> = ({ children }) => {
-  const { refetch: refetchAdminStatus, isAdmin } = useAdminStatus();
+  const { refetch: refetchAdminStatus, isAdmin, isLoading: isAdminLoading } = useAdminStatus();
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const history = useHistory();
   const location = useLocation();
@@ -57,6 +57,14 @@ useIonViewDidEnter(()=>{
       requestPushPermission();
     }
   })
+
+  // Refetch admin status when navigating to admin paths
+  useEffect(() => {
+    if (isAdminPath) {
+      refetchAdminStatus();
+    }
+  }, [isAdminPath, refetchAdminStatus]);
+
   const navigateTo = (path: string) => {
     history.push(path);
     setSidebarOpen(false); // Close sidebar after navigation on mobile
@@ -69,6 +77,26 @@ useIonViewDidEnter(()=>{
   const isActiveRoute = (path: string) => {
     return location.pathname === path;
   };
+
+  // If we're on an admin path but still loading admin status, show loading
+  if (isAdminPath && isAdminLoading) {
+    return (
+      <div className="admin-loading">
+        <div style={{ 
+          display: 'flex', 
+          justifyContent: 'center', 
+          alignItems: 'center', 
+          height: '100vh',
+          flexDirection: 'column',
+          gap: '10px'
+        }}>
+          <div className="spinner"></div>
+          <p>Loading admin panel...</p>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className={`app-layout ${isAdmin && isAdminPath ? 'admin-layout' : 'user-layout'} ${sidebarOpen ? 'sidebar-open' : ''}`}>
       {isAdmin && isAdminPath && (
@@ -146,14 +174,14 @@ useIonViewDidEnter(()=>{
               <IonIcon icon={peopleCircle} />
               <span>Users</span>
             </button>
-
+{/* 
             <button 
               onClick={() => navigateTo('/app/admin/credits')} 
               className={`sidebar-item ${isActiveRoute('/app/admin/credits') ? 'active' : ''}`}
             >
               <IonIcon icon={walletOutline} />
               <span>Credits & Promos</span>
-            </button>
+            </button> */}
 
             <button 
               onClick={() => navigateTo('/app/admin/reports')} 
@@ -184,13 +212,13 @@ useIonViewDidEnter(()=>{
       )}
 
       <main className="main-content">
-        {isAdmin && isAdminPath ? (
+        {(isAdmin && isAdminPath) ? (
           // For admin, use simple router outlet without tabs
           <div style={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
             {children}
           </div>
-        ) : (
-          // For users, use the tab system
+        ) : !isAdminPath ? (
+          // For users, use the tab system (only if not on admin path)
           <IonTabs>
             <IonRouterOutlet>{children}</IonRouterOutlet>
             <IonTabBar slot="bottom" className="tabs-bar mobile-only">
@@ -225,6 +253,18 @@ useIonViewDidEnter(()=>{
               </IonTabButton>
             </IonTabBar>
           </IonTabs>
+        ) : (
+          // If on admin path but not admin, redirect or show error
+          <div style={{ 
+            display: 'flex', 
+            justifyContent: 'center', 
+            alignItems: 'center', 
+            height: '100vh',
+            flexDirection: 'column',
+            gap: '10px'
+          }}>
+            <p>Access denied. Admin privileges required.</p>
+          </div>
         )}
       </main>
     </div>

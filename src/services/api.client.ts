@@ -117,6 +117,14 @@ class ApiClient {
     return this.request("DELETE", url, schema);
   }
 
+  async patch<T>(
+    url: string,
+    schema: z.ZodSchema<ApiResponse<T>>,
+    data?: any
+  ): Promise<T> {
+    return this.request("PATCH", url, schema, data);
+  }
+
   // Auth token management
   saveAuthToken(token: string): void {
     this.setAuthToken(token);

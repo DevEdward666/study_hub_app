@@ -64,6 +64,7 @@ export const createTableStatusChip = (status: string) => {
         color: colors.color,
         border: `1px solid ${colors.border}`,
         textTransform: "capitalize",
+        maxWidth:"150px", 
       }}
     >
       {status}

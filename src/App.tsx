@@ -51,6 +51,7 @@ import TablesManagement from "./pages/TableManagement";
 import TransactionsManagement from "./pages/TransactionManagement";
 import UsersManagement from "./pages/UserManagement";
 import CreditsManagement from "./pages/CreditsManagement";
+import CreditsManagementPromos from "./pages/CreditsManagementPromos";
 import ReportsPage from "./pages/ReportsPage";
 import WiFiPortal from "./pages/WiFiPortal";
 import PublicWiFiPortal from "./pages/PublicWiFiPortal";
@@ -85,6 +86,7 @@ const App: React.FC = () => (
               <Route exact path="/app/admin/tables" component={TablesManagement} />
               <Route exact path="/app/admin/transactions" component={TransactionsManagement} />
               <Route exact path="/app/admin/users" component={UsersManagement} />
+              <Route exact path="/app/admin/credits/promos" component={CreditsManagementPromos} />
               <Route exact path="/app/admin/credits" component={CreditsManagement} />
               <Route exact path="/app/admin/reports" component={ReportsPage} />
               <Route exact path="/app/admin/wifi" component={WiFiPortal} />

@@ -34,7 +34,14 @@ import {
 } from "@ionic/react";
 import { createTableStatusChip } from "@/shared/DynamicTable/Utls/TableUtils";
 import SlideoutModal from "@/shared/SideOutModal/SideoutModalComponent";
-import { playCircleOutline, stopCircleOutline } from "ionicons/icons";
+import {
+  playCircleOutline,
+  stopCircleOutline,
+  createOutline,
+  swapHorizontalOutline,
+  playOutline,
+  stopOutline
+} from "ionicons/icons";
 import { tableService } from "@/services/table.service";
 import { useMutation } from "@tanstack/react-query";
 import { SessionTimer } from "@/components/common/SessionTimer";
@@ -95,16 +102,20 @@ const TablesManagement: React.FC = () => {
   });
   const [isExporting, setIsExporting] = useState(false);
   const [showCreateForm, setShowCreateForm] = useState(false);
+  const [showEditModal, setShowEditModal] = useState(false);
+  const [editingTable, setEditingTable] = useState<any>(null);
   const [showStartSessionModal, setShowStartSessionModal] = useState(false);
   const [selectedTableForSession, setSelectedTableForSession] = useState<any>(null);
   const [selectedUserId, setSelectedUserId] = useState<string>("");
   const [sessionHours, setSessionHours] = useState<number>(1);
   const [selectedPromoId, setSelectedPromoId] = useState<string | null>(null);
   const [promoDiscount, setPromoDiscount] = useState<number>(0);
+  const [showChangeTableModal, setShowChangeTableModal] = useState(false);
+  const [selectedSessionForTransfer, setSelectedSessionForTransfer] = useState<any>(null);
+  const [targetTableId, setTargetTableId] = useState<string>("");
   const [formData, setFormData] = useState({
     tableID: "",
     tableNumber: "",
-    hourlyRate: "",
     location: "",
     capacity: "",
   });
@@ -113,6 +124,47 @@ const TablesManagement: React.FC = () => {
   const [toastColor, setToastColor] = useState<"success" | "danger" | "warning">("success");
 
   const { users } = useUsersManagement();
+
+  // Helper function to calculate running time in minutes
+  const getRunningTimeMinutes = (session: any): number => {
+    if (!session?.startTime) return 0;
+    const startTime = new Date(session.startTime);
+    const now = new Date();
+    return Math.floor((now.getTime() - startTime.getTime()) / (1000 * 60));
+  };
+
+  // Helper function to format running time display
+  const formatRunningTime = (minutes: number): string => {
+    if (minutes < 60) {
+      return `${minutes}m`;
+    }
+    const hours = Math.floor(minutes / 60);
+    const remainingMinutes = minutes % 60;
+    return `${hours}h ${remainingMinutes}m`;
+  };
+
+  // Get available tables for transfer (not occupied)
+  const getAvailableTables = () => {
+    return data?.data?.filter(table => !table.isOccupied) || [];
+  };
+
+  // Custom sorting function for table data
+  const sortTableData = (tableData: any[], sortBy: string, sortOrder: string) => {
+    if (sortBy !== 'runningTime') {
+      return tableData; // Let the original sorting handle other columns
+    }
+
+    return [...tableData].sort((a, b) => {
+      const aRunningTime = a.isOccupied && a.currentSession ? getRunningTimeMinutes(a.currentSession) : 0;
+      const bRunningTime = b.isOccupied && b.currentSession ? getRunningTimeMinutes(b.currentSession) : 0;
+      
+      if (sortOrder === 'asc') {
+        return aRunningTime - bRunningTime;
+      } else {
+        return bRunningTime - aRunningTime;
+      }
+    });
+  };
 
   const startSessionMutation = useMutation({
     mutationFn: async (data: { tableId: string; userId: string; hours: number; qrCode: string; promoId?: string }) => {
@@ -145,12 +197,12 @@ const TablesManagement: React.FC = () => {
         const selectedUser = users.find(user => user.id === variables.userId);
         const tableName = selectedTableForSession?.tableNumber || 'Unknown';
         const location = selectedTableForSession?.location || 'Unknown';
-        const creditsUsed = (selectedTableForSession?.hourlyRate || 0) * variables.hours;
+        const amountUsed = 100 * variables.hours;
 
         await showLocalNotification(
           "📚 New Study Session Started",
           {
-            body: `${selectedUser?.name || 'User'} started a ${variables.hours}h session at Table ${tableName} (${location}). Credits: ${creditsUsed}`,
+            body: `${selectedUser?.name || 'User'} started a ${variables.hours}h session at Table ${tableName} (${location}). Amount: ₱${amountUsed}`,
             icon: "/icon-192.png",
             badge: "/badge.png",
             tag: "admin-session-start",
@@ -161,7 +213,7 @@ const TablesManagement: React.FC = () => {
               tableNumber: tableName,
               location: location,
               hours: variables.hours,
-              creditsUsed: creditsUsed,
+              amountUsed: amountUsed,
               url: "/app/admin/tables"
             },
             requireInteraction: true
@@ -218,6 +270,53 @@ const TablesManagement: React.FC = () => {
     },
   });
 
+  const changeTableMutation = useMutation({
+    mutationFn: async (data: { sessionId: string; newTableId: string }) => {
+      return tableService.changeTable(data.sessionId, data.newTableId);
+    },
+    onSuccess: async (result, variables) => {
+      RefetchTable();
+      setShowChangeTableModal(false);
+      setSelectedSessionForTransfer(null);
+      setTargetTableId("");
+      setToastMessage("✅ Customer table changed successfully!");
+      setToastColor("success");
+      setShowToast(true);
+
+      // Send notification about table change
+      try {
+        const session = selectedSessionForTransfer;
+        const newTable = data?.data?.find(t => t.id === variables.newTableId);
+        const oldTable = data?.data?.find(t => t.currentSession?.id === variables.sessionId);
+        
+        await showLocalNotification(
+          "🔄 Table Changed",
+          {
+            body: `Customer moved from Table ${oldTable?.tableNumber} to Table ${newTable?.tableNumber}`,
+            icon: "/icon-192.png",
+            badge: "/badge.png",
+            tag: "admin-table-change",
+            data: {
+              type: "table_change",
+              sessionId: variables.sessionId,
+              oldTableId: oldTable?.id,
+              newTableId: variables.newTableId,
+              url: "/app/admin/tables"
+            }
+          }
+        );
+        console.log("Admin notification sent for table change");
+      } catch (notificationError) {
+        console.error("Failed to send table change notification:", notificationError);
+      }
+    },
+    onError: (error: any) => {
+      setToastMessage(`❌ Failed to change table: ${error.message || "Unknown error"}`);
+      setToastColor("danger");
+      setShowToast(true);
+    },
+  });
+
   const handleEndSession = async (sessionId: string, tableNumber?: string) => {
     showConfirmation({
       header: 'End Session',
@@ -240,7 +339,7 @@ const TablesManagement: React.FC = () => {
               `User: ${sessionData.currentSession.user?.firstName} ${sessionData.currentSession.user?.lastName}\n` +
               `Location: ${sessionData.location}\n` +
               `Duration: ${sessionData.currentSession?.duration}h\n` +
-              `Credits Used: ${sessionData.currentSession?.totalCost}`,
+              `Amount Used: ₱${sessionData.currentSession?.totalCost}`,
         icon: '/icon-192.png',
         tag: `timeout-${sessionId}`,
         requireInteraction: true
@@ -255,13 +354,34 @@ const TablesManagement: React.FC = () => {
   const handleUpdateTable = async (e: React.FormEvent) => {
     e.preventDefault();
 
+    // Validate form data
+    if (!formData.tableNumber.trim()) {
+      setToastMessage("Table number is required");
+      setToastColor("danger");
+      setShowToast(true);
+      return;
+    }
+
+    if (!formData.location.trim()) {
+      setToastMessage("Location is required");
+      setToastColor("danger");
+      setShowToast(true);
+      return;
+    }
+
+    if (!formData.capacity || parseInt(formData.capacity) <= 0) {
+      setToastMessage("Valid capacity is required");
+      setToastColor("danger");
+      setShowToast(true);
+      return;
+    }
+
     // Show confirmation dialog
     showConfirmation({
       header: 'Update Table',
       message: `Are you sure you want to update Table ${formData.tableNumber}?\n\n` +
         `Location: ${formData.location}\n` +
-        `Capacity: ${formData.capacity} people\n` +
-        `Hourly Rate: ${formData.hourlyRate} credits\n\n` +
+        `Capacity: ${formData.capacity} people\n\n` +
         `This will modify the table settings.`,
       confirmText: 'Update Table',
       cancelText: 'Cancel'
@@ -270,7 +390,6 @@ const TablesManagement: React.FC = () => {
         await updateTable.mutateAsync({
           tableID: formData.tableID,
           tableNumber: formData.tableNumber,
-          hourlyRate: parseFloat(formData.hourlyRate),
           location: formData.location,
           capacity: parseInt(formData.capacity),
         });
@@ -279,25 +398,33 @@ const TablesManagement: React.FC = () => {
         showLocalNotification('🔧 Table Updated', {
           body: `Table ${formData.tableNumber} has been updated.\n` +
                 `Location: ${formData.location}\n` +
-                `Capacity: ${formData.capacity} people\n` +
-                `Hourly Rate: ${formData.hourlyRate} credits`,
+                `Capacity: ${formData.capacity} people`,
           icon: '/icon-192.png',
           tag: `table-update-${formData.tableID}`,
           requireInteraction: false
         });
         
         RefetchTable();
+        
+        // Show success message
+        setToastMessage(`✅ Table ${formData.tableNumber} updated successfully!`);
+        setToastColor("success");
+        setShowToast(true);
+        
         // Reset form
         setFormData({
           tableID: "",
           tableNumber: "",
-          hourlyRate: "",
           location: "",
           capacity: "",
         });
-        setShowCreateForm(false);
+        setShowEditModal(false);
+        setEditingTable(null);
       } catch (error) {
         console.error("Failed to update table:", error);
+        setToastMessage(`❌ Failed to update table: ${error || "Unknown error"}`);
+        setToastColor("danger");
+        setShowToast(true);
       }
     });
   };
@@ -310,8 +437,7 @@ const TablesManagement: React.FC = () => {
       message: `Are you sure you want to create a new table?\n\n` +
         `Table Number: ${formData.tableNumber}\n` +
         `Location: ${formData.location}\n` +
-        `Capacity: ${formData.capacity} people\n` +
-        `Hourly Rate: ${formData.hourlyRate} credits\n\n` +
+        `Capacity: ${formData.capacity} people\n\n` +
         `This will create a new study table.`,
       confirmText: 'Create Table',
       cancelText: 'Cancel'
@@ -319,7 +445,6 @@ const TablesManagement: React.FC = () => {
       try {
         await createTable.mutateAsync({
           tableNumber: formData.tableNumber,
-          hourlyRate: parseFloat(formData.hourlyRate),
           location: formData.location,
           capacity: parseInt(formData.capacity),
         });
@@ -328,8 +453,7 @@ const TablesManagement: React.FC = () => {
         showLocalNotification('✅ New Table Created', {
           body: `Table ${formData.tableNumber} has been created.\n` +
                 `Location: ${formData.location}\n` +
-                `Capacity: ${formData.capacity} people\n` +
-                `Hourly Rate: ${formData.hourlyRate} credits`,
+                `Capacity: ${formData.capacity} people`,
           icon: '/icon-192.png',
           tag: `table-create-${formData.tableNumber}`,
           requireInteraction: false
@@ -340,7 +464,6 @@ const TablesManagement: React.FC = () => {
         setFormData({
           tableID: "",
           tableNumber: "",
-          hourlyRate: "",
           location: "",
           capacity: "",
         });
@@ -385,9 +508,32 @@ const TablesManagement: React.FC = () => {
     },
     {
       key: "hourlyRate",
-      label: "Hourly Rate",
+      label: "Fixed Rate",
+      sortable: false,
+      render: (value, row) => (
+        <span style={{ color: '#28a745', fontWeight: '600' }}>
+          ₱100 <small style={{ color: '#666', fontWeight: 'normal' }}>(Global)</small>
+        </span>
+      ),
+    },
+    {
+      key: "currentSession",
+      label: "Running Time",
       sortable: true,
-      render: (value) => value,
+      render: (session, row) => {
+        if (!session || !row.isOccupied) {
+          return <span style={{ color: '#666' }}>-</span>;
+        }
+        const runningMinutes = getRunningTimeMinutes(session);
+        return (
+          <span style={{ 
+            color: runningMinutes > 300 ? '#e74c3c' : runningMinutes > 180 ? '#f39c12' : '#27ae60',
+            fontWeight: 'bold'
+          }}>
+            {formatRunningTime(runningMinutes)}
+          </span>
+        );
+      },
     },
     {
       key: "isOccupied",
@@ -396,7 +542,6 @@ const TablesManagement: React.FC = () => {
       render: (value, row) => {
         // Check if table is occupied and has a session with endTime
         if (value && row.currentSession?.endTime) {
-          console.log(`Timer for Table ${row.tableNumber}:`, row.currentSession.endTime);
           return (
             <SessionTimer
               endTime={row.currentSession.endTime}
@@ -409,69 +554,131 @@ const TablesManagement: React.FC = () => {
     },
     {
       key: "id",
-      label: "Actions",
+      label: "",
       sortable: false,
+      width: "300px",
       render: (value, row) => (
-        <>
+        <div className="table-actions-container actions-row-layout">
+          {/* Edit Button */}
           <IonButton
             size="small"
-            fill="solid"
+            fill="outline"
+            color="medium"
+            className="action-btn edit-btn"
             onClick={() => handleSetUpdate(value)}
-            title="Edit Table"
           >
+            <IonIcon icon={createOutline} slot="start" />
             Edit
           </IonButton>
+
+          {/* Session Actions */}
           {row.isOccupied && row.currentSession ? (
-            <IonButton
-              size="small"
-              fill="solid"
-              color="danger"
-              onClick={(e) => {
-                e.stopPropagation();
-                if (row.currentSession) {
-                  handleEndSession(row.currentSession.id, row.tableNumber);
-                }
-              }}
-              title="End Session"
-            >
-              Stop
-            </IonButton>
+            <>
+              <IonButton
+                size="small"
+                fill="solid"
+                color="warning"
+                className="action-btn change-btn"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  handleChangeTable(row.currentSession);
+                }}
+              >
+                <IonIcon icon={swapHorizontalOutline} slot="start" />
+                Change
+              </IonButton>
+              <IonButton
+                size="small"
+                fill="solid"
+                color="danger"
+                className="action-btn stop-btn"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  if (row.currentSession) {
+                    handleEndSession(row.currentSession.id, row.tableNumber);
+                  }
+                }}
+              >
+                <IonIcon icon={stopOutline} slot="start" />
+                End
+              </IonButton>
+            </>
           ) : (
             <IonButton
               size="small"
               fill="solid"
               color="success"
+              className="action-btn start-btn"
               onClick={(e) => {
                 e.stopPropagation();
                 handleStartSession(row);
               }}
-              title="Start Session"
             >
+              <IonIcon icon={playOutline} slot="start" />
               Start
             </IonButton>
           )}
-        </>
+        </div>
       ),
     },
   ];
   const handleSetUpdate = async (val: any) => {
-    await selectedTable.mutateAsync({
-      tableId: val,
-    });
-    console.log(selectedTable.data);
-    setFormData({
-      tableID: selectedTable.data?.tableID!,
-      tableNumber: selectedTable.data?.tableNumber!,
-      hourlyRate: selectedTable.data?.hourlyRate.toString()!,
-      location: selectedTable.data?.location!,
-      capacity: selectedTable.data?.capacity.toString()!,
-    });
-    setShowCreateForm(true);
+    try {
+      await selectedTable.mutateAsync({
+        tableId: val,
+      });
+      console.log(selectedTable.data);
+      
+      // Set editing table data
+      setEditingTable(selectedTable.data);
+      setFormData({
+        tableID: selectedTable.data?.tableID!,
+        tableNumber: selectedTable.data?.tableNumber!,
+        location: selectedTable.data?.location!,
+        capacity: selectedTable.data?.capacity.toString()!,
+      });
+      setShowEditModal(true);
+    } catch (error) {
+      console.error("Failed to fetch table data:", error);
+      setToastMessage("Failed to load table data for editing");
+      setToastColor("danger");
+      setShowToast(true);
+    }
   };
 
   const handleStartSession = (table: any) => {
     setSelectedTableForSession(table);
     setShowStartSessionModal(true);
+  };
+
+  const handleChangeTable = (session: any) => {
+    setSelectedSessionForTransfer(session);
+    setShowChangeTableModal(true);
+  };
+
+  const handleConfirmChangeTable = () => {
+    if (!targetTableId || !selectedSessionForTransfer) {
+      setToastMessage("Please select a target table");
+      setToastColor("warning");
+      setShowToast(true);
+      return;
+    }
+
+    showConfirmation({
+      header: 'Change Table',
+      message: `Are you sure you want to move this customer to the selected table?\n\n` +
+        `Customer: ${selectedSessionForTransfer.user?.firstName} ${selectedSessionForTransfer.user?.lastName}\n` +
+        `Current Table: ${data?.data?.find(t => t.currentSession?.id === selectedSessionForTransfer.id)?.tableNumber}\n` +
+        `New Table: ${data?.data?.find(t => t.id === targetTableId)?.tableNumber}\n\n` +
+        `This will transfer the active session to the new table.`,
+      confirmText: 'Change Table',
+      cancelText: 'Cancel'
+    }, () => {
+      changeTableMutation.mutate({
+        sessionId: selectedSessionForTransfer.id,
+        newTableId: targetTableId
+      });
+    });
   };
 
   const handlePromoSelect = (promoId: string | null, discount: number) => {
@@ -590,21 +797,42 @@ const TablesManagement: React.FC = () => {
         <div className="page-header">
           <h1 style={{ color: 'var(--ion-color-primary)' }}>🔧 Table Management</h1>
           <p>Create and manage study tables</p>
-          <button
-            className="btn btn-primary"
-            onClick={() => {
-              setShowCreateForm(!showCreateForm);
-              setFormData({
-                tableID: "",
-                tableNumber: "",
-                hourlyRate: "",
-                location: "",
-                capacity: "",
-              });
-            }}
-          >
-            {showCreateForm ? "Cancel" : "+ Create New Table"}
-          </button>
+          <div style={{ display: 'flex', gap: '10px', alignItems: 'center', flexWrap: 'wrap' }}>
+            {/* Running Time Sort Options */}
+            <IonSelect
+              value={tableState.sortBy === 'runningTime' ? `runningTime-${tableState.sortOrder}` : ''}
+              placeholder="Sort by Running Time"
+              onIonChange={(e) => {
+                const value = e.detail.value;
+                if (value) {
+                  const [sortBy, sortOrder] = value.split('-');
+                  updateState({ sortBy, sortOrder });
+                } else {
+                  updateState({ sortBy: 'id', sortOrder: 'asc' });
+                }
+              }}
+              style={{ minWidth: '200px' }}
+            >
+              <IonSelectOption value="">No time sorting</IonSelectOption>
+              <IonSelectOption value="runningTime-asc">Running Time: Low to High</IonSelectOption>
+              <IonSelectOption value="runningTime-desc">Running Time: High to Low</IonSelectOption>
+            </IonSelect>
+            
+            <button
+              className="btn btn-primary"
+              onClick={() => {
+                setShowCreateForm(!showCreateForm);
+                setFormData({
+                  tableID: "",
+                  tableNumber: "",
+                  location: "",
+                  capacity: "",
+                });
+              }}
+            >
+              {showCreateForm ? "Cancel" : "+ Create New Table"}
+            </button>
+          </div>
         </div>
 
         {/* Create Table Form */}
@@ -634,21 +862,6 @@ const TablesManagement: React.FC = () => {
                     value={formData.tableNumber}
                     onChange={handleInputChange}
                     placeholder="e.g., A1, B2, C3"
-                    required
-                  />
-                </div>
-
-                <div className="form-group">
-                  <label htmlFor="hourlyRate">Hourly Rate (Credits)</label>
-                  <input
-                    type="number"
-                    id="hourlyRate"
-                    name="hourlyRate"
-                    value={formData.hourlyRate}
-                    onChange={handleInputChange}
-                    placeholder="e.g., 5"
-                    min="0.1"
-                    step="0.1"
                     required
                   />
                 </div>
@@ -712,7 +925,7 @@ const TablesManagement: React.FC = () => {
         )}
         <DynamicTable
           columns={columns}
-          data={data?.data}
+          data={data?.data ? sortTableData(data.data, tableState.sortBy, tableState.sortOrder) : undefined}
           total={data?.total}
           totalPages={data?.totalPages}
           isLoading={isLoading || isFetching}
@@ -754,7 +967,7 @@ const TablesManagement: React.FC = () => {
               <div className="table-detail">
                 <span className="detail-label">💰 Rate:</span>
                 <span className="detail-value">
-                  {table.hourlyRate} credits/hour
+                  ₱100 fixed rate (Global)
                 </span>
               </div>
 
@@ -861,7 +1074,7 @@ const TablesManagement: React.FC = () => {
         <div style={{ padding: "20px" }}>
           <h3>Table: {selectedTableForSession?.tableNumber}</h3>
           <p>Location: {selectedTableForSession?.location}</p>
-          <p>Rate: {selectedTableForSession?.hourlyRate} credits/hour</p>
+          <p>Rate: ₱100 fixed rate (Global)</p>
 
           <IonItem style={{ marginTop: "20px" }}>
             <IonLabel>Select User</IonLabel>
@@ -872,7 +1085,7 @@ const TablesManagement: React.FC = () => {
             >
               {users.map((user) => (
                 <IonSelectOption key={user.id} value={user.id}>
-                  {user.name || user.email} - {user.credits} credits
+                  {user.name || user.email} - ₱{user.credits} balance
                 </IonSelectOption>
               ))}
             </IonSelect>
@@ -903,11 +1116,11 @@ const TablesManagement: React.FC = () => {
           )}
 
           <div style={{ marginTop: "20px", padding: "15px", background: "#f5f5f5", borderRadius: "8px" }}>
-            <p><strong>Subtotal:</strong> {(selectedTableForSession?.hourlyRate || 0) * sessionHours} credits</p>
+            <p><strong>Subtotal:</strong> ₱{100 * sessionHours}</p>
             {promoDiscount > 0 && (
-              <p style={{ color: "#28a745" }}><strong>Promo Discount:</strong> -{promoDiscount} credits</p>
+              <p style={{ color: "#28a745" }}><strong>Promo Discount:</strong> -₱{promoDiscount}</p>
             )}
-            <p><strong>Total Credits:</strong> {((selectedTableForSession?.hourlyRate || 0) * sessionHours) - promoDiscount} credits</p>
+            <p><strong>Total Amount:</strong> ₱{(100 * sessionHours) - promoDiscount}</p>
             <p><strong>End Time:</strong> {new Date(Date.now() + sessionHours * 60 * 60 * 1000).toLocaleString()}</p>
           </div>
         </div>
@@ -934,6 +1147,193 @@ const TablesManagement: React.FC = () => {
                 fill="solid"
               >
                 {startSessionMutation.isPending ? "Starting..." : "Start Session"}
+              </IonButton>
+            </IonButtons>
+          </IonToolbar>
+        </IonFooter>
+      </SlideoutModal>
+
+      {/* Edit Table Modal */}
+      <SlideoutModal
+        isOpen={showEditModal}
+        onClose={() => {
+          setShowEditModal(false);
+          setEditingTable(null);
+          setFormData({
+            tableID: "",
+            tableNumber: "",
+            location: "",
+            capacity: "",
+          });
+        }}
+        title="Edit Table"
+        position="end"
+        size="large"
+      >
+        <div style={{ padding: "20px" }}>
+          {editingTable && (
+            <>
+              <h3>Edit Table: {editingTable.tableNumber}</h3>
+              <div style={{ background: "#f5f5f5", padding: "15px", borderRadius: "8px", marginBottom: "20px" }}>
+                <p><strong>Current Status:</strong> {editingTable.isOccupied ? "Occupied" : "Available"}</p>
+                <p><strong>QR Code:</strong> {editingTable.qrCode}</p>
+                <p><strong>Created:</strong> {new Date(editingTable.createdAt).toLocaleDateString()}</p>
+              </div>
+
+              <form onSubmit={handleUpdateTable} className="edit-table-form">
+                <div className="form-grid">
+                  <div className="form-group">
+                    <label htmlFor="editTableNumber">Table Number</label>
+                    <input
+                      type="text"
+                      id="editTableNumber"
+                      name="tableNumber"
+                      value={formData.tableNumber}
+                      onChange={handleInputChange}
+                      placeholder="e.g., A1, B2, C3"
+                      required
+                    />
+                  </div>
+
+                  <div className="form-group">
+                    <label htmlFor="editLocation">Location</label>
+                    <input
+                      type="text"
+                      id="editLocation"
+                      name="location"
+                      value={formData.location}
+                      onChange={handleInputChange}
+                      placeholder="e.g., Ground Floor, Second Floor"
+                      required
+                    />
+                  </div>
+
+                  <div className="form-group">
+                    <label htmlFor="editCapacity">Capacity (People)</label>
+                    <input
+                      type="number"
+                      id="editCapacity"
+                      name="capacity"
+                      value={formData.capacity}
+                      onChange={handleInputChange}
+                      placeholder="e.g., 1, 2, 4"
+                      min="1"
+                      required
+                    />
+                  </div>
+                </div>
+
+                <div className="form-actions" style={{ marginTop: "20px", display: "flex", gap: "10px" }}>
+                  <button
+                    type="button"
+                    className="btn btn-secondary"
+                    onClick={() => {
+                      setShowEditModal(false);
+                      setEditingTable(null);
+                    }}
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    type="submit"
+                    className="btn btn-success"
+                    disabled={updateTable.isPending}
+                  >
+                    {updateTable.isPending ? "Updating..." : "Update Table"}
+                  </button>
+                </div>
+              </form>
+            </>
+          )}
+        </div>
+      </SlideoutModal>
+
+      {/* Change Table Modal */}
+      <SlideoutModal
+        isOpen={showChangeTableModal}
+        onClose={() => {
+          setShowChangeTableModal(false);
+          setSelectedSessionForTransfer(null);
+          setTargetTableId("");
+        }}
+        title="Change Customer Table"
+        position="end"
+        size="large"
+      >
+        <div style={{ padding: "20px" }}>
+          {selectedSessionForTransfer && (
+            <>
+              <h3>Current Session Details</h3>
+              <div style={{ background: "#f5f5f5", padding: "15px", borderRadius: "8px", marginBottom: "20px" }}>
+                <p><strong>Customer:</strong> {selectedSessionForTransfer.user?.firstName} {selectedSessionForTransfer.user?.lastName}</p>
+                <p><strong>Email:</strong> {selectedSessionForTransfer.user?.email}</p>
+                <p><strong>Current Table:</strong> {data?.data?.find(t => t.currentSession?.id === selectedSessionForTransfer.id)?.tableNumber}</p>
+                <p><strong>Running Time:</strong> {formatRunningTime(getRunningTimeMinutes(selectedSessionForTransfer))}</p>
+                <p><strong>Session Duration:</strong> {selectedSessionForTransfer.duration}h</p>
+                <p><strong>Credits Used:</strong> {selectedSessionForTransfer.totalCost}</p>
+              </div>
+
+              <h3>Select New Table</h3>
+              <IonItem style={{ marginTop: "20px" }}>
+                <IonLabel>Available Tables</IonLabel>
+                <IonSelect
+                  value={targetTableId}
+                  placeholder="Choose available table"
+                  onIonChange={(e) => setTargetTableId(e.detail.value)}
+                >
+                  {getAvailableTables().map((table) => (
+                    <IonSelectOption key={table.id} value={table.id}>
+                      Table {table.tableNumber} - {table.location} (Capacity: {table.capacity})
+                    </IonSelectOption>
+                  ))}
+                </IonSelect>
+              </IonItem>
+
+              {getAvailableTables().length === 0 && (
+                <div style={{ 
+                  padding: "20px", 
+                  background: "#fff3cd", 
+                  border: "1px solid #ffeaa7", 
+                  borderRadius: "8px",
+                  marginTop: "20px"
+                }}>
+                  <p style={{ margin: 0, color: "#856404" }}>
+                    ⚠️ No available tables found. All tables are currently occupied.
+                  </p>
+                </div>
+              )}
+
+              {targetTableId && (
+                <div style={{ marginTop: "20px", padding: "15px", background: "#e8f5e8", borderRadius: "8px" }}>
+                  <p style={{ margin: 0 }}>
+                    <strong>Selected Table:</strong> {data?.data?.find(t => t.id === targetTableId)?.tableNumber} - 
+                    {data?.data?.find(t => t.id === targetTableId)?.location}
+                  </p>
+                </div>
+              )}
+            </>
+          )}
+        </div>
+
+        <IonFooter className="ion-no-border">
+          <IonToolbar>
+            <IonButtons slot="end" className="modal-action-buttons">
+              <IonButton
+                onClick={() => {
+                  setShowChangeTableModal(false);
+                  setSelectedSessionForTransfer(null);
+                  setTargetTableId("");
+                }}
+              >
+                Cancel
+              </IonButton>
+              <IonButton
+                onClick={handleConfirmChangeTable}
+                disabled={!targetTableId || changeTableMutation.isPending || getAvailableTables().length === 0}
+                color="warning"
+                fill="solid"
+              >
+                {changeTableMutation.isPending ? "Changing..." : "Change Table"}
               </IonButton>
             </IonButtons>
           </IonToolbar>

@@ -44,6 +44,14 @@ export class TableService {
     );
   }
 
+  async changeTable(sessionId: string, newTableId: string): Promise<any> {
+    return apiClient.post(
+      '/tables/sessions/change-table',
+      ApiResponseSchema(z.object({ success: z.boolean(), message: z.string() })),
+      { sessionId, newTableId }
+    );
+  }
+
   async getActiveSession(): Promise<SessionWithTable | null> {
      const res = apiClient.get(
       '/tables/sessions/active',

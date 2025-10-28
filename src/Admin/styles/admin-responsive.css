@@ -8,7 +8,7 @@
 .tables-management,
 .transactions-management,
 .users-management {
-  max-width: 1400px;
+  max-width: 100%;
   margin: 0 auto;
   padding: 16px;
   min-height: 100vh;
@@ -908,7 +908,6 @@ table tbody td ion-button:hover ion-icon {
 /* Button with text (if needed) */
 table tbody td ion-button[size="small"] {
   font-size: 11px;
-  padding: 0 10px;
   width: auto;
   min-width: auto;
 }
