@@ -2,11 +2,15 @@ import React, { useState } from "react";
 import {
   TransactionManagementServiceAPI,
   useTransactionsManagement,
+  useTablesManagement,
+  useUsersManagement,
 } from "../hooks/AdminDataHooks";
 import { useNotifications } from "../hooks/useNotifications";
 import { useConfirmation } from "../hooks/useConfirmation";
 import { LoadingSpinner } from "../components/common/LoadingSpinner";
 import { ErrorMessage } from "../components/common/ErrorMessage";
+import { useHourlyRate } from "../hooks/GlobalSettingsHooks";
+import { useActiveRates } from "../hooks/RateHooks";
 import { ConfirmToast } from "../components/common/ConfirmToast";
 import "../Admin/styles/admin.css";
 import "../Admin/styles/admin-responsive.css";
@@ -18,13 +22,146 @@ import {
   createTableStatusChip,
   formatDate,
 } from "@/shared/DynamicTable/Utls/TableUtils";
-import { IonButton, IonSegment, IonSegmentButton, IonLabel } from "@ionic/react";
+import { 
+  IonButton, 
+  IonSegment, 
+  IonSegmentButton, 
+  IonLabel,
+  IonSelect,
+  IonSelectOption,
+  IonItem,
+  IonRange,
+  IonIcon,
+  IonFooter,
+  IonToolbar,
+  IonButtons,
+} from "@ionic/react";
 import { PesoFormat } from "@/shared/PesoHelper";
+import { useMutation } from "@tanstack/react-query";
+import SlideoutModal from "@/shared/SideOutModal/SideoutModalComponent";
+import { tableService } from "@/services/table.service";
+import { addOutline } from "ionicons/icons";
+import PromoSelector from "../components/common/PromoSelector";
 const TransactionsManagement: React.FC = () => {
   const { isLoading, error, approve, reject, refetch } =
     useTransactionsManagement();
   const { notifyCreditApproved } = useNotifications();
   const [selectedTab, setSelectedTab] = useState<"pending" | "all">("pending");
+
+  // Get rates from rate management
+  const { data: rates, isLoading: isLoadingRates } = useActiveRates();
+  
+  // Keep hourly rate as fallback for backward compatibility
+  const { hourlyRate } = useHourlyRate();
+
+  // Add New Transaction Modal State
+  const [showNewTransactionModal, setShowNewTransactionModal] = useState(false);
+  const [selectedTableId, setSelectedTableId] = useState<string>("");
+  const [selectedUserId, setSelectedUserId] = useState<string>("");
+  const [selectedRateId, setSelectedRateId] = useState<string>("");
+  const [selectedPromoId, setSelectedPromoId] = useState<string | null>(null);
+  const [promoDiscount, setPromoDiscount] = useState<number>(0);
+
+  // Helper functions to get selected rate data
+  const selectedRate = rates?.find(rate => rate.id === selectedRateId);
+  const sessionHours = selectedRate?.hours || 1;
+  const sessionPrice = selectedRate?.price || hourlyRate;
+
+  // Fetch tables and users for the new transaction modal
+  const { tables, isLoading: isLoadingTables, refetch: refetchTables } = useTablesManagement();
+  const { users, isLoading: isLoadingUsers } = useUsersManagement();
+
+  // Start session mutation
+  const startSessionMutation = useMutation({
+    mutationFn: async (data: {
+      tableId: string;
+      userId: string;
+      hours: number;
+      qrCode: string;
+      promoId?: string;
+      amount: number;
+    }) => {
+      return tableService.startSession({
+        tableId: data.tableId,
+        userId: data.userId,
+        hours: data.hours,
+        qrCode: data.qrCode, // Use table's QR code for admin-initiated sessions
+        promoId: data.promoId,
+        amount: data.amount,
+      });
+    },
+    onSuccess: async () => {
+      setShowNewTransactionModal(false);
+      setSelectedTableId("");
+      setSelectedUserId("");
+      setSessionHours(1);
+      setSelectedPromoId(null);
+      setPromoDiscount(0);
+      
+      // Refresh all data to ensure consistency
+      await Promise.all([
+        refetchPendingTable(),
+        refetchAllTable(),
+        refetchTables(),
+      ]);
+    },
+    onError: (error: any) => {
+      console.error("Failed to start session:", error);
+    },
+  });
+
+  // Promo handler
+  const handlePromoSelect = (promoId: string | null, discount: number) => {
+    setSelectedPromoId(promoId);
+    setPromoDiscount(discount);
+  };
+
+  // Handle new transaction
+  const handleNewTransaction = () => {
+    setShowNewTransactionModal(true);
+  };
+
+  const handleConfirmNewTransaction = () => {
+    if (!selectedUserId) {
+      showConfirmation({
+        header: 'User Required',
+        message: 'Please select a user before starting the session.',
+        confirmText: 'OK',
+        cancelText: ''
+      }, () => {});
+      return;
+    }
+    
+    if (!selectedTableId) {
+      showConfirmation({
+        header: 'Table Required',
+        message: 'Please select a table before starting the session.',
+        confirmText: 'OK',
+        cancelText: ''
+      }, () => {});
+      return;
+    }
+
+    const selectedTable = tables?.find((t: any) => t.id === selectedTableId);
+    if (!selectedTable) {
+      showConfirmation({
+        header: 'Invalid Table',
+        message: 'Selected table not found. Please try again.',
+        confirmText: 'OK',
+        cancelText: ''
+      }, () => {});
+      return;
+    }
+
+    startSessionMutation.mutate({
+      tableId: selectedTableId,
+      userId: selectedUserId,
+      hours: sessionHours,
+      qrCode: selectedTable.qrCode,
+      promoId: selectedPromoId || undefined,
+    amount: sessionPrice, // Use price from selected rate
+    });
+  };
 
   // Confirmation hook
   const {
@@ -131,8 +268,8 @@ const TransactionsManagement: React.FC = () => {
     });
   };
 
-  if (isLoading) {
-    return <LoadingSpinner message="Loading transactions..." />;
+  if (isLoading || isLoadingRates) {
+    return <LoadingSpinner message={isLoadingRates ? "Loading rates..." : "Loading transactions..."} />;
   }
 
   if (error) {
@@ -268,8 +405,22 @@ const TransactionsManagement: React.FC = () => {
   return (
     <div className="transactions-management">
       <div className="page-header">
-        <h1>Transaction Management</h1>
-        <p>Review credit purchase requests and transaction history</p>
+        <div className="header-content">
+          <div className="header-text">
+            <h1>Transaction Management</h1>
+            <p>Review credit purchase requests and transaction history</p>
+          </div>
+          <div className="header-actions">
+            <IonButton
+              color="primary"
+              fill="solid"
+              onClick={handleNewTransaction}
+            >
+              <IonIcon icon={addOutline} slot="start" />
+              Add New Transaction
+            </IonButton>
+          </div>
+        </div>
       </div>
 
       {/* Tab Segment */}
@@ -327,6 +478,114 @@ const TransactionsManagement: React.FC = () => {
         confirmText={confirmOptions.confirmText}
         cancelText={confirmOptions.cancelText}
       />
+
+      {/* New Transaction Modal */}
+      <SlideoutModal
+        isOpen={showNewTransactionModal}
+        onClose={() => {
+          setShowNewTransactionModal(false);
+          setSelectedTableId("");
+          setSelectedUserId("");
+          setSessionHours(1);
+          setSelectedPromoId(null);
+          setPromoDiscount(0);
+        }}
+        title="Add New Transaction"
+        position="end"
+        size="large"
+      >
+        <div style={{ padding: "20px" }}>
+
+
+          <IonItem style={{ marginBottom: "20px" }}>
+            <IonLabel>Select User</IonLabel>
+            <IonSelect
+              value={selectedUserId}
+              placeholder="Choose a user"
+              onIonChange={(e) => setSelectedUserId(e.detail.value)}
+            >
+              {users?.map((user: any) => (
+                <IonSelectOption key={user.id} value={user.id}>
+                  {`${user.name || user.email}`}
+                </IonSelectOption>
+              ))}
+            </IonSelect>
+          </IonItem>
+
+          <IonItem style={{ marginBottom: "20px" }}>
+            <IonLabel>Select Table</IonLabel>
+            <IonSelect
+              value={selectedTableId}
+              placeholder="Choose a table"
+              onIonChange={(e) => setSelectedTableId(e.detail.value)}
+            >
+              {tables?.filter((table: any) => !table.isOccupied).map((table: any) => (
+                <IonSelectOption key={table.id} value={table.id}>
+                  {table.tableNumber} - {table.location}
+                </IonSelectOption>
+              ))}
+            </IonSelect>
+          </IonItem>
+          <IonItem style={{ marginBottom: "20px" }}>
+            <IonLabel>Hours: {sessionHours}</IonLabel>
+            <IonRange
+              min={1}
+              max={12}
+              step={1}
+              value={sessionHours}
+              pin={true}
+              onIonChange={(e) => setSessionHours(e.detail.value as number)}
+            />
+          </IonItem>
+
+          {/* Promo Selection */}
+          {/* <div style={{ marginBottom: "20px" }}>
+            <PromoSelector
+              sessionCost={hourlyRate * sessionHours}
+              selectedPromoId={selectedPromoId}
+              onPromoSelect={handlePromoSelect}
+              disabled={false}
+            />
+          </div> */}
+
+          <div style={{ padding: "15px", background: "#f5f5f5", borderRadius: "8px" }}>
+            <p><strong>Rate:</strong> ₱{hourlyRate} per hour (Global)</p>
+            <p><strong>Subtotal:</strong> ₱{hourlyRate * sessionHours}</p>
+            {promoDiscount > 0 && (
+              <p style={{ color: "#28a745" }}><strong>Promo Discount:</strong> -₱{promoDiscount}</p>
+            )}
+            <p><strong>Total Amount:</strong> ₱{(hourlyRate * sessionHours) - promoDiscount}</p>
+            <p><strong>End Time:</strong> {new Date(Date.now() + sessionHours * 60 * 60 * 1000).toLocaleString()}</p>
+          </div>
+        </div>
+
+        <IonFooter className="ion-no-border">
+          <IonToolbar>
+            <IonButtons slot="end" className="modal-action-buttons">
+              <IonButton
+                onClick={() => {
+                  setShowNewTransactionModal(false);
+                  setSelectedTableId("");
+                  setSelectedUserId("");
+                  setSessionHours(1);
+                  setSelectedPromoId(null);
+                  setPromoDiscount(0);
+                }}
+              >
+                Cancel
+              </IonButton>
+              <IonButton
+                onClick={handleConfirmNewTransaction}
+                disabled={!selectedUserId || !selectedTableId || !selectedRateId || startSessionMutation.isPending || isLoadingRates}
+                color="primary"
+                fill="solid"
+              >
+                {startSessionMutation.isPending ? "Starting..." : isLoadingRates ? "Loading Rates..." : "Start Session"}
+              </IonButton>
+            </IonButtons>
+          </IonToolbar>
+        </IonFooter>
+      </SlideoutModal>
     </div>
   );
 };

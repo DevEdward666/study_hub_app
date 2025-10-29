@@ -30,6 +30,8 @@ import {
   chevronForwardOutline,
   chevronBackOutline,
   wifiOutline,
+  settingsOutline,
+  cashOutline,
 } from "ionicons/icons";
 import "./TabsLayout.css";
 import { useAdminStatus } from "@/hooks/AdminHooks";
@@ -197,6 +199,22 @@ useIonViewDidEnter(()=>{
             >
               <IonIcon icon={wifiOutline} />
               <span>WiFi Portal</span>
+            </button>
+
+            <button 
+              onClick={() => navigateTo('/app/admin/global-settings')} 
+              className={`sidebar-item ${isActiveRoute('/app/admin/global-settings') ? 'active' : ''}`}
+            >
+              <IonIcon icon={settingsOutline} />
+              <span>Settings</span>
+            </button>
+
+            <button 
+              onClick={() => navigateTo('/app/admin/rate-management')} 
+              className={`sidebar-item ${isActiveRoute('/app/admin/rate-management') ? 'active' : ''}`}
+            >
+              <IonIcon icon={cashOutline} />
+              <span>Rate Management</span>
             </button>
 
             <button 

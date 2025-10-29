@@ -55,6 +55,8 @@ import CreditsManagementPromos from "./pages/CreditsManagementPromos";
 import ReportsPage from "./pages/ReportsPage";
 import WiFiPortal from "./pages/WiFiPortal";
 import PublicWiFiPortal from "./pages/PublicWiFiPortal";
+import GlobalSettings from "./pages/GlobalSettings";
+import RateManagement from "./pages/RateManagement";
 setupIonicReact();
 
 const App: React.FC = () => (
@@ -90,6 +92,8 @@ const App: React.FC = () => (
               <Route exact path="/app/admin/credits" component={CreditsManagement} />
               <Route exact path="/app/admin/reports" component={ReportsPage} />
               <Route exact path="/app/admin/wifi" component={WiFiPortal} />
+              <Route exact path="/app/admin/global-settings" component={GlobalSettings} />
+              <Route exact path="/app/admin/rate-management" component={RateManagement} />
               <Route exact path="/app/admin/profile" component={Profile} />
 
               <Route exact path="/app">

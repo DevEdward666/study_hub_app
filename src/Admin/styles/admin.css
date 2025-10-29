@@ -540,6 +540,32 @@
   flex-wrap: wrap;
 }
 
+/* Transaction Page Header Layout */
+.header-content {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 20px;
+  width: 100%;
+}
+
+.header-text {
+  flex: 1;
+}
+
+.header-actions {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+}
+
+.header-actions ion-button {
+  --border-radius: 8px;
+  --padding-start: 16px;
+  --padding-end: 16px;
+  font-weight: 500;
+}
+
 /* Running Time Display */
 .running-time-display {
   font-family: 'Courier New', monospace;

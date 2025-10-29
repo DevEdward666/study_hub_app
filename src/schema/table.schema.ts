@@ -28,8 +28,8 @@ export const TableSessionSchema = z.object({
   tableId: z.string(),
   startTime: z.string(),
   endTime: z.string().nullable(),
-  creditsUsed: z.number(),
-status: z.string(),
+  amount: z.number(),
+  status: z.string(),
   createdAt: z.string(),
 });
 
@@ -44,11 +44,18 @@ export const StartSessionRequestSchema = z.object({
   hours: z.number().optional(),
   endTime: z.string().optional(),
   promoId: z.string().optional(),
+  amount: z.number(),
 });
 
 export const EndSessionResponseSchema = z.object({
-  creditsUsed: z.number(),
+  amount: z.number(),
   duration: z.number(),
+});
+
+export const ChangeTableResponseSchema = z.object({
+  success: z.boolean(),
+  message: z.string(),
+  newSessionId: z.string(),
 });
 
 export type StudyTable = z.infer<typeof StudyTableSchema>;
@@ -56,6 +63,7 @@ export type TableSession = z.infer<typeof TableSessionSchema>;
 export type SessionWithTable = z.infer<typeof SessionWithTableSchema>;
 export type StartSessionRequest = z.infer<typeof StartSessionRequestSchema>;
 export type EndSessionResponse = z.infer<typeof EndSessionResponseSchema>;
+export type ChangeTableResponse = z.infer<typeof ChangeTableResponseSchema>;
 
 export const getTablesSchema = z.object({
   id: z.string(),

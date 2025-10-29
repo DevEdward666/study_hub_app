@@ -81,7 +81,7 @@ const Dashboard: React.FC = () => {
       // Show confirmation toast
       showConfirmation({
         header: 'End Study Session',
-        message: `Are you sure you want to end your study session at Table ${activeSession.table.tableNumber}?\n\nDuration: ${durationMinutes} minutes\nCredits used: ${activeSession.creditsUsed || 0}\n\nThis action cannot be undone.`,
+        message: `Are you sure you want to end your study session at Table ${activeSession.table.tableNumber}?\n\nDuration: ${durationMinutes} minutes\nCredits used: ${activeSession.amount || 0}\n\nThis action cannot be undone.`,
         confirmText: 'End Session',
         cancelText: 'Continue Studying'
       }, async () => {
@@ -108,7 +108,7 @@ const Dashboard: React.FC = () => {
             activeSession.id,
             activeSession.table.tableNumber,
             durationMinutes,
-            activeSession.creditsUsed || 0
+            activeSession.amount || 0
           );
         } catch (notifError) {
           console.error("Failed to send notification:", notifError);
@@ -233,7 +233,7 @@ const Dashboard: React.FC = () => {
                       )}m
                     </span>
                     <span className="metric-separator">•</span>
-                    <span className="metric-mini">{activeSession.creditsUsed} credits</span>
+                    <span className="metric-mini">{activeSession.amount} credits</span>
                   </div>
                 </div>
                 <IonButton

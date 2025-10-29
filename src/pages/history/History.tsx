@@ -31,8 +31,9 @@ import {
   stopOutline,
 } from "ionicons/icons";
 import { useUser } from "../../hooks/UserHooks";
-import { LoadingSpinner } from "../../components/common/LoadingSpinner";
-import { ErrorMessage } from "../../components/common/ErrorMessage";
+import { LoadingSpinner } from '../../components/common/LoadingSpinner';
+import { ErrorMessage } from '../../components/common/ErrorMessage';
+import { useHourlyRate } from '../../hooks/GlobalSettingsHooks';
 import { SessionWithTable, CreditTransaction } from "../../schema/user.schema";
 import "./History.css";
 
@@ -41,6 +42,9 @@ type FilterType = "all" | "sessions" | "transactions";
 const History: React.FC = () => {
   const [selectedFilter, setSelectedFilter] = useState<FilterType>("all");
   const [displayCount, setDisplayCount] = useState(10);
+
+  // Get hourly rate from global settings
+  const { hourlyRate } = useHourlyRate();
 
   const {
     sessions,
@@ -178,14 +182,14 @@ const History: React.FC = () => {
             <div className="item-detail">
               <span className="detail-label">Credits Used</span>
               <span className="detail-value credits">
-                {session.creditsUsed}
+                {session.amount}
               </span>
             </div>
 
             <div className="item-detail">
               <span className="detail-label">Rate</span>
               <span className="detail-value">
-                {session.table.hourlyRate} credits/hour
+                {hourlyRate} credits/hour (Global)
               </span>
             </div>
           </div>

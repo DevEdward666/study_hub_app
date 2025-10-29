@@ -130,7 +130,7 @@ const Profile: React.FC = () => {
     const completedSessions =
       sessions?.filter((s) => s.status === "Completed").length || 0;
     const totalCreditsUsed =
-      sessions?.reduce((sum, s) => sum + s.creditsUsed, 0) || 0;
+      sessions?.reduce((sum, s) => sum + s.amount, 0) || 0;
     const totalHours =
       sessions?.reduce((sum, s) => {
         if (s.endTime && s.startTime) {

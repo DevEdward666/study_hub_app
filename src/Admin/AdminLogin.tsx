@@ -55,7 +55,7 @@ export const AdminLogin: React.FC = () => {
       if (adminStatus.data) {
         // Small delay to ensure state is updated
         setTimeout(() => {
-          history.replace("/app/admin/dashboard");
+          window.location.replace("/app/admin/dashboard");
         }, 100);
       } else {
         setErrorMessage("Access denied. Admin privileges required.");

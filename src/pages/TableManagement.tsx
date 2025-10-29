@@ -1,4 +1,4 @@
-import React, { useRef, useState } from "react";
+import React, { useRef, useState, useCallback } from "react";
 import {
   PremiseManagementServiceAPI,
   TableManagementServiceAPI,
@@ -9,8 +9,7 @@ import { LoadingSpinner } from "../components/common/LoadingSpinner";
 import { ErrorMessage } from "../components/common/ErrorMessage";
 import { useConfirmation } from "../hooks/useConfirmation";
 import { ConfirmToast } from "../components/common/ConfirmToast";
-import { useNotifications } from "../hooks/useNotifications";
-import PromoSelector from "../components/common/PromoSelector";
+import { useHourlyRate } from "../hooks/GlobalSettingsHooks";
 import "../Admin/styles/admin.css";
 import "../Admin/styles/admin-responsive.css";
 import QRCode from "react-qr-code";
@@ -39,7 +38,6 @@ import {
   stopCircleOutline,
   createOutline,
   swapHorizontalOutline,
-  playOutline,
   stopOutline
 } from "ionicons/icons";
 import { tableService } from "@/services/table.service";
@@ -55,6 +53,10 @@ const TablesManagement: React.FC = () => {
     updateTable,
     refetch,
   } = useTablesManagement();
+  
+  // Get hourly rate from global settings
+  const { hourlyRate } = useHourlyRate();
+  
   const {
     tableState,
     updateState,
@@ -80,11 +82,6 @@ const TablesManagement: React.FC = () => {
     handleDismiss: dismissConfirm
   } = useConfirmation();
 
-  // Notifications hook
-  const {
-    showLocalNotification
-  } = useNotifications();
-
   // Auto-refresh table data every 30 seconds to keep timers in sync
   React.useEffect(() => {
     const interval = setInterval(() => {
@@ -93,6 +90,26 @@ const TablesManagement: React.FC = () => {
 
     return () => clearInterval(interval);
   }, [RefetchTable]);
+
+  // Clear ended sessions tracking when tables data changes
+  React.useEffect(() => {
+    if (tables) {
+      // Get current active session IDs
+      const activeSessionIds = new Set(
+        tables
+          .filter(table => table.currentSession?.id)
+          .map(table => table.currentSession!.id)
+      );
+      
+      // Remove ended session IDs that are no longer active
+      const currentEndedSessions = Array.from(endedSessionsRef.current);
+      currentEndedSessions.forEach(sessionId => {
+        if (!activeSessionIds.has(sessionId)) {
+          endedSessionsRef.current.delete(sessionId);
+        }
+      });
+    }
+  }, [tables]);
   const containerRef = useRef<HTMLDivElement | null>(null);
   const [qrSize, setQrSize] = useState<number>(128);
   const [openSelectedRow, setOpenSelectedRow] = useState({
@@ -104,12 +121,6 @@ const TablesManagement: React.FC = () => {
   const [showCreateForm, setShowCreateForm] = useState(false);
   const [showEditModal, setShowEditModal] = useState(false);
   const [editingTable, setEditingTable] = useState<any>(null);
-  const [showStartSessionModal, setShowStartSessionModal] = useState(false);
-  const [selectedTableForSession, setSelectedTableForSession] = useState<any>(null);
-  const [selectedUserId, setSelectedUserId] = useState<string>("");
-  const [sessionHours, setSessionHours] = useState<number>(1);
-  const [selectedPromoId, setSelectedPromoId] = useState<string | null>(null);
-  const [promoDiscount, setPromoDiscount] = useState<number>(0);
   const [showChangeTableModal, setShowChangeTableModal] = useState(false);
   const [selectedSessionForTransfer, setSelectedSessionForTransfer] = useState<any>(null);
   const [targetTableId, setTargetTableId] = useState<string>("");
@@ -122,6 +133,9 @@ const TablesManagement: React.FC = () => {
   const [showToast, setShowToast] = useState(false);
   const [toastMessage, setToastMessage] = useState("");
   const [toastColor, setToastColor] = useState<"success" | "danger" | "warning">("success");
+
+  // Track ended sessions to prevent duplicate endSession calls
+  const endedSessionsRef = useRef<Set<string>>(new Set());
 
   const { users } = useUsersManagement();
 
@@ -166,72 +180,6 @@ const TablesManagement: React.FC = () => {
     });
   };
 
-  const startSessionMutation = useMutation({
-    mutationFn: async (data: { tableId: string; userId: string; hours: number; qrCode: string; promoId?: string }) => {
-      const endTime = new Date();
-      endTime.setHours(endTime.getHours() + data.hours);
-      
-      return tableService.startSession({
-        tableId: data.tableId,
-        userId: data.userId,
-        qrCode: data.qrCode, // Use table's QR code for admin-initiated sessions
-        hours: data.hours,
-        endTime: endTime.toISOString(),
-        promoId: data.promoId,
-      });
-    },
-    onSuccess: async (result, variables) => {
-      RefetchTable();
-      setShowStartSessionModal(false);
-      setSelectedTableForSession(null);
-      setSelectedUserId("");
-      setSessionHours(1);
-      setSelectedPromoId(null);
-      setPromoDiscount(0);
-      setToastMessage("🎉 Session started successfully!");
-      setToastColor("success");
-      setShowToast(true);
-
-      // Send push notification to admin about the session start
-      try {
-        const selectedUser = users.find(user => user.id === variables.userId);
-        const tableName = selectedTableForSession?.tableNumber || 'Unknown';
-        const location = selectedTableForSession?.location || 'Unknown';
-        const amountUsed = 100 * variables.hours;
-
-        await showLocalNotification(
-          "📚 New Study Session Started",
-          {
-            body: `${selectedUser?.name || 'User'} started a ${variables.hours}h session at Table ${tableName} (${location}). Amount: ₱${amountUsed}`,
-            icon: "/icon-192.png",
-            badge: "/badge.png",
-            tag: "admin-session-start",
-            data: {
-              type: "session_start",
-              userId: variables.userId,
-              tableId: variables.tableId,
-              tableNumber: tableName,
-              location: location,
-              hours: variables.hours,
-              amountUsed: amountUsed,
-              url: "/app/admin/tables"
-            },
-            requireInteraction: true
-          }
-        );
-        console.log("Admin notification sent for session start");
-      } catch (notificationError) {
-        console.error("Failed to send admin notification:", notificationError);
-        // Don't block the success flow if notification fails
-      }
-    },
-    onError: (error: any) => {
-      setToastMessage(`Failed to start session: ${error.message || "Unknown error"}`);
-      setToastColor("danger");
-      setShowToast(true);
-    },
-  });
-
   const endSessionMutation = useMutation({
     mutationFn: async (sessionId: string) => {
       return tableService.endSession(sessionId);
@@ -244,20 +192,7 @@ const TablesManagement: React.FC = () => {
 
       // Send push notification to admin about the session end
       try {
-        await showLocalNotification(
-          "🏁 Study Session Ended",
-          {
-            body: `A study session was ended by admin. Session ID: ${sessionId}`,
-            icon: "/icon-192.png",
-            badge: "/badge.png",
-            tag: "admin-session-end",
-            data: {
-              type: "session_end",
-              sessionId: sessionId,
-              url: "/app/admin/tables"
-            }
-          }
-        );
+        console.log("Admin notification: Session ended");
         console.log("Admin notification sent for session end");
       } catch (notificationError) {
         console.error("Failed to send admin session end notification:", notificationError);
@@ -289,22 +224,7 @@ const TablesManagement: React.FC = () => {
         const newTable = data?.data?.find(t => t.id === variables.newTableId);
         const oldTable = data?.data?.find(t => t.currentSession?.id === variables.sessionId);
         
-        await showLocalNotification(
-          "🔄 Table Changed",
-          {
-            body: `Customer moved from Table ${oldTable?.tableNumber} to Table ${newTable?.tableNumber}`,
-            icon: "/icon-192.png",
-            badge: "/badge.png",
-            tag: "admin-table-change",
-            data: {
-              type: "table_change",
-              sessionId: variables.sessionId,
-              oldTableId: oldTable?.id,
-              newTableId: variables.newTableId,
-              url: "/app/admin/tables"
-            }
-          }
-        );
+        console.log("Admin notification: Table changed");
         console.log("Admin notification sent for table change");
       } catch (notificationError) {
         console.error("Failed to send table change notification:", notificationError);
@@ -328,29 +248,26 @@ const TablesManagement: React.FC = () => {
     });
   };
 
-  const handleSessionTimeUp = (sessionId: string, tableNumber?: string) => {
-    console.log(`Session time expired for Table ${tableNumber}, automatically ending session:`, sessionId);
+  const handleSessionTimeUp = useCallback((sessionId: string, tableNumber?: string) => {
+    // Prevent duplicate calls for the same session
+    if (endedSessionsRef.current.has(sessionId)) {
+      console.log(`TableManagement: Session ${sessionId} already processed, skipping...`);
+      return;
+    }
+
+    console.log(`TableManagement: Session time expired for Table ${tableNumber}, automatically ending session:`, sessionId);
+    
+    // Mark this session as being processed
+    endedSessionsRef.current.add(sessionId);
     
     // Send notification to admin about automatic session timeout
-    const sessionData = tables?.find(table => table.currentSession?.id === sessionId);
-    if (sessionData?.currentSession) {
-      showLocalNotification('🔔 Session Timeout', {
-        body: `Time expired! Session for Table ${tableNumber} automatically ended.\n` +
-              `User: ${sessionData.currentSession.user?.firstName} ${sessionData.currentSession.user?.lastName}\n` +
-              `Location: ${sessionData.location}\n` +
-              `Duration: ${sessionData.currentSession?.duration}h\n` +
-              `Amount Used: ₱${sessionData.currentSession?.totalCost}`,
-        icon: '/icon-192.png',
-        tag: `timeout-${sessionId}`,
-        requireInteraction: true
-      });
-    }
+    console.log("TableManagement: Session timeout notification for table", tableNumber);
     
     endSessionMutation.mutate(sessionId);
     setToastMessage(`⏰ Time's up! Session for Table ${tableNumber} has been automatically ended.`);
     setToastColor("warning");
     setShowToast(true);
-  };
+  }, [endSessionMutation]); // Removed tables, setToastMessage, setToastColor, setShowToast to prevent unnecessary recreations
   const handleUpdateTable = async (e: React.FormEvent) => {
     e.preventDefault();
 
@@ -395,14 +312,7 @@ const TablesManagement: React.FC = () => {
         });
         
         // Send notification to admin about table update
-        showLocalNotification('🔧 Table Updated', {
-          body: `Table ${formData.tableNumber} has been updated.\n` +
-                `Location: ${formData.location}\n` +
-                `Capacity: ${formData.capacity} people`,
-          icon: '/icon-192.png',
-          tag: `table-update-${formData.tableID}`,
-          requireInteraction: false
-        });
+        console.log("Table updated notification");
         
         RefetchTable();
         
@@ -450,14 +360,7 @@ const TablesManagement: React.FC = () => {
         });
         
         // Send notification to admin about new table creation
-        showLocalNotification('✅ New Table Created', {
-          body: `Table ${formData.tableNumber} has been created.\n` +
-                `Location: ${formData.location}\n` +
-                `Capacity: ${formData.capacity} people`,
-          icon: '/icon-192.png',
-          tag: `table-create-${formData.tableNumber}`,
-          requireInteraction: false
-        });
+        console.log("New table created notification");
         
         RefetchTable();
         // Reset form
@@ -512,7 +415,7 @@ const TablesManagement: React.FC = () => {
       sortable: false,
       render: (value, row) => (
         <span style={{ color: '#28a745', fontWeight: '600' }}>
-          ₱100 <small style={{ color: '#666', fontWeight: 'normal' }}>(Global)</small>
+          ₱{hourlyRate} <small style={{ color: '#666', fontWeight: 'normal' }}>(Global)</small>
         </span>
       ),
     },
@@ -541,6 +444,7 @@ const TablesManagement: React.FC = () => {
       sortable: true,
       render: (value, row) => {
         // Check if table is occupied and has a session with endTime
+        console.log(row)
         if (value && row.currentSession?.endTime) {
           return (
             <SessionTimer
@@ -603,21 +507,7 @@ const TablesManagement: React.FC = () => {
                 End
               </IonButton>
             </>
-          ) : (
-            <IonButton
-              size="small"
-              fill="solid"
-              color="success"
-              className="action-btn start-btn"
-              onClick={(e) => {
-                e.stopPropagation();
-                handleStartSession(row);
-              }}
-            >
-              <IonIcon icon={playOutline} slot="start" />
-              Start
-            </IonButton>
-          )}
+          ) : null}
         </div>
       ),
     },
@@ -644,11 +534,6 @@ const TablesManagement: React.FC = () => {
       setToastColor("danger");
       setShowToast(true);
     }
-  };
-
-  const handleStartSession = (table: any) => {
-    setSelectedTableForSession(table);
-    setShowStartSessionModal(true);
   };
 
   const handleChangeTable = (session: any) => {
@@ -681,39 +566,6 @@ const TablesManagement: React.FC = () => {
     });
   };
 
-  const handlePromoSelect = (promoId: string | null, discount: number) => {
-    setSelectedPromoId(promoId);
-    setPromoDiscount(discount);
-  };
-
-  const handleConfirmStartSession = () => {
-    if (!selectedUserId) {
-      showConfirmation({
-        header: 'User Required',
-        message: 'Please select a user before starting the session.',
-        confirmText: 'OK',
-        cancelText: ''
-      }, () => {});
-      return;
-    }
-    if (!selectedTableForSession) {
-      showConfirmation({
-        header: 'Table Required',
-        message: 'No table selected. Please try again.',
-        confirmText: 'OK',
-        cancelText: ''
-      }, () => {});
-      return;
-    }
-
-    startSessionMutation.mutate({
-      tableId: selectedTableForSession.id,
-      userId: selectedUserId,
-      hours: sessionHours,
-      qrCode: selectedTableForSession.qrCode, // Include table's QR code
-      promoId: selectedPromoId || undefined,
-    });
-  };
   // const handleShowQR = (val: any) => {
   //   setOpenSelectedRow({
   //     open: true,
@@ -967,7 +819,7 @@ const TablesManagement: React.FC = () => {
               <div className="table-detail">
                 <span className="detail-label">💰 Rate:</span>
                 <span className="detail-value">
-                  ₱100 fixed rate (Global)
+                  ₱{hourlyRate} per hour (Global)
                 </span>
               </div>
 
@@ -1052,101 +904,6 @@ const TablesManagement: React.FC = () => {
                 disabled={isExporting}
               >
                 {isExporting ? "Exporting..." : "Download PNG"}
-              </IonButton>
-            </IonButtons>
-          </IonToolbar>
-        </IonFooter>
-      </SlideoutModal>
-
-      {/* Start Session Modal */}
-      <SlideoutModal
-        isOpen={showStartSessionModal}
-        onClose={() => {
-          setShowStartSessionModal(false);
-          setSelectedTableForSession(null);
-          setSelectedUserId("");
-          setSessionHours(1);
-        }}
-        title="Start Session"
-        position="end"
-        size="large"
-      >
-        <div style={{ padding: "20px" }}>
-          <h3>Table: {selectedTableForSession?.tableNumber}</h3>
-          <p>Location: {selectedTableForSession?.location}</p>
-          <p>Rate: ₱100 fixed rate (Global)</p>
-
-          <IonItem style={{ marginTop: "20px" }}>
-            <IonLabel>Select User</IonLabel>
-            <IonSelect
-              value={selectedUserId}
-              placeholder="Choose a user"
-              onIonChange={(e) => setSelectedUserId(e.detail.value)}
-            >
-              {users.map((user) => (
-                <IonSelectOption key={user.id} value={user.id}>
-                  {user.name || user.email} - ₱{user.credits} balance
-                </IonSelectOption>
-              ))}
-            </IonSelect>
-          </IonItem>
-
-          <IonItem style={{ marginTop: "20px" }}>
-            <IonLabel>Hours: {sessionHours}</IonLabel>
-            <IonRange
-              min={1}
-              max={12}
-              step={1}
-              value={sessionHours}
-              pin={true}
-              onIonChange={(e) => setSessionHours(e.detail.value as number)}
-            />
-          </IonItem>
-
-          {/* Promo Selection */}
-          {selectedTableForSession && (
-            <div style={{ marginTop: "20px" }}>
-              <PromoSelector
-                sessionCost={(selectedTableForSession?.hourlyRate || 0) * sessionHours}
-                selectedPromoId={selectedPromoId}
-                onPromoSelect={handlePromoSelect}
-                disabled={false}
-              />
-            </div>
-          )}
-
-          <div style={{ marginTop: "20px", padding: "15px", background: "#f5f5f5", borderRadius: "8px" }}>
-            <p><strong>Subtotal:</strong> ₱{100 * sessionHours}</p>
-            {promoDiscount > 0 && (
-              <p style={{ color: "#28a745" }}><strong>Promo Discount:</strong> -₱{promoDiscount}</p>
-            )}
-            <p><strong>Total Amount:</strong> ₱{(100 * sessionHours) - promoDiscount}</p>
-            <p><strong>End Time:</strong> {new Date(Date.now() + sessionHours * 60 * 60 * 1000).toLocaleString()}</p>
-          </div>
-        </div>
-
-        <IonFooter className="ion-no-border">
-          <IonToolbar>
-            <IonButtons slot="end" className="modal-action-buttons">
-              <IonButton
-                onClick={() => {
-                  setShowStartSessionModal(false);
-                  setSelectedTableForSession(null);
-                  setSelectedUserId("");
-                  setSessionHours(1);
-                  setSelectedPromoId(null);
-                  setPromoDiscount(0);
-                }}
-              >
-                Cancel
-              </IonButton>
-              <IonButton
-                onClick={handleConfirmStartSession}
-                disabled={!selectedUserId || startSessionMutation.isPending}
-                color="primary"
-                fill="solid"
-              >
-                {startSessionMutation.isPending ? "Starting..." : "Start Session"}
               </IonButton>
             </IonButtons>
           </IonToolbar>

@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useCallback, useRef } from 'react';
 import { IonBadge, IonIcon } from '@ionic/react';
 import { timeOutline, warningOutline } from 'ionicons/icons';
 import './SessionTimer.css';
@@ -17,9 +17,17 @@ export const SessionTimer: React.FC<SessionTimerProps> = ({
   showIcon = true 
 }) => {
   const [timeRemaining, setTimeRemaining] = useState<number>(0);
-  const [hasEnded, setHasEnded] = useState(false);
+  const hasCalledTimeUp = useRef(false);
+
+  // Memoize the onTimeUp callback to prevent unnecessary re-renders
+  const memoizedOnTimeUp = useCallback(onTimeUp || (() => {}), [onTimeUp]);
 
   useEffect(() => {
+    // Reset the flag when endTime changes (new session)
+    hasCalledTimeUp.current = false;
+    
+    console.log(`SessionTimer: New session started with endTime: ${endTime}`);
+
     const calculateTimeRemaining = () => {
       const end = new Date(endTime).getTime();
       const now = Date.now();
@@ -27,11 +35,11 @@ export const SessionTimer: React.FC<SessionTimerProps> = ({
       
       setTimeRemaining(remaining);
 
-      if (remaining === 0 && !hasEnded) {
-        setHasEnded(true);
-        if (onTimeUp) {
-          onTimeUp();
-        }
+      // Only call onTimeUp once when time reaches zero
+      if (remaining === 0 && !hasCalledTimeUp.current && memoizedOnTimeUp) {
+        console.log(`SessionTimer: Time up for session ending at ${endTime}, calling onTimeUp`);
+        hasCalledTimeUp.current = true;
+        memoizedOnTimeUp();
       }
     };
 
@@ -39,7 +47,7 @@ export const SessionTimer: React.FC<SessionTimerProps> = ({
     const interval = setInterval(calculateTimeRemaining, 1000);
 
     return () => clearInterval(interval);
-  }, [endTime, hasEnded, onTimeUp]);
+  }, [endTime, memoizedOnTimeUp]); // Remove hasEnded from dependencies
 
   const formatTime = (ms: number): string => {
     const totalSeconds = Math.floor(ms / 1000);

@@ -19,10 +19,14 @@ import "../Admin/styles/admin-responsive.css";
 import { useTable } from "@/shared/DynamicTable/DynamicTable";
 import { SessionTimer } from "@/components/common/SessionTimer";
 import { tableService } from "@/services/table.service";
+import { useHourlyRate } from "../hooks/GlobalSettingsHooks";
 import { useMutation } from "@tanstack/react-query";
 
 const TableDashboard: React.FC = () => {
   console.log('TableDashboard component is rendering...');
+  
+  // Get hourly rate from global settings
+  const { hourlyRate } = useHourlyRate();
   
   // Simple fallback content
   const [showFallback, setShowFallback] = React.useState(false);
@@ -208,7 +212,7 @@ const TableDashboard: React.FC = () => {
                     table.isDisabled ? 'Disabled' : 
                     table.isOccupied ? `Occupied${table.currentSession?.user ? ` by ${table.currentSession.user.firstName} ${table.currentSession.user.lastName}` : ''}` : 
                     'Available'
-                  }\nRate: ${table.hourlyRate} credits/hour\nCapacity: ${table.capacity} people`}
+                  }\nRate: ${hourlyRate} credits/hour\nCapacity: ${table.capacity} people`}
                 >
                   <div className="table-number">{table.tableNumber}</div>
                   {!table.isOccupied ? (
@@ -256,7 +260,7 @@ const TableDashboard: React.FC = () => {
                     <div className="activity-details">
                       User: {table.currentSession?.user?.firstName} {table.currentSession?.user?.lastName} | 
                       Location: {table.location} | 
-                      Rate: {table.hourlyRate} credits/hour | 
+                      Rate: {hourlyRate} credits/hour | 
                       Capacity: {table.capacity} people
                     </div>
                     <div className="activity-time">
@@ -299,7 +303,7 @@ const TableDashboard: React.FC = () => {
                 <div style={{ background: 'white', padding: '16px', borderRadius: '8px', boxShadow: '0 2px 6px rgba(0,0,0,0.05)', border: '1px solid #f0f0f0' }}>
                   <h4 style={{ color: 'var(--ion-color-primary)', marginBottom: '8px', fontSize: '14px' }}>Active Revenue</h4>
                   <div style={{ fontSize: '20px', fontWeight: 'bold', color: 'black' }}>
-                    {data?.data?.filter((t: any) => t.isOccupied).reduce((sum: number, t: any) => sum + (t.hourlyRate || 0), 0) || 0}
+                    {(data?.data?.filter((t: any) => t.isOccupied).length || 0) * hourlyRate}
                   </div>
                   <p style={{ color: 'black', fontSize: '12px', margin: '4px 0 0 0', opacity: 0.7 }}>
                     credits per hour

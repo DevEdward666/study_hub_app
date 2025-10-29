@@ -43,6 +43,7 @@ import { LoadingSpinner } from '../../components/common/LoadingSpinner';
 import { ErrorMessage } from '../../components/common/ErrorMessage';
 import { ConfirmToast } from '../../components/common/ConfirmToast';
 import PromoSelector from '../../components/common/PromoSelector';
+import { useHourlyRate } from '../../hooks/GlobalSettingsHooks';
 import './TableDetails.css';
 
 interface TableParams {
@@ -60,6 +61,9 @@ const TableDetails: React.FC = () => {
   const [showPromoModal, setShowPromoModal] = useState(false);
   const [selectedPromoId, setSelectedPromoId] = useState<string | null>(null);
   const [promoDiscount, setPromoDiscount] = useState<number>(0);
+
+  // Get hourly rate from global settings
+  const { hourlyRate } = useHourlyRate();
 
   // Confirmation hook
   const {
@@ -85,7 +89,7 @@ const TableDetails: React.FC = () => {
   // Find the table by ID
   const table = tables.find(t => t.id === id);
   const isCurrentTable = activeSession?.table.id === id;
-  const hasInsufficientCredits = (credits?.balance || 0) < (table?.hourlyRate || 0);
+  const hasInsufficientCredits = (credits?.balance || 0) < hourlyRate;
 
   const handleRefresh = async (event: CustomEvent<RefresherEventDetail>) => {
     await Promise.all([
@@ -105,7 +109,7 @@ const TableDetails: React.FC = () => {
     if (!table) return;
 
     if (hasInsufficientCredits) {
-      setToastMessage(`Insufficient credits. You need ${table.hourlyRate} credits to start a session.`);
+      setToastMessage(`Insufficient credits. You need ${hourlyRate} credits to start a session.`);
       setToastColor('warning');
       setShowToast(true);
       return;
@@ -125,20 +129,28 @@ const TableDetails: React.FC = () => {
   const confirmStartSession = async () => {
     if (!table) return;
 
-    const finalCredits = table.hourlyRate - promoDiscount;
+    const finalCredits = hourlyRate - promoDiscount;
     const promoText = selectedPromoId ? `\nPromo Applied: -${promoDiscount} credits\nFinal Credits: ${finalCredits}` : '';
 
     const confirmStart = showConfirmation({
       header: 'Start Study Session',
-      message: `Start study session at Table ${table.tableNumber}?\n\nLocation: ${table.location}\nHourly rate: ${table.hourlyRate} credits${promoText}\nCurrent balance: ${credits?.balance || 0} credits\n\nYour session will begin and credits will be deducted.`,
+      message: `Start study session at Table ${table.tableNumber}?\n\nLocation: ${table.location}\nHourly rate: ${hourlyRate} credits${promoText}\nCurrent balance: ${credits?.balance || 0} credits\n\nYour session will begin and credits will be deducted.`,
       confirmText: 'Start Session',
       cancelText: 'Cancel'
     }, async () => {
       try {
+        // Default to 1 hour session, amount is the final credits after promo
+        const amount = finalCredits;
+        const endTime = new Date();
+        endTime.setHours(endTime.getHours() + 1);
+        
         await startSession.mutateAsync({
           tableId: table.id,
           qrCode: table.qrCode,
           promoId: selectedPromoId || undefined,
+          hours: 1,
+          endTime: endTime.toISOString(),
+          amount: amount,
         });
         
         setToastMessage('Session started successfully!');
@@ -202,7 +214,7 @@ const TableDetails: React.FC = () => {
     return `${minutes}m`;
   };
 
-  const estimatedCost = Math.ceil((new Date().getTime() - new Date(activeSession?.startTime || 0).getTime()) / (1000 * 60 * 60)) * (table?.hourlyRate || 0);
+  const estimatedCost = Math.ceil((new Date().getTime() - new Date(activeSession?.startTime || 0).getTime()) / (1000 * 60 * 60)) * hourlyRate;
 
   if (!table) {
     return (
@@ -282,7 +294,7 @@ const TableDetails: React.FC = () => {
                   <IonIcon icon={cardOutline} slot="start" />
                   <IonLabel>
                     <h3>Hourly Rate</h3>
-                    <p>{table.hourlyRate} credits/hour</p>
+                    <p>{hourlyRate} credits/hour</p>
                   </IonLabel>
                 </IonItem>
               </div>
@@ -320,7 +332,7 @@ const TableDetails: React.FC = () => {
                   
                   <div className="session-info">
                     <p><strong>Started:</strong> {new Date(activeSession.startTime).toLocaleString()}</p>
-                    <p><strong>Current Usage:</strong> {activeSession.creditsUsed} credits</p>
+                    <p><strong>Current Usage:</strong> {activeSession.amount} credits</p>
                   </div>
                 </div>
               </IonCardContent>
@@ -506,12 +518,12 @@ const TableDetails: React.FC = () => {
                   <IonCardContent>
                     <div style={{ marginBottom: '16px' }}>
                       <p><strong>Location:</strong> {table.location}</p>
-                      <p><strong>Hourly Rate:</strong> {table.hourlyRate} credits</p>
+                      <p><strong>Hourly Rate:</strong> {hourlyRate} credits</p>
                       <p><strong>Your Balance:</strong> {credits?.balance || 0} credits</p>
                     </div>
 
                     <PromoSelector
-                      sessionCost={table.hourlyRate}
+                      sessionCost={hourlyRate}
                       selectedPromoId={selectedPromoId}
                       onPromoSelect={handlePromoSelect}
                       disabled={false}
@@ -529,7 +541,7 @@ const TableDetails: React.FC = () => {
                         marginBottom: '8px'
                       }}>
                         <span>Hourly Rate:</span>
-                        <span>{table.hourlyRate} credits</span>
+                        <span>{hourlyRate} credits</span>
                       </div>
                       {promoDiscount > 0 && (
                         <div style={{
@@ -551,7 +563,7 @@ const TableDetails: React.FC = () => {
                         paddingTop: '8px'
                       }}>
                         <span>Total per Hour:</span>
-                        <span>{table.hourlyRate - promoDiscount} credits</span>
+                        <span>{hourlyRate - promoDiscount} credits</span>
                       </div>
                     </div>
 

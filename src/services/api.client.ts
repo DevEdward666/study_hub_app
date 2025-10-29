@@ -82,10 +82,22 @@ class ApiClient {
           url,
           method,
           errors: error.issues,
-          receivedData: error.message
+          receivedData: JSON.stringify((error as any).data, null, 2)
         });
         throw new Error(`Invalid API response format: ${error.issues.map((e: z.ZodIssue) => `${e.path.join('.')}: ${e.message}`).join(', ')}`);
       }
+      
+      // Log API errors for debugging
+      if (axios.isAxiosError(error)) {
+        console.error('API Error:', {
+          url,
+          method,
+          status: error.response?.status,
+          data: error.response?.data,
+          message: error.message
+        });
+      }
+      
       throw error;
     }
   }

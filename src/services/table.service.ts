@@ -4,10 +4,12 @@ import {
   SessionWithTable,
   StartSessionRequest,
   EndSessionResponse,
+  ChangeTableResponse,
   StudyTableSchema,
   SessionWithTableSchema,
   StartSessionRequestSchema,
-  EndSessionResponseSchema
+  EndSessionResponseSchema,
+  ChangeTableResponseSchema
 } from '../schema/table.schema';
 import { ApiResponseSchema } from '../schema/api.schema';
 import { z } from 'zod';
@@ -44,10 +46,10 @@ export class TableService {
     );
   }
 
-  async changeTable(sessionId: string, newTableId: string): Promise<any> {
+  async changeTable(sessionId: string, newTableId: string): Promise<ChangeTableResponse> {
     return apiClient.post(
       '/tables/sessions/change-table',
-      ApiResponseSchema(z.object({ success: z.boolean(), message: z.string() })),
+      ApiResponseSchema(ChangeTableResponseSchema),
       { sessionId, newTableId }
     );
   }

@@ -28,6 +28,7 @@ import { useConfirmation } from "../../hooks/useConfirmation";
 import { LoadingSpinner } from "../../components/common/LoadingSpinner";
 import { ConfirmToast } from "../../components/common/ConfirmToast";
 import { useNotifications } from "../../hooks/useNotifications";
+import { useHourlyRate } from "../../hooks/GlobalSettingsHooks";
 import "./TableScanner.css";
 import { Scanner } from "@yudiel/react-qr-scanner";
 const TableScanner: React.FC = () => {
@@ -40,6 +41,9 @@ const TableScanner: React.FC = () => {
   const [selectedHours, setSelectedHours] = useState<number>(1);
   const history = useHistory();
   const { credits } = useUser();
+  
+  // Get hourly rate from global settings
+  const { hourlyRate } = useHourlyRate();
   
   // Confirmation hook
   const {
@@ -148,7 +152,7 @@ const { startSession, activeSession,tables } = useTables();
   const handleStartSession = async () => {
     if (scannedTable && scannedCode) {
       // Show confirmation dialog
-      const totalCredits = scannedTable.hourlyRate * selectedHours;
+      const totalCredits = hourlyRate * selectedHours;
       
       showConfirmation({
         header: 'Start Study Session',
@@ -165,11 +169,15 @@ const { startSession, activeSession,tables } = useTables();
           const endTime = new Date();
           endTime.setHours(endTime.getHours() + selectedHours);
           
+          // Calculate the amount based on hours and hourly rate
+          const amount = hourlyRate * selectedHours;
+          
           await startSession.mutateAsync({
             tableId: scannedTable.id,
             qrCode: scannedCode,
             hours: selectedHours,
             endTime: endTime.toISOString(),
+            amount: amount,
           });
           
           // Send session start notification
@@ -179,7 +187,7 @@ const { startSession, activeSession,tables } = useTables();
                 scannedTable.id, // Will be replaced with actual session ID by service
                 scannedTable.tableNumber,
                 scannedTable.location,
-                scannedTable.hourlyRate * selectedHours
+                hourlyRate * selectedHours
               );
               
               // Setup monitoring for 30-minute warning
@@ -477,7 +485,7 @@ const { startSession, activeSession,tables } = useTables();
                     <IonItem lines="none">
                       <IonLabel>
                         <p className="detail-label">Rate per Hour</p>
-                        <h3 className="detail-value">{scannedTable.hourlyRate} credits/hour</h3>
+                        <h3 className="detail-value">{hourlyRate} credits/hour</h3>
                       </IonLabel>
                     </IonItem>
                   </div>
@@ -515,11 +523,11 @@ const { startSession, activeSession,tables } = useTables();
                   </div>
                   <div className="summary-row">
                     <span className="summary-label">Rate:</span>
-                    <span className="summary-value">{scannedTable.hourlyRate} credits/hour</span>
+                    <span className="summary-value">{hourlyRate} credits/hour</span>
                   </div>
                   <div className="summary-row total">
                     <span className="summary-label">Total Credits:</span>
-                    <span className="summary-value highlight">{scannedTable.hourlyRate * selectedHours} credits</span>
+                    <span className="summary-value highlight">{hourlyRate * selectedHours} credits</span>
                   </div>
                   <div className="summary-row">
                     <span className="summary-label">End Time:</span>

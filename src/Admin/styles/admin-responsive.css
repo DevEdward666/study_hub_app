@@ -8,7 +8,7 @@
 .tables-management,
 .transactions-management,
 .users-management {
-  max-width: 100%;
+  width: 100%;
   margin: 0 auto;
   padding: 16px;
   min-height: 100vh;
@@ -27,6 +27,25 @@
   background: white;
   border-radius: 12px;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+}
+
+/* Header content layout */
+.header-content {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 20px;
+  width: 100%;
+}
+
+.header-text {
+  flex: 1;
+}
+
+.header-actions {
+  display: flex;
+  gap: 12px;
+  align-items: center;
 }
 
 .page-header h1 {
@@ -1342,6 +1361,22 @@ table tbody td ion-button[size="small"] {
     margin: 8px 0;
     width: auto;
     max-width: 200px;
+  }
+  
+  /* Header responsiveness for mobile */
+  .header-content {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 15px;
+  }
+  
+  .header-actions {
+    justify-content: flex-start;
+  }
+  
+  .header-actions ion-button {
+    width: 100%;
+    justify-content: center;
   }
 }
 
