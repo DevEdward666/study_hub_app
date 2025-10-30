@@ -1015,19 +1015,16 @@ const TablesManagement: React.FC = () => {
         }}
         title="Change Customer Table"
         position="end"
-        size="large"
+        size="medium"
       >
         <div style={{ padding: "20px" }}>
           {selectedSessionForTransfer && (
             <>
               <h3>Current Session Details</h3>
               <div style={{ background: "#f5f5f5", padding: "15px", borderRadius: "8px", marginBottom: "20px" }}>
-                <p><strong>Customer:</strong> {selectedSessionForTransfer.user?.firstName} {selectedSessionForTransfer.user?.lastName}</p>
-                <p><strong>Email:</strong> {selectedSessionForTransfer.user?.email}</p>
+                <p><strong>Customer:</strong> {selectedSessionForTransfer.customerName} {selectedSessionForTransfer.user?.lastName}</p>
                 <p><strong>Current Table:</strong> {data?.data?.find(t => t.currentSession?.id === selectedSessionForTransfer.id)?.tableNumber}</p>
                 <p><strong>Running Time:</strong> {formatRunningTime(getRunningTimeMinutes(selectedSessionForTransfer))}</p>
-                <p><strong>Session Duration:</strong> {selectedSessionForTransfer.duration}h</p>
-                <p><strong>Credits Used:</strong> {selectedSessionForTransfer.totalCost}</p>
               </div>
 
               <h3>Select New Table</h3>

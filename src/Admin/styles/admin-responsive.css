@@ -1496,3 +1496,9 @@ table tbody td ion-button[size="small"] {
     break-inside: avoid;
   }
 }
+
+ .rate-container{
+      display: flex;
+    flex-direction: row;
+    justify-content: space-between;
+  }

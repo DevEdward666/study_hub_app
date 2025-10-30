@@ -193,21 +193,21 @@ useIonViewDidEnter(()=>{
               <span>Reports</span>
             </button>
 
-            <button 
+            {/* <button 
               onClick={() => navigateTo('/app/admin/wifi')} 
               className={`sidebar-item ${isActiveRoute('/app/admin/wifi') ? 'active' : ''}`}
             >
               <IonIcon icon={wifiOutline} />
               <span>WiFi Portal</span>
-            </button>
+            </button> */}
 
-            <button 
+            {/* <button 
               onClick={() => navigateTo('/app/admin/global-settings')} 
               className={`sidebar-item ${isActiveRoute('/app/admin/global-settings') ? 'active' : ''}`}
             >
               <IonIcon icon={settingsOutline} />
               <span>Settings</span>
-            </button>
+            </button> */}
 
             <button 
               onClick={() => navigateTo('/app/admin/rate-management')} 

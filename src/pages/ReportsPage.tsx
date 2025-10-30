@@ -65,9 +65,6 @@ type ReportView = 'overview' | 'detailed' | 'recommended';
 const TransactionSummarySchema = z.object({
   totalTransactions: z.number(),
   totalAmount: z.number(),
-  approvedCount: z.number(),
-  pendingCount: z.number(),
-  rejectedCount: z.number().optional(),
   averageAmount: z.number().optional(),
 });
 
@@ -104,20 +101,14 @@ const QuickStatsSchema = z.object({
   today: z.object({
     transactions: z.number(),
     amount: z.number(),
-    approved: z.number(),
-    pending: z.number(),
   }),
   thisWeek: z.object({
     transactions: z.number(),
     amount: z.number(),
-    approved: z.number(),
-    pending: z.number(),
   }),
   thisMonth: z.object({
     transactions: z.number(),
     amount: z.number(),
-    approved: z.number(),
-    pending: z.number(),
   }),
 });
 
@@ -304,20 +295,6 @@ const QuickStatsSchema = z.object({
                               <span className="stat-label">Total Amount</span>
                             </div>
                           </div>
-                          <div className="stat-item">
-                            <IonIcon icon={checkmarkCircleOutline} />
-                            <div>
-                              <span className="stat-value">{quickStats.today.approved}</span>
-                              <span className="stat-label">Approved</span>
-                            </div>
-                          </div>
-                          <div className="stat-item">
-                            <IonIcon icon={hourglassOutline} />
-                            <div>
-                              <span className="stat-value">{quickStats.today.pending}</span>
-                              <span className="stat-label">Pending</span>
-                            </div>
-                          </div>
                         </div>
                       </div>
                     </IonCol>
@@ -342,20 +319,6 @@ const QuickStatsSchema = z.object({
                               <span className="stat-label">Total Amount</span>
                             </div>
                           </div>
-                          <div className="stat-item">
-                            <IonIcon icon={checkmarkCircleOutline} />
-                            <div>
-                              <span className="stat-value">{quickStats.thisWeek.approved}</span>
-                              <span className="stat-label">Approved</span>
-                            </div>
-                          </div>
-                          <div className="stat-item">
-                            <IonIcon icon={hourglassOutline} />
-                            <div>
-                              <span className="stat-value">{quickStats.thisWeek.pending}</span>
-                              <span className="stat-label">Pending</span>
-                            </div>
-                          </div>
                         </div>
                       </div>
                     </IonCol>
@@ -378,20 +341,6 @@ const QuickStatsSchema = z.object({
                             <div>
                               <span className="stat-value">{PesoFormat(quickStats.thisMonth.amount)}</span>
                               <span className="stat-label">Total Amount</span>
-                            </div>
-                          </div>
-                          <div className="stat-item">
-                            <IonIcon icon={checkmarkCircleOutline} />
-                            <div>
-                              <span className="stat-value">{quickStats.thisMonth.approved}</span>
-                              <span className="stat-label">Approved</span>
-                            </div>
-                          </div>
-                          <div className="stat-item">
-                            <IonIcon icon={hourglassOutline} />
-                            <div>
-                              <span className="stat-value">{quickStats.thisMonth.pending}</span>
-                              <span className="stat-label">Pending</span>
                             </div>
                           </div>
                         </div>
@@ -583,7 +532,7 @@ const QuickStatsSchema = z.object({
                   <IonCardContent>
                     <IonGrid>
                       <IonRow>
-                        <IonCol size="6" sizeMd="3">
+                        <IonCol size="6" sizeMd="6">
                           <div className="summary-item">
                             <IonIcon icon={cashOutline} className="summary-icon" />
                             <div className="summary-content">
@@ -592,7 +541,7 @@ const QuickStatsSchema = z.object({
                             </div>
                           </div>
                         </IonCol>
-                        <IonCol size="6" sizeMd="3">
+                        <IonCol size="6" sizeMd="6">
                           <div className="summary-item">
                             <IonIcon icon={trendingUpOutline} className="summary-icon" />
                             <div className="summary-content">
@@ -601,35 +550,7 @@ const QuickStatsSchema = z.object({
                             </div>
                           </div>
                         </IonCol>
-                        <IonCol size="6" sizeMd="3">
-                          <div className="summary-item">
-                            <IonIcon icon={checkmarkCircleOutline} className="summary-icon" color="success" />
-                            <div className="summary-content">
-                              <div className="summary-label">Approved</div>
-                              <div className="summary-value">{report.report.summary.approvedCount}</div>
-                            </div>
-                          </div>
-                        </IonCol>
-                        <IonCol size="6" sizeMd="3">
-                          <div className="summary-item">
-                            <IonIcon icon={hourglassOutline} className="summary-icon" color="warning" />
-                            <div className="summary-content">
-                              <div className="summary-label">Pending</div>
-                              <div className="summary-value">{report.report.summary.pendingCount}</div>
-                            </div>
-                          </div>
-                        </IonCol>
-                        {report.report.summary.rejectedCount !== undefined && (
-                          <IonCol size="6" sizeMd="3">
-                            <div className="summary-item">
-                              <IonIcon icon={closeCircleOutline} className="summary-icon" color="danger" />
-                              <div className="summary-content">
-                                <div className="summary-label">Rejected</div>
-                                <div className="summary-value">{report.report.summary.rejectedCount}</div>
-                              </div>
-                            </div>
-                          </IonCol>
-                        )}
+                 
                         {report.report.summary.averageAmount !== undefined && (
                           <IonCol size="6" sizeMd="3">
                             <div className="summary-item">

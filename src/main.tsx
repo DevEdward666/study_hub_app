@@ -6,18 +6,14 @@ import { QueryProvider } from "./providers/QueryProvier";
 // Early service worker registration
 if ('serviceWorker' in navigator) {
   window.addEventListener('load', () => {
-    console.log('Attempting to register service worker...');
     navigator.serviceWorker.register('/studyhub-service-worker.js', {
       scope: '/',
       updateViaCache: 'none'
     })
     .then((registration) => {
-      console.log('SW registered successfully: ', registration);
-      console.log('SW scope: ', registration.scope);
       
       // Listen for service worker updates
       registration.addEventListener('updatefound', () => {
-        console.log('New service worker found!');
         const newWorker = registration.installing;
         if (newWorker) {
           newWorker.addEventListener('statechange', () => {

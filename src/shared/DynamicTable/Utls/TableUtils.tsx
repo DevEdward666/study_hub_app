@@ -45,9 +45,13 @@ export const createTableStatusChip = (status: string) => {
   const getStatusColor = (status: string) => {
     switch (status) {
       case "Occupied":
-        return { bg: "#d4edda", color: "#155724", border: "#c3e6cb" };
+        return { bg: "#efac0fff", color: "#ffffffff", border: "#c6c6c6ff" };
       case "Available":
-        return { bg: "#f8d7da", color: "#721c24", border: "#f5c6cb" };
+        return { bg: "#49e34cff", color: "#ffffffff", border: "#c6c6c6ff" };
+          case "active":
+        return { bg: "#62bef4ff", color: "#ffffffff", border: "#c6c6c6ff" };
+      case "completed":
+        return { bg: "#49e34cff", color: "#ffffffff", border: "#c6c6c6ff" };
       default:
         return { bg: "#f8f9fa", color: "#6c757d", border: "#dee2e6" };
     }

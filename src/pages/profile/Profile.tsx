@@ -91,7 +91,7 @@ const Profile: React.FC = () => {
   const performSignOut = async () => {
     try {
       await signOut.mutateAsync();
-      history.push("/login");
+      history.push("/admin/login");
     } catch (error) {
       console.error("Sign out error:", error);
       setToastMessage("Failed to sign out. Please try again.");

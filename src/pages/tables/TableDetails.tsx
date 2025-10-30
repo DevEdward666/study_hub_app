@@ -202,7 +202,7 @@ const TableDetails: React.FC = () => {
     if (!activeSession) return '';
     
     const now = new Date().getTime();
-    const start = new Date(activeSession.startTime).getTime();
+    const start = new Date(activeSession.startTime || 0).getTime();
     const durationMs = now - start;
     
     const hours = Math.floor(durationMs / (1000 * 60 * 60));
@@ -331,7 +331,7 @@ const TableDetails: React.FC = () => {
                   </div>
                   
                   <div className="session-info">
-                    <p><strong>Started:</strong> {new Date(activeSession.startTime).toLocaleString()}</p>
+                    <p><strong>Started:</strong> {new Date(activeSession.startTime || 0).toLocaleString()}</p>
                     <p><strong>Current Usage:</strong> {activeSession.amount} credits</p>
                   </div>
                 </div>

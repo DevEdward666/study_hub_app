@@ -30,6 +30,7 @@ import {
   IonSelect,
   IonSelectOption,
   IonItem,
+  IonInput,
   IonRange,
   IonIcon,
   IonFooter,
@@ -46,7 +47,7 @@ const TransactionsManagement: React.FC = () => {
   const { isLoading, error, approve, reject, refetch } =
     useTransactionsManagement();
   const { notifyCreditApproved } = useNotifications();
-  const [selectedTab, setSelectedTab] = useState<"pending" | "all">("pending");
+  const [selectedTab, setSelectedTab] = useState<"active" | "all">("active");
 
   // Get rates from rate management
   const { data: rates, isLoading: isLoadingRates } = useActiveRates();
@@ -61,6 +62,9 @@ const TransactionsManagement: React.FC = () => {
   const [selectedRateId, setSelectedRateId] = useState<string>("");
   const [selectedPromoId, setSelectedPromoId] = useState<string | null>(null);
   const [promoDiscount, setPromoDiscount] = useState<number>(0);
+  const [paymentMethod, setPaymentMethod] = useState<string>("Cash");
+  const [cash, setCash] = useState<number>(0);
+  const [change, setChange] = useState<number>(0);
 
   // Helper functions to get selected rate data
   const selectedRate = rates?.find(rate => rate.id === selectedRateId);
@@ -80,6 +84,9 @@ const TransactionsManagement: React.FC = () => {
       qrCode: string;
       promoId?: string;
       amount: number;
+      paymentMethod: string;
+      cash?: number;
+      change?: number;
     }) => {
       return tableService.startSession({
         tableId: data.tableId,
@@ -88,15 +95,21 @@ const TransactionsManagement: React.FC = () => {
         qrCode: data.qrCode, // Use table's QR code for admin-initiated sessions
         promoId: data.promoId,
         amount: data.amount,
+        paymentMethod: data.paymentMethod,
+        cash: data.cash,
+        change: data.change,
       });
     },
     onSuccess: async () => {
       setShowNewTransactionModal(false);
       setSelectedTableId("");
       setSelectedUserId("");
-      setSessionHours(1);
+      setSelectedRateId("");
       setSelectedPromoId(null);
       setPromoDiscount(0);
+      setPaymentMethod("Cash");
+      setCash(0);
+      setChange(0);
       
       // Refresh all data to ensure consistency
       await Promise.all([
@@ -114,6 +127,14 @@ const TransactionsManagement: React.FC = () => {
   const handlePromoSelect = (promoId: string | null, discount: number) => {
     setSelectedPromoId(promoId);
     setPromoDiscount(discount);
+  };
+
+  // Cash input handler - automatically calculate change
+  const handleCashInput = (value: number) => {
+    setCash(value);
+    const totalAmount = sessionPrice - promoDiscount;
+    const calculatedChange = value - totalAmount;
+    setChange(calculatedChange >= 0 ? calculatedChange : 0);
   };
 
   // Handle new transaction
@@ -142,6 +163,18 @@ const TransactionsManagement: React.FC = () => {
       return;
     }
 
+    // Validate cash for Cash payment method
+    const totalAmount = sessionPrice - promoDiscount;
+    if (paymentMethod === "Cash" && cash < totalAmount) {
+      showConfirmation({
+        header: 'Insufficient Cash',
+        message: `Cash amount (₱${cash.toFixed(2)}) is less than the total amount (₱${totalAmount.toFixed(2)}).\n\nPlease enter sufficient cash to proceed.`,
+        confirmText: 'OK',
+        cancelText: ''
+      }, () => {});
+      return;
+    }
+
     const selectedTable = tables?.find((t: any) => t.id === selectedTableId);
     if (!selectedTable) {
       showConfirmation({
@@ -159,7 +192,10 @@ const TransactionsManagement: React.FC = () => {
       hours: sessionHours,
       qrCode: selectedTable.qrCode,
       promoId: selectedPromoId || undefined,
-    amount: sessionPrice, // Use price from selected rate
+      amount: sessionPrice, // Use price from selected rate
+      paymentMethod: paymentMethod,
+      cash: paymentMethod === "Cash" ? cash : undefined,
+      change: paymentMethod === "Cash" ? change : undefined,
     });
   };
 
@@ -204,7 +240,7 @@ const TransactionsManagement: React.FC = () => {
   });
   const handleApprove = async (transactionId: string) => {
     // Find the transaction details to get user info and amount
-    const currentData = selectedTab === "pending" ? pendingData : allData;
+    const currentData = selectedTab === "active" ? pendingData : allData;
     const transaction = currentData?.data.find((t: any) => t.id === transactionId);
     
     // Show confirmation dialog
@@ -213,7 +249,7 @@ const TransactionsManagement: React.FC = () => {
       message: `Are you sure you want to approve this credit purchase transaction?\n\n` +
         `Transaction ID: ${transactionId}\n` +
         `User: ${transaction?.user?.name || 'Unknown'}\n` +
-        `Amount: ${transaction?.amount || 0} credits\n\n` +
+        `Amount: ${transaction?.session?.amount || 0} credits\n\n` +
         `This will add credits to the user's account and cannot be undone.`,
       confirmText: 'Approve',
       cancelText: 'Cancel'
@@ -222,17 +258,17 @@ const TransactionsManagement: React.FC = () => {
         await approve.mutateAsync(transactionId);
         
         // Send notification to user about credit approval
-        if (transaction) {
+        if (transaction && transaction.user) {
           try {
             // Note: In a real implementation, the API would return the updated balance
             // For now, we'll use the amount as placeholder
-            const newBalance = transaction.amount; // This should come from API response
+            const newBalance = transaction?.session?.amount; // This should come from API response
             
             await notifyCreditApproved(
               transaction.user.id,
               transactionId,
-              transaction.amount,
-              newBalance
+              transaction?.session?.amount!,
+              newBalance!
             );
           } catch (notifError) {
             console.error("Failed to send approval notification:", notifError);
@@ -284,113 +320,136 @@ const TransactionsManagement: React.FC = () => {
       key: "user",
       label: "User",
       sortable: true,
-      render: (value) => value.name,
+      render: (value) => value?.name || value?.email || "Unknown User",
     },
     {
-      key: "amount",
-      label: "Amount",
-      sortable: false,
-      render: (value) => PesoFormat(value),
+      key: "tables",
+      label: "Table No",
+      sortable: true,
+      render: (value) => value?.tableNumber || "N/A",
     },
     {
       key: "cost",
       label: "Cost",
+      sortable: false,
+      render: (value) => PesoFormat(value || 0),
+    },
+    {
+      key: "startTime",
+      label: "Start Time",
       sortable: true,
-      render: (value) => PesoFormat(value),
+      render: (value) => value ? formatDate(value) : "N/A",
+    },
+    {
+      key: "endTime",
+      label: "End Time",
+      sortable: true,
+      render: (value) => value ? formatDate(value) : "N/A",
     },
     {
       key: "paymentMethod",
       label: "Payment Method",
       sortable: true,
-      render: (value) => value,
+      render: (value) => value || "N/A",
+    },
+    {
+      key: "cash",
+      label: "Cash",
+      sortable: true,
+      render: (value) => value ? PesoFormat(value) : "N/A",
+    },
+    {
+      key: "change",
+      label: "Change",
+      sortable: true,
+      render: (value) => value ? PesoFormat(value) : "N/A",
     },
     {
       key: "status",
       label: "Status",
       sortable: true,
-      render: (value) => createStatusChip(value),
+      render: (value) => createTableStatusChip(value || "Unknown"),
     },
     {
-      key: "createdAt",
+      key: "tables",
       label: "Date",
       sortable: true,
-      render: (value) => formatDate(value),
-    },
-    {
-      key: "id",
-      label: "Actions",
-      sortable: true,
-      render: (value) => (
-        <>
-          <IonButton
-            size="small"
-            color={"success"}
-            className="slideout-actions-button"
-            onClick={() => handleApprove(value)}
-          >
-            Approve
-          </IonButton>
-          <IonButton
-            size="small"
-            color={"danger"}
-            className="slideout-actions-button"
-            onClick={() => handleReject(value)}
-          >
-            Reject
-          </IonButton>
-        </>
-      ),
+      render: (value) => formatDate(value?.createdAt || ""),
     },
   ];
 
   const allColumns: TableColumn<GetTransactionWithUserTableColumn>[] = [
-    {
+   {
       key: "user",
       label: "User",
       sortable: true,
-      render: (value) => value.name,
+      render: (value) => value?.name || value?.email || "Unknown User",
     },
     {
-      key: "amount",
-      label: "Amount",
-      sortable: false,
-      render: (value) => PesoFormat(value),
+      key: "tables",
+      label: "Table No",
+      sortable: true,
+      render: (value) => value?.tableNumber || "N/A",
     },
     {
       key: "cost",
       label: "Cost",
+      sortable: false,
+      render: (value) => PesoFormat(value || 0),
+    },
+    {
+      key: "startTime",
+      label: "Start Time",
       sortable: true,
-      render: (value) => PesoFormat(value),
+      render: (value) => value ? formatDate(value) : "N/A",
+    },
+    {
+      key: "endTime",
+      label: "End Time",
+      sortable: true,
+      render: (value) => value ? formatDate(value) : "N/A",
     },
     {
       key: "paymentMethod",
       label: "Payment Method",
       sortable: true,
-      render: (value) => value,
+      render: (value) => value || "N/A",
+    },
+    {
+      key: "cash",
+      label: "Cash",
+      sortable: true,
+      render: (value) => value ? PesoFormat(value) : "N/A",
+    },
+    {
+      key: "change",
+      label: "Change",
+      sortable: true,
+      render: (value) => value ? PesoFormat(value) : "N/A",
     },
     {
       key: "status",
       label: "Status",
       sortable: true,
-      render: (value) => createStatusChip(value),
+      render: (value) => createTableStatusChip(value || "Unknown"),
     },
     {
-      key: "createdAt",
+      key: "tables",
       label: "Date",
       sortable: true,
-      render: (value) => formatDate(value),
+      render: (value) => formatDate(value?.createdAt || ""),
     },
   ];
   
-  const currentData = selectedTab === "pending" ? pendingData : allData;
-  const currentColumns = selectedTab === "pending" ? pendingColumns : allColumns;
-  const currentTableState = selectedTab === "pending" ? pendingTableState : allTableState;
-  const currentUpdateState = selectedTab === "pending" ? updatePendingState : updateAllState;
-  const currentIsLoading = selectedTab === "pending" ? isLoadingPending : isLoadingAll;
-  const currentIsFetching = selectedTab === "pending" ? isFetchingPending : isFetchingAll;
-  const currentIsError = selectedTab === "pending" ? isErrorPending : isErrorAll;
-  const currentError = selectedTab === "pending" ? errorPending : errorAll;
-  const currentRefetch = selectedTab === "pending" ? refetchPendingTable : refetchAllTable;
+  const currentData = selectedTab === "active" ? pendingData : allData;
+  const currentColumns = selectedTab === "active" ? pendingColumns : allColumns;
+  const currentTableState = selectedTab === "active" ? pendingTableState : allTableState;
+  const currentUpdateState = selectedTab === "active" ? updatePendingState : updateAllState;
+  const currentIsLoading = selectedTab === "active" ? isLoadingPending : isLoadingAll;
+  const currentIsFetching = selectedTab === "active" ? isFetchingPending : isFetchingAll;
+  const currentIsError = selectedTab === "active" ? isErrorPending : isErrorAll;
+  const currentError = selectedTab === "active" ? errorPending : errorAll;
+  const currentRefetch = selectedTab === "active" ? refetchPendingTable : refetchAllTable;
 
   if (isLoading) {
     return <LoadingSpinner message="Loading transactions..." />;
@@ -427,21 +486,21 @@ const TransactionsManagement: React.FC = () => {
       <div className="transaction-tabs" style={{ marginBottom: '20px' }}>
         <IonSegment
           value={selectedTab}
-          onIonChange={(e) => setSelectedTab(e.detail.value as "pending" | "all")}
+          onIonChange={(e) => setSelectedTab(e.detail.value as "active" | "all")}
         >
-          <IonSegmentButton value="pending">
-            <IonLabel>Pending Transactions</IonLabel>
+          <IonSegmentButton value="active">
+            <IonLabel>Inprogress</IonLabel>
           </IonSegmentButton>
           <IonSegmentButton value="all">
-            <IonLabel>All Transactions</IonLabel>
+            <IonLabel>Completed Transactions</IonLabel>
           </IonSegmentButton>
         </IonSegment>
       </div>
 
       {currentData?.data.length === 0 ? (
         <div className="empty-state">
-          <h3>{selectedTab === "pending" ? "No pending transactions" : "No transactions found"}</h3>
-          <p>{selectedTab === "pending" ? "All transactions have been processed" : "No transaction history available"}</p>
+          <h3>{selectedTab === "active" ? "No active transactions" : "No transactions found"}</h3>
+          <p>{selectedTab === "active" ? "All transactions have been processed" : "No transaction history available"}</p>
         </div>
       ) : (
         <div className="transactions-table">
@@ -486,13 +545,16 @@ const TransactionsManagement: React.FC = () => {
           setShowNewTransactionModal(false);
           setSelectedTableId("");
           setSelectedUserId("");
-          setSessionHours(1);
+          setSelectedRateId("");
           setSelectedPromoId(null);
           setPromoDiscount(0);
+          setPaymentMethod("Cash");
+          setCash(0);
+          setChange(0);
         }}
         title="Add New Transaction"
         position="end"
-        size="large"
+        size="medium"
       >
         <div style={{ padding: "20px" }}>
 
@@ -526,22 +588,57 @@ const TransactionsManagement: React.FC = () => {
               ))}
             </IonSelect>
           </IonItem>
+          
+          {/* Rate Selection */}
           <IonItem style={{ marginBottom: "20px" }}>
-            <IonLabel>Hours: {sessionHours}</IonLabel>
-            <IonRange
-              min={1}
-              max={12}
-              step={1}
-              value={sessionHours}
-              pin={true}
-              onIonChange={(e) => setSessionHours(e.detail.value as number)}
-            />
+            <IonLabel>Rate Package *</IonLabel>
+            <IonSelect
+              placeholder="Select a rate"
+              value={selectedRateId}
+              onIonChange={(e) => setSelectedRateId(e.detail.value)}
+            >
+              {rates?.map((rate) => (
+                <IonSelectOption key={rate.id} value={rate.id}>
+                  {rate.hours} {rate.hours === 1 ? "Hour" : "Hours"} - ₱{rate.price.toFixed(2)}
+                  {rate.description && ` (${rate.description})`}
+                </IonSelectOption>
+              ))}
+            </IonSelect>
           </IonItem>
+
+          {/* Payment Method Selection */}
+          <IonItem style={{ marginBottom: "20px" }}>
+            <IonLabel>Payment Method *</IonLabel>
+            <IonSelect
+              placeholder="Select payment method"
+              value={paymentMethod}
+              onIonChange={(e) => setPaymentMethod(e.detail.value)}
+            >
+              <IonSelectOption value="Cash">Cash</IonSelectOption>
+              <IonSelectOption value="EWallet">EWallet</IonSelectOption>
+              <IonSelectOption value="Bank Transfer">Bank Transfer</IonSelectOption>
+            </IonSelect>
+          </IonItem>
+
+          {/* Cash Input - Only show for Cash payment method */}
+          {paymentMethod === "Cash" && (
+            <IonItem style={{ marginBottom: "20px" }}>
+              <IonLabel position="stacked">Cash Amount *</IonLabel>
+              <IonInput
+                type="number"
+                value={cash}
+                placeholder="Enter cash amount"
+                onIonInput={(e) => handleCashInput(parseFloat(e.detail.value || "0"))}
+                min={0}
+                step="0.01"
+              />
+            </IonItem>
+          )}
 
           {/* Promo Selection */}
           {/* <div style={{ marginBottom: "20px" }}>
             <PromoSelector
-              sessionCost={hourlyRate * sessionHours}
+              sessionCost={sessionPrice}
               selectedPromoId={selectedPromoId}
               onPromoSelect={handlePromoSelect}
               disabled={false}
@@ -549,13 +646,38 @@ const TransactionsManagement: React.FC = () => {
           </div> */}
 
           <div style={{ padding: "15px", background: "#f5f5f5", borderRadius: "8px" }}>
-            <p><strong>Rate:</strong> ₱{hourlyRate} per hour (Global)</p>
-            <p><strong>Subtotal:</strong> ₱{hourlyRate * sessionHours}</p>
-            {promoDiscount > 0 && (
-              <p style={{ color: "#28a745" }}><strong>Promo Discount:</strong> -₱{promoDiscount}</p>
+            {selectedRate ? (
+              <>
+                <p className="rate-container"><strong>Selected Rate:</strong> {selectedRate.hours} {selectedRate.hours === 1 ? "Hour" : "Hours"}</p>
+                <p className="rate-container"><strong>Price:</strong> ₱{selectedRate.price.toFixed(2)}</p>
+                {selectedRate.description && (
+                  <p className="rate-container" style={{ fontSize: "12px", color: "#666" }}>{selectedRate.description}</p>
+                )}
+                {promoDiscount > 0 && (
+                  <p className="rate-container" style={{ color: "#28a745" }}><strong>Promo Discount:</strong> -₱{promoDiscount}</p>
+                )}
+                <p className="rate-container"><strong>Total Amount:</strong> ₱{(selectedRate.price - promoDiscount).toFixed(2)}</p>
+                {paymentMethod === "Cash" && cash > 0 && (
+                  <>
+                    <p className="rate-container" style={{ marginTop: "10px", paddingTop: "10px", borderTop: "1px solid #ddd" }}>
+                      <strong>Cash Received:</strong> ₱{cash.toFixed(2)}
+                    </p>
+                    {cash < (selectedRate.price - promoDiscount) ? (
+                      <p className="rate-container" style={{ color: "#dc3545" }}>
+                        <strong>⚠️ Insufficient:</strong> Need ₱{((selectedRate.price - promoDiscount) - cash).toFixed(2)} more
+                      </p>
+                    ) : (
+                      <p className="rate-container" style={{ color: "#28a745" }}>
+                        <strong>Change:</strong> ₱{change.toFixed(2)}
+                      </p>
+                    )}
+                  </>
+                )}
+                <p className="rate-container"><strong>End Time:</strong> {new Date(Date.now() + selectedRate.hours * 60 * 60 * 1000).toLocaleString()}</p>
+              </>
+            ) : (
+              <p style={{ color: "#999", textAlign: "center" }}>Please select a rate package</p>
             )}
-            <p><strong>Total Amount:</strong> ₱{(hourlyRate * sessionHours) - promoDiscount}</p>
-            <p><strong>End Time:</strong> {new Date(Date.now() + sessionHours * 60 * 60 * 1000).toLocaleString()}</p>
           </div>
         </div>
 
@@ -567,9 +689,12 @@ const TransactionsManagement: React.FC = () => {
                   setShowNewTransactionModal(false);
                   setSelectedTableId("");
                   setSelectedUserId("");
-                  setSessionHours(1);
+                  setSelectedRateId("");
                   setSelectedPromoId(null);
                   setPromoDiscount(0);
+                  setPaymentMethod("Cash");
+                  setCash(0);
+                  setChange(0);
                 }}
               >
                 Cancel

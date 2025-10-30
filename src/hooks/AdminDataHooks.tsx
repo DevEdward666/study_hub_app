@@ -62,11 +62,23 @@ export const useUsersManagement = () => {
   });
 
   const createUserMutation = useMutation({
-    mutationFn: ({ name, email, password }: { name: string; email: string; password: string }) =>
+    mutationFn: ({ name, email, password, role }: { name: string; email: string; password: string; role: string }) =>
       apiClient.post(
         "/admin/users/create",
         ApiResponseSchema(UserWithInfoSchema),
-        { name, email, password }
+        { name, email, password, role }
+      ),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["admin", "users"] });
+    },
+  });
+
+  const updateUserMutation = useMutation({
+    mutationFn: ({ userId, name, email, role, phone }: { userId: string; name: string; email: string; role: string; phone?: string }) =>
+      apiClient.put(
+        "/admin/users/update",
+        ApiResponseSchema(UserWithInfoSchema),
+        { userId, name, email, role, phone }
       ),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["admin", "users"] });
@@ -80,6 +92,7 @@ export const useUsersManagement = () => {
     toggleAdmin: toggleAdminMutation,
     addCredits: addCreditsMutation,
     createUser: createUserMutation,
+    updateUser: updateUserMutation,
     refetch: usersQuery.refetch,
   };
 };
@@ -92,7 +105,7 @@ export const useTransactionsManagement = () => {
     queryFn: () =>
       apiClient.get(
         "/admin/transactions/pending",
-        ApiResponseSchema(z.array(TransactionWithUserSchema))
+        ApiResponseSchema(z.array(getTransactionWithUserSchema))
       ),
     refetchInterval: 30000, // Refresh every 30 seconds
   });
@@ -102,7 +115,7 @@ export const useTransactionsManagement = () => {
     queryFn: () =>
       apiClient.get(
         "/admin/transactions/all",
-        ApiResponseSchema(z.array(TransactionWithUserSchema))
+        ApiResponseSchema(z.array(getTransactionWithUserSchema))
       ),
     refetchInterval: 60000, // Refresh every 60 seconds
   });
@@ -152,7 +165,6 @@ export class TransactionManagementServiceAPI {
       "/admin/transactions/pending",
       ApiResponseSchema(z.array(TransactionWithUserSchema))
     );
-    console.log(fetchTransactionManagement);
     const parsed = getTransactionWithUserTableSchema.parse({
       data: Array.isArray(fetchTransactionManagement)
         ? fetchTransactionManagement
@@ -165,19 +177,16 @@ export class TransactionManagementServiceAPI {
       filteredTransactionWithUserTable =
         filteredTransactionWithUserTable.filter(
           (val) =>
-            val.id?.toString()?.toLowerCase().includes(searchTerm) ||
-            val.amount?.toString().toLowerCase().includes(searchTerm) ||
-            val.cost.toString()?.toLowerCase().includes(searchTerm) ||
-            val.paymentMethod?.toString().toLowerCase().includes(searchTerm) ||
-            val.user.toString()?.toLowerCase().includes(searchTerm)
+            val.tables?.id?.toString()?.toLowerCase().includes(searchTerm) ||
+            val.tables?.hourlyRate?.toString().toLowerCase().includes(searchTerm)
         );
     }
 
     const sortBy: GetTransactionWithUserTableKeys =
       state.sortBy as GetTransactionWithUserTableKeys;
     filteredTransactionWithUserTable.sort((a, b) => {
-      const aVal = a[sortBy];
-      const bVal = b[sortBy];
+      const aVal = a[sortBy] as string | number | null | undefined;
+      const bVal = b[sortBy] as string | number | null | undefined;
 
       if (aVal == null) return 1;
       if (bVal == null) return -1;
@@ -239,21 +248,17 @@ export class TransactionManagementServiceAPI {
       filteredTransactionWithUserTable =
         filteredTransactionWithUserTable.filter(
           (val) =>
-            val.id?.toString()?.toLowerCase().includes(searchTerm) ||
-            val.amount?.toString().toLowerCase().includes(searchTerm) ||
-            val.cost.toString()?.toLowerCase().includes(searchTerm) ||
-            val.paymentMethod?.toString().toLowerCase().includes(searchTerm) ||
-            val.status?.toString().toLowerCase().includes(searchTerm) ||
-            val.user.name?.toString().toLowerCase().includes(searchTerm) ||
-            val.user.email?.toString().toLowerCase().includes(searchTerm)
+            val.tables?.id?.toString()?.toLowerCase().includes(searchTerm) ||
+            val.tables?.hourlyRate?.toString().toLowerCase().includes(searchTerm) ||
+            val.tables?.location?.toString().toLowerCase().includes(searchTerm)
         );
     }
 
     const sortBy: GetTransactionWithUserTableKeys =
       state.sortBy as GetTransactionWithUserTableKeys;
     filteredTransactionWithUserTable.sort((a, b) => {
-      const aVal = a[sortBy];
-      const bVal = b[sortBy];
+      const aVal = a[sortBy] as string | number | null | undefined;
+      const bVal = b[sortBy] as string | number | null | undefined;
 
       if (aVal == null) return 1;
       if (bVal == null) return -1;
@@ -406,8 +411,8 @@ export class TableManagementServiceAPI {
 
     const sortBy: GetTablesTableKeys = state.sortBy as GetTablesTableKeys;
     filteredetTablesTable.sort((a, b) => {
-      const aVal = a[sortBy];
-      const bVal = b[sortBy];
+      const aVal = a[sortBy] as string | number | null | undefined;
+      const bVal = b[sortBy] as string | number | null | undefined;
 
       if (aVal == null) return 1;
       if (bVal == null) return -1;
@@ -515,8 +520,8 @@ export class PremiseManagementServiceAPI {
 
     const sortBy: GetPremiseTableKeys = state.sortBy as GetPremiseTableKeys;
     filteredetPremiseTable.sort((a, b) => {
-      const aVal = a[sortBy];
-      const bVal = b[sortBy];
+      const aVal = a[sortBy] as string | number | null | undefined;
+      const bVal = b[sortBy] as string | number | null | undefined;
 
       if (aVal == null) return 1;
       if (bVal == null) return -1;

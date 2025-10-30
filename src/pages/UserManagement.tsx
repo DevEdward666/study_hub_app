@@ -37,11 +37,12 @@ import {
   arrowUpOutline, 
   arrowDownOutline, 
   addCircleOutline,
-  personAddOutline
+  personAddOutline,
+  pencilOutline
 } from "ionicons/icons";
 
 const UsersManagement: React.FC = () => {
-  const { users, isLoading, error, toggleAdmin, addCredits, createUser, refetch } =
+  const { users, isLoading, error, toggleAdmin, addCredits, createUser, updateUser, refetch } =
     useUsersManagement();
   const { refetch: refetchAdminStatus, isAdmin } = useAdminStatus();
   const [filterType, setFilterType] = useState<"all" | "admin" | "user">("all");
@@ -59,9 +60,21 @@ const UsersManagement: React.FC = () => {
     name: "",
     email: "",
     password: "",
-    confirmPassword: ""
+    confirmPassword: "",
+    role: "Staff"
   });
   const [userFormErrors, setUserFormErrors] = useState<{[key: string]: string}>({});
+  
+  // Edit User Modal State
+  const [isEditUserModalOpen, setIsEditUserModalOpen] = useState(false);
+  const [editUserData, setEditUserData] = useState({
+    userId: "",
+    name: "",
+    email: "",
+    phone: "",
+    role: "Staff"
+  });
+  const [editFormErrors, setEditFormErrors] = useState<{[key: string]: string}>({});
   
   const [showToast, setShowToast] = useState(false);
   const [toastMessage, setToastMessage] = useState("");
@@ -219,7 +232,8 @@ const UsersManagement: React.FC = () => {
       await createUser.mutateAsync({
         name: newUserData.name,
         email: newUserData.email,
-        password: newUserData.password
+        password: newUserData.password,
+        role: newUserData.role
       });
       
       setToastMessage(`Successfully created user: ${newUserData.name}`);
@@ -232,13 +246,98 @@ const UsersManagement: React.FC = () => {
         name: "",
         email: "",
         password: "",
-        confirmPassword: ""
+        confirmPassword: "",
+        role: "Staff"
       });
       setUserFormErrors({});
       
       refetch();
     } catch (error) {
       const message = error instanceof Error ? error.message : "Failed to create user";
+      setToastMessage(message);
+      setToastColor("danger");
+      setShowToast(true);
+    }
+  };
+
+  // Edit User Functions
+  const openEditUserModal = (userId: string) => {
+    const user = users?.find(u => u.id === userId);
+    if (!user) return;
+    
+    setEditUserData({
+      userId: user.id,
+      name: user.name || "",
+      email: user.email,
+      phone: "", // Phone not in current UserWithInfoDto, will be empty
+      role: user.role
+    });
+    setEditFormErrors({});
+    setIsEditUserModalOpen(true);
+  };
+
+  const validateEditForm = (): boolean => {
+    const errors: {[key: string]: string} = {};
+    
+    if (!editUserData.name || editUserData.name.trim().length === 0) {
+      errors.name = "Name is required";
+    }
+    
+    if (!editUserData.email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(editUserData.email)) {
+      errors.email = "Valid email is required";
+    }
+    
+    if (!editUserData.role) {
+      errors.role = "Role is required";
+    }
+    
+    setEditFormErrors(errors);
+    return Object.keys(errors).length === 0;
+  };
+
+  const handleUpdateUser = async () => {
+    if (!validateEditForm()) {
+      return;
+    }
+
+    showConfirmation({
+      header: 'Update User',
+      message: `Are you sure you want to update this user?\n\nName: ${editUserData.name}\nEmail: ${editUserData.email}\nRole: ${editUserData.role}\n\nChanges will be applied immediately.`,
+      confirmText: 'Update User',
+      cancelText: 'Cancel'
+    }, async () => {
+      await performUpdateUser();
+    });
+  };
+
+  const performUpdateUser = async () => {
+    try {
+      await updateUser.mutateAsync({
+        userId: editUserData.userId,
+        name: editUserData.name,
+        email: editUserData.email,
+        role: editUserData.role,
+        phone: editUserData.phone || undefined
+      });
+      
+      setToastMessage(`Successfully updated user: ${editUserData.name}`);
+      setToastColor("success");
+      setShowToast(true);
+      setIsEditUserModalOpen(false);
+      
+      // Reset form
+      setEditUserData({
+        userId: "",
+        name: "",
+        email: "",
+        phone: "",
+        role: "Staff"
+      });
+      setEditFormErrors({});
+      
+      refetch();
+    } catch (error) {
+      const message = error instanceof Error ? error.message : "Failed to update user";
       setToastMessage(message);
       setToastColor("danger");
       setShowToast(true);
@@ -280,13 +379,42 @@ const UsersManagement: React.FC = () => {
       sortable: true,
     },
     {
-      key: "isAdmin",
+      key: "role",
       label: "Role",
+      sortable: true,
+      render: (value) => {
+        const roleConfig = {
+          "Customer": { color: "#3880ff", bgColor: "#e3f2fd" }  ,
+          "Staff": {  color: "#666", bgColor: "#f5f5f5" },
+          "Admin": {  color: "#3880ff", bgColor: "#e3f2fd" },
+          "Super Admin": {  color: "#d32f2f", bgColor: "#ffebee" }
+        };
+        const config = roleConfig[value as keyof typeof roleConfig] || roleConfig["Staff"];
+        
+        return (
+          <span style={{
+            display: "inline-flex",
+            alignItems: "center",
+            gap: "4px",
+            padding: "4px 12px",
+            borderRadius: "12px",
+            fontSize: "0.85em",
+            fontWeight: "500",
+            color: config.color,
+            backgroundColor: config.bgColor
+          }}>
+            {value}
+          </span>
+        );
+      },
+    },
+    {
+      key: "isAdmin",
+      label: "Admin Status",
       sortable: true,
       render: (value) => (
         <span className={`status-badge ${value ? 'admin' : 'user'}`}>
-          <span className="badge-icon">{value ? '⭐' : '👤'}</span>
-          {value ? 'Admin' : 'User'}
+          {value ? <IonIcon icon={checkmarkCircleOutline} color="success" /> : <IonIcon icon={closeCircleOutline} color="medium" />}
         </span>
       ),
     },
@@ -316,15 +444,12 @@ const UsersManagement: React.FC = () => {
           <IonButton
             size="small"
             fill="clear"
-            color="dark"
-            onClick={() => handleToggleAdmin(value)}
-            disabled={toggleAdmin.isPending}
-            title={row.isAdmin ? "Remove Admin" : "Make Admin"}
+            color="secondary"
+            onClick={() => openEditUserModal(value)}
+            disabled={updateUser.isPending}
+            title="Edit User"
           >
-            <IonIcon 
-              slot="icon-only" 
-              icon={row.isAdmin ? arrowDownOutline : arrowUpOutline}
-            />
+            <IonIcon slot="icon-only" icon={pencilOutline} />
           </IonButton>
           <IonButton
             size="small"
@@ -614,6 +739,24 @@ const UsersManagement: React.FC = () => {
                 </div>
 
                 <div className="form-section">
+                  <IonItem>
+                    <IonLabel position="stacked">Role *</IonLabel>
+                    <IonSelect
+                      value={newUserData.role}
+                      placeholder="Select role"
+                      onIonChange={(e) => setNewUserData({...newUserData, role: e.detail.value})}
+                    >
+                      <IonSelectOption value="Staff">Staff</IonSelectOption>
+                      <IonSelectOption value="Admin">Admin</IonSelectOption>
+                      <IonSelectOption value="Super Admin">Super Admin</IonSelectOption>
+                    </IonSelect>
+                  </IonItem>
+                  <IonText color="medium" style={{ fontSize: "0.85em", marginTop: "4px", display: "block", paddingLeft: "16px" }}>
+                    <small>Staff: Regular user access | Admin: Admin dashboard access | Super Admin: Full system access</small>
+                  </IonText>
+                </div>
+
+                <div className="form-section">
                   <IonItem className={userFormErrors.password ? 'ion-invalid' : ''}>
                     <IonLabel position="stacked">Password *</IonLabel>
                     <IonInput
@@ -678,7 +821,7 @@ const UsersManagement: React.FC = () => {
                     marginBottom: "8px"
                   }}>
                     <span><strong>Role:</strong></span>
-                    <span>User (can be changed later)</span>
+                    <span>{newUserData.role}</span>
                   </div>
                   <div className="summary-row" style={{
                     display: "flex",
@@ -707,6 +850,169 @@ const UsersManagement: React.FC = () => {
                   <p>
                     <small>
                       Note: The user will be able to log in immediately with these credentials.
+                    </small>
+                  </p>
+                </div>
+              </IonCardContent>
+            </IonCard>
+          </div>
+        </IonContent>
+      </IonModal>
+
+      {/* Edit User Modal */}
+      <IonModal
+        isOpen={isEditUserModalOpen}
+        onDidDismiss={() => setIsEditUserModalOpen(false)}
+      >
+        <IonHeader>
+          <IonToolbar>
+            <IonTitle>Edit User</IonTitle>
+            <IonButton
+              slot="end"
+              fill="clear"
+              onClick={() => setIsEditUserModalOpen(false)}
+            >
+              Close
+            </IonButton>
+          </IonToolbar>
+        </IonHeader>
+
+        <IonContent className="edit-user-modal-content">
+          <div className="edit-user-form">
+            <IonCard>
+              <IonCardHeader>
+                <IonCardTitle>Update User Details</IonCardTitle>
+              </IonCardHeader>
+              <IonCardContent>
+                <div className="form-section">
+                  <IonItem className={editFormErrors.name ? 'ion-invalid' : ''}>
+                    <IonLabel position="stacked">Full Name *</IonLabel>
+                    <IonInput
+                      type="text"
+                      value={editUserData.name}
+                      placeholder="Enter full name"
+                      onIonInput={(e) => setEditUserData({...editUserData, name: e.detail.value!})}
+                      required
+                    />
+                  </IonItem>
+                  {editFormErrors.name && (
+                    <IonText color="danger" className="error-text">
+                      <small>{editFormErrors.name}</small>
+                    </IonText>
+                  )}
+                </div>
+
+                <div className="form-section">
+                  <IonItem className={editFormErrors.email ? 'ion-invalid' : ''}>
+                    <IonLabel position="stacked">Email Address *</IonLabel>
+                    <IonInput
+                      type="email"
+                      value={editUserData.email}
+                      placeholder="Enter email address"
+                      onIonInput={(e) => setEditUserData({...editUserData, email: e.detail.value!})}
+                      required
+                    />
+                  </IonItem>
+                  {editFormErrors.email && (
+                    <IonText color="danger" className="error-text">
+                      <small>{editFormErrors.email}</small>
+                    </IonText>
+                  )}
+                </div>
+
+                <div className="form-section">
+                  <IonItem>
+                    <IonLabel position="stacked">Phone Number</IonLabel>
+                    <IonInput
+                      type="tel"
+                      value={editUserData.phone}
+                      placeholder="Enter phone number"
+                      onIonInput={(e) => setEditUserData({...editUserData, phone: e.detail.value!})}
+                    />
+                  </IonItem>
+                </div>
+
+                <div className="form-section">
+                  <IonItem className={editFormErrors.role ? 'ion-invalid' : ''}>
+                    <IonLabel position="stacked">Role *</IonLabel>
+                    <IonSelect
+                      value={editUserData.role}
+                      placeholder="Select role"
+                      onIonChange={(e) => setEditUserData({...editUserData, role: e.detail.value})}
+                    >
+                      <IonSelectOption value="Staff">Staff</IonSelectOption>
+                      <IonSelectOption value="Admin">Admin</IonSelectOption>
+                      <IonSelectOption value="Super Admin">Super Admin</IonSelectOption>
+                    </IonSelect>
+                  </IonItem>
+                  <IonText color="medium" style={{ fontSize: "0.85em", marginTop: "4px", display: "block", paddingLeft: "16px" }}>
+                    <small>Staff: Regular user access | Admin: Admin dashboard access | Super Admin: Full system access</small>
+                  </IonText>
+                  {editFormErrors.role && (
+                    <IonText color="danger" className="error-text">
+                      <small>{editFormErrors.role}</small>
+                    </IonText>
+                  )}
+                </div>
+
+                <div className="edit-user-summary" style={{
+                  marginTop: "20px",
+                  padding: "16px",
+                  backgroundColor: "#f5f5f5",
+                  borderRadius: "8px"
+                }}>
+                  <h4 style={{ margin: "0 0 12px 0", color: "var(--ion-color-primary)" }}>User Summary</h4>
+                  <div className="summary-row" style={{
+                    display: "flex",
+                    justifyContent: "space-between",
+                    marginBottom: "8px"
+                  }}>
+                    <span><strong>Name:</strong></span>
+                    <span>{editUserData.name || "Not set"}</span>
+                  </div>
+                  <div className="summary-row" style={{
+                    display: "flex",
+                    justifyContent: "space-between",
+                    marginBottom: "8px"
+                  }}>
+                    <span><strong>Email:</strong></span>
+                    <span>{editUserData.email || "Not set"}</span>
+                  </div>
+                  <div className="summary-row" style={{
+                    display: "flex",
+                    justifyContent: "space-between",
+                    marginBottom: "8px"
+                  }}>
+                    <span><strong>Phone:</strong></span>
+                    <span>{editUserData.phone || "Not set"}</span>
+                  </div>
+                  <div className="summary-row" style={{
+                    display: "flex",
+                    justifyContent: "space-between"
+                  }}>
+                    <span><strong>Role:</strong></span>
+                    <span>{editUserData.role}</span>
+                  </div>
+                </div>
+
+                <IonButton
+                  expand="block"
+                  onClick={handleUpdateUser}
+                  disabled={updateUser.isPending || !editUserData.name || !editUserData.email}
+                  style={{ marginTop: "20px" }}
+                >
+                  {updateUser.isPending
+                    ? "Updating User..."
+                    : "Update User"}
+                </IonButton>
+
+                <div className="edit-user-note" style={{
+                  marginTop: "16px",
+                  textAlign: "center"
+                }}>
+                  <p>
+                    <small>
+                      Note: Changes will be applied immediately. Role changes will automatically update admin permissions.
                     </small>
                   </p>
                 </div>

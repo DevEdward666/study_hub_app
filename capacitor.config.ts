@@ -3,7 +3,7 @@ import { Capacitor } from '@capacitor/core';
 
 const config = {
   appId: 'com.studyhub.app',
-  appName: 'StudyHub',
+  appName: 'SunnySideUp',
   webDir: 'build',
   server: {
     androidScheme: 'https'

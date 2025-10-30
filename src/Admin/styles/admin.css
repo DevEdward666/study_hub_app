@@ -2201,3 +2201,9 @@ display: flex
     padding: 8px;
   }
 }
+ .rate-container{
+      display: flex;
+    flex-direction: row;
+    justify-content: space-between;
+    gap: 10px;
+  }

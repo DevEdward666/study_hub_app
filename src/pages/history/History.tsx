@@ -121,7 +121,7 @@ const History: React.FC = () => {
         combinedData.push({
           type: "session",
           data: session,
-          timestamp: new Date(session.startTime).getTime(),
+          timestamp: new Date(session.startTime || 0).getTime(),
         });
       });
     }
@@ -175,7 +175,7 @@ const History: React.FC = () => {
             <div className="item-detail">
               <span className="detail-label">Duration</span>
               <span className="detail-value duration">
-                {formatDuration(session.startTime, session.endTime!)}
+                {formatDuration(session.startTime!, session.endTime!)}
               </span>
             </div>
 
@@ -195,7 +195,7 @@ const History: React.FC = () => {
           </div>
 
           <div className="item-timestamp">
-            Started: {new Date(session.startTime).toLocaleString()}
+            Started: {new Date(session.startTime || 0).toLocaleString()}
             {session.endTime && (
               <>
                 <br />

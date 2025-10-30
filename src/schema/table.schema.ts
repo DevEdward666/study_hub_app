@@ -4,6 +4,7 @@ export const CurrentSessionSchema = z.object({
   id: z.string(),
   startTime: z.string(),
   endTime: z.string(),
+    customerName: z.string().optional().nullable(),
 }).nullable().optional();
 
 export const StudyTableSchema = z.object({
@@ -25,11 +26,14 @@ export const SessionStatusSchema = z.enum(["Active", "Completed"]);
 export const TableSessionSchema = z.object({
   id: z.string(),
   userId: z.string(),
-  tableId: z.string(),
-  startTime: z.string(),
-  endTime: z.string().nullable(),
+  tableId: z.string().optional().nullable(),
+  startTime: z.string().optional().nullable(),
+  endTime: z.string().optional().nullable(),
   amount: z.number(),
   status: z.string(),
+  paymentMethod: z.string().optional().nullable(),
+  cash: z.number().optional().nullable(),
+  change: z.number().optional().nullable(),
   createdAt: z.string(),
 });
 
@@ -45,6 +49,9 @@ export const StartSessionRequestSchema = z.object({
   endTime: z.string().optional(),
   promoId: z.string().optional(),
   amount: z.number(),
+  paymentMethod: z.string().optional(),
+  cash: z.number().optional(),
+  change: z.number().optional(),
 });
 
 export const EndSessionResponseSchema = z.object({

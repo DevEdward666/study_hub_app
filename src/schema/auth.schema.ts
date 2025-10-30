@@ -17,6 +17,7 @@ export const UserSchema = z.object({
   name: z.string().nullable(),
   image: z.string().nullable().optional(),
   emailVerified: z.boolean().nullable().optional(),
+  role: z.string(),
   createdAt: z.string(),
   updatedAt: z.string().nullable().optional(),
 });

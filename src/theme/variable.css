@@ -4,12 +4,12 @@ http://ionicframework.com/docs/theming/ */
 
 /* Primary Colors */
 :root {
-  --ion-color-primary: #F8D03D;
+  --ion-color-primary: #F6D57A;
 --ion-color-primary-rgb: 	248,	208,	61;
   --ion-color-primary-contrast: #ffffff;
   --ion-color-primary-contrast-rgb: 255, 255, 255;
-  --ion-color-primary-shade: #F8D03D;
-  --ion-color-primary-tint: #F8D03D;
+  --ion-color-primary-shade: #F6D57A;
+  --ion-color-primary-tint: #F6D57A;
 
   --ion-color-secondary: #FAAB35;
   --ion-color-secondary-rgb: 	250,	171,	53;
