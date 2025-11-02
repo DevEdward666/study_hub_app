@@ -62,6 +62,32 @@ export class TableService {
     console.log(res)
   return res;
   }
+
+  async printReceipt(sessionId: string, wifiPassword?: string): Promise<boolean> {
+    return apiClient.post(
+      `/tables/sessions/${sessionId}/print-receipt`,
+      ApiResponseSchema(z.boolean()),
+      wifiPassword ? { wifiPassword } : {}
+    );
+  }
+
+  async downloadReceiptPreview(sessionId: string): Promise<Blob> {
+    const baseURL = import.meta.env.VITE_API_BASE_URL || 'https://3qrbqpcx-5212.asse.devtunnels.ms/';
+    const token = localStorage.getItem('auth_token');
+    
+    const response = await fetch(`${baseURL}tables/sessions/${sessionId}/receipt-preview`, {
+      method: 'GET',
+      headers: {
+        'Authorization': `Bearer ${token}`
+      }
+    });
+    
+    if (!response.ok) {
+      throw new Error('Failed to download receipt preview');
+    }
+    
+    return await response.blob();
+  }
 }
 
 export const tableService = new TableService();

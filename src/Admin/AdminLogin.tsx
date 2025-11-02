@@ -76,7 +76,7 @@ export const AdminLogin: React.FC = () => {
           <div className="admin-login-card">
             <div className="admin-login-header">
               <div className="admin-logo">
-                <div className="logo-icon"><img src="/public/logo.png" alt="Sunny Side Logo" height={"400px"} width={"400px"}/></div>
+                <div className="logo-icon"><img src="/logo.png" alt="Sunny Side Logo" height={"400px"} width={"400px"}/></div>
                 <h1>Sunny Side Up Work + Study Admin</h1>
               </div>
               <p>Sign in to access the admin dashboard</p>

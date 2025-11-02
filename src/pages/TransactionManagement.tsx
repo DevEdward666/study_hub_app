@@ -41,7 +41,7 @@ import { PesoFormat } from "@/shared/PesoHelper";
 import { useMutation } from "@tanstack/react-query";
 import SlideoutModal from "@/shared/SideOutModal/SideoutModalComponent";
 import { tableService } from "@/services/table.service";
-import { addOutline } from "ionicons/icons";
+import { addOutline, printOutline } from "ionicons/icons";
 import PromoSelector from "../components/common/PromoSelector";
 const TransactionsManagement: React.FC = () => {
   const { isLoading, error, approve, reject, refetch } =
@@ -65,6 +65,11 @@ const TransactionsManagement: React.FC = () => {
   const [paymentMethod, setPaymentMethod] = useState<string>("Cash");
   const [cash, setCash] = useState<number>(0);
   const [change, setChange] = useState<number>(0);
+
+  // Print Receipt Modal State
+  const [showPasswordModal, setShowPasswordModal] = useState(false);
+  const [wifiPassword, setWifiPassword] = useState<string>("password1234");
+  const [selectedSessionId, setSelectedSessionId] = useState<string>("");
 
   // Helper functions to get selected rate data
   const selectedRate = rates?.find(rate => rate.id === selectedRateId);
@@ -100,7 +105,17 @@ const TransactionsManagement: React.FC = () => {
         change: data.change,
       });
     },
-    onSuccess: async () => {
+    onSuccess: async (sessionId: string) => {
+      // Try to print receipt automatically (non-blocking)
+      try {
+        await tableService.printReceipt(sessionId);
+        console.log('Receipt printed successfully');
+      } catch (error) {
+        console.log(error)
+        console.error('Failed to print receipt:', error);
+        // Don't block the UI if printing fails
+      }
+
       setShowNewTransactionModal(false);
       setSelectedTableId("");
       setSelectedUserId("");
@@ -122,6 +137,48 @@ const TransactionsManagement: React.FC = () => {
       console.error("Failed to start session:", error);
     },
   });
+
+  // Print receipt mutation
+  const printReceiptMutation = useMutation({
+    mutationFn: async ({ sessionId, password }: { sessionId: string; password?: string }) => {
+      return tableService.printReceipt(sessionId, password);
+    },
+    onSuccess: () => {
+      setShowPasswordModal(false);
+      setWifiPassword("password1234");
+      showConfirmation({
+        header: 'Receipt Printed',
+        message: 'Receipt has been sent to the printer successfully!',
+        confirmText: 'OK',
+        cancelText: ''
+      }, () => {});
+    },
+    onError: (error: any) => {
+      console.error('Failed to print receipt:', error);
+      showConfirmation({
+        header: 'Print Failed',
+        message: 'Failed to print receipt. Please check the printer connection.',
+        confirmText: 'OK',
+        cancelText: ''
+      }, () => {});
+    },
+  });
+
+  // Handle print receipt - open password modal
+  const handlePrintReceipt = (sessionId: string) => {
+    setSelectedSessionId(sessionId);
+    setShowPasswordModal(true);
+  };
+
+  // Confirm print with password
+  const handleConfirmPrint = () => {
+    if (selectedSessionId) {
+      printReceiptMutation.mutate({ 
+        sessionId: selectedSessionId, 
+        password: wifiPassword 
+      });
+    }
+  };
 
   // Promo handler
   const handlePromoSelect = (promoId: string | null, discount: number) => {
@@ -376,6 +433,27 @@ const TransactionsManagement: React.FC = () => {
       sortable: true,
       render: (value) => formatDate(value?.createdAt || ""),
     },
+    {
+      key: "id",
+      label: "Actions",
+      sortable: false,
+      render: (value, row) => (
+        <IonButton
+          size="small"
+          fill="outline"
+          color="primary"
+          onClick={(e) => {
+            e.stopPropagation();
+            console.log(row)
+            handlePrintReceipt(value);
+          }}
+          disabled={printReceiptMutation.isPending}
+        >
+          <IonIcon icon={printOutline} slot="start" />
+          Print Receipt
+        </IonButton>
+      ),
+    },
   ];
 
   const allColumns: TableColumn<GetTransactionWithUserTableColumn>[] = [
@@ -438,6 +516,26 @@ const TransactionsManagement: React.FC = () => {
       label: "Date",
       sortable: true,
       render: (value) => formatDate(value?.createdAt || ""),
+    },
+    {
+      key: "id",
+      label: "Actions",
+      sortable: false,
+      render: (value, row) => (
+        <IonButton
+          size="small"
+          fill="outline"
+          color="primary"
+          onClick={(e) => {
+            e.stopPropagation();
+            handlePrintReceipt(value);
+          }}
+          disabled={printReceiptMutation.isPending}
+        >
+          <IonIcon icon={printOutline} slot="start" />
+          Print Receipt
+        </IonButton>
+      ),
     },
   ];
   
@@ -706,6 +804,76 @@ const TransactionsManagement: React.FC = () => {
                 fill="solid"
               >
                 {startSessionMutation.isPending ? "Starting..." : isLoadingRates ? "Loading Rates..." : "Start Session"}
+              </IonButton>
+            </IonButtons>
+          </IonToolbar>
+        </IonFooter>
+      </SlideoutModal>
+
+      {/* WiFi Password Modal for Print Receipt */}
+      <SlideoutModal
+        isOpen={showPasswordModal}
+        onClose={() => {
+          setShowPasswordModal(false);
+          setWifiPassword("password1234");
+          setSelectedSessionId("");
+        }}
+        title="Print Receipt - WiFi Password"
+        position="end"
+        size="small"
+      >
+        <div style={{ padding: "20px" }}>
+          <p style={{ marginBottom: "20px", color: "#666" }}>
+            Enter the WiFi password to be printed on the receipt as a QR code.
+          </p>
+
+          <IonItem style={{ marginBottom: "20px" }}>
+            <IonLabel position="stacked">WiFi Password *</IonLabel>
+            <IonInput
+              type="text"
+              value={wifiPassword}
+              placeholder="Enter WiFi password"
+              onIonInput={(e) => setWifiPassword(e.detail.value || "")}
+            />
+          </IonItem>
+
+          <div style={{ 
+            padding: "15px", 
+            background: "#f0f9ff", 
+            borderRadius: "8px",
+            border: "1px solid #0ea5e9"
+          }}>
+            <p style={{ margin: 0, fontSize: "14px", color: "#0369a1" }}>
+              <strong>📱 QR Code Preview:</strong>
+            </p>
+            <p style={{ margin: "8px 0 0 0", fontSize: "13px", color: "#0c4a6e" }}>
+              Password: <strong>{wifiPassword || "(empty)"}</strong>
+            </p>
+            <p style={{ margin: "8px 0 0 0", fontSize: "12px", color: "#64748b" }}>
+              This will be printed as a scannable QR code on the receipt.
+            </p>
+          </div>
+        </div>
+
+        <IonFooter className="ion-no-border">
+          <IonToolbar>
+            <IonButtons slot="end" className="modal-action-buttons">
+              <IonButton
+                onClick={() => {
+                  setShowPasswordModal(false);
+                  setWifiPassword("password1234");
+                  setSelectedSessionId("");
+                }}
+              >
+                Cancel
+              </IonButton>
+              <IonButton
+                onClick={handleConfirmPrint}
+                disabled={!wifiPassword || printReceiptMutation.isPending}
+                color="primary"
+                fill="solid"
+              >
+                {printReceiptMutation.isPending ? "Printing..." : "Print Receipt"}
               </IonButton>
             </IonButtons>
           </IonToolbar>

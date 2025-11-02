@@ -45,6 +45,8 @@ export const TransactionWithUserSchema = z.object({
   endTime: z.string().optional().nullable(),
   cost: z.number(),
   status: z.string(),
+
+  id:z.string().optional().nullable(),
 });
 
 export const CreateTableRequestSchema = z.object({
@@ -82,6 +84,7 @@ export const getTransactionWithUserSchema = z.object({
   endTime: z.string().optional().nullable(),
   cost: z.number(),
   status: z.string(),
+  id:z.string().optional().nullable(),
 });
 export const getTransactionWithUserTableSchema = z.object({
   data: z.array(
@@ -91,6 +94,8 @@ export const getTransactionWithUserTableSchema = z.object({
   startTime: z.string().optional().nullable(),
   endTime: z.string().optional().nullable(),
   cost: z.number(),
+
+  id:z.string().optional().nullable(),
   status: z.string(),
     })
   ),
