@@ -49,14 +49,25 @@ export const StartSessionRequestSchema = z.object({
   endTime: z.string().optional(),
   promoId: z.string().optional(),
   amount: z.number(),
+  rateId: z.string().optional(),
   paymentMethod: z.string().optional(),
   cash: z.number().optional(),
   change: z.number().optional(),
 });
 
 export const EndSessionResponseSchema = z.object({
+  sessionId: z.string(),
   amount: z.number(),
   duration: z.number(),
+  hours: z.number(),
+  rate: z.number(),
+  tableNumber: z.string(),
+  customerName: z.string(),
+  startTime: z.string(),
+  endTime: z.string(),
+  paymentMethod: z.string().optional().nullable(),
+  cash: z.number().optional().nullable(),
+  change: z.number().optional().nullable(),
 });
 
 export const ChangeTableResponseSchema = z.object({

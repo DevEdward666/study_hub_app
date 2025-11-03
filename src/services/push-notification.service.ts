@@ -375,7 +375,7 @@ class PushNotificationService {
 
     // Enhanced notification options with better defaults
     const enhancedOptions: NotificationOptions = {
-      body: options?.body || 'StudyHub notification',
+      body: options?.body || 'Sunny Side Up notification',
       icon: options?.icon || '/icon-192.png',
       badge: options?.badge || '/badge.png',
       tag: options?.tag || `notification-${Date.now()}`,

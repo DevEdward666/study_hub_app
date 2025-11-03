@@ -49,6 +49,7 @@ import globalSettingsService, {
   GlobalSettingHistory,
   CreateGlobalSettingRequest,
 } from "../services/global-settings.service";
+import { PrinterSettings } from "../components/PrinterSettings";
 import "../Admin/styles/admin.css";
 import "../Admin/styles/admin-responsive.css";
 
@@ -347,6 +348,17 @@ const GlobalSettings: React.FC = () => {
         {/* Settings Tab */}
         {activeTab === "settings" && (
           <>
+            {/* Thermal Printer Settings */}
+            <div style={{ marginBottom: '20px' }}>
+              <PrinterSettings 
+                onPrintTest={() => {
+                  setToastMessage("✅ Test receipt printed successfully!");
+                  setToastColor("success");
+                  setShowToast(true);
+                }}
+              />
+            </div>
+
             {/* Search and Filter Bar */}
             <IonCard>
               <IonCardContent style={{ padding: '12px' }}>

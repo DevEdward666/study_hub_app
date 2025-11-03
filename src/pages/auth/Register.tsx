@@ -92,7 +92,7 @@ const Register: React.FC = () => {
         <div className="register-container">
           <div className="register-header">
             <h1>Create Account</h1>
-            <p>Join StudyHub to get started</p>
+            <p>Join Sunny Side Up to get started</p>
           </div>
 
           <form onSubmit={handleSubmit} className="register-form">

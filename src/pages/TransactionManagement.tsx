@@ -7,6 +7,7 @@ import {
 } from "../hooks/AdminDataHooks";
 import { useNotifications } from "../hooks/useNotifications";
 import { useConfirmation } from "../hooks/useConfirmation";
+import { useThermalPrinter } from "../hooks/useThermalPrinter";
 import { LoadingSpinner } from "../components/common/LoadingSpinner";
 import { ErrorMessage } from "../components/common/ErrorMessage";
 import { useHourlyRate } from "../hooks/GlobalSettingsHooks";
@@ -47,6 +48,7 @@ const TransactionsManagement: React.FC = () => {
   const { isLoading, error, approve, reject, refetch } =
     useTransactionsManagement();
   const { notifyCreditApproved } = useNotifications();
+  const { print: printDirect, isConnected: printerConnected } = useThermalPrinter();
   const [selectedTab, setSelectedTab] = useState<"active" | "all">("active");
 
   // Get rates from rate management
@@ -90,6 +92,7 @@ const TransactionsManagement: React.FC = () => {
       promoId?: string;
       amount: number;
       paymentMethod: string;
+      rateId?: string;
       cash?: number;
       change?: number;
     }) => {
@@ -102,6 +105,7 @@ const TransactionsManagement: React.FC = () => {
         amount: data.amount,
         paymentMethod: data.paymentMethod,
         cash: data.cash,
+        rateId: data.rateId,
         change: data.change,
       });
     },
@@ -138,9 +142,48 @@ const TransactionsManagement: React.FC = () => {
     },
   });
 
-  // Print receipt mutation
+  // Print receipt mutation - tries browser printing first, then backend fallback
   const printReceiptMutation = useMutation({
     mutationFn: async ({ sessionId, password }: { sessionId: string; password?: string }) => {
+      // Try browser printing first if printer is connected
+      if (printerConnected) {
+        try {
+          console.log('🖨️ Attempting browser printing...');
+          
+          // Get transaction details - find in either pending or all data
+          const transaction = (pendingData?.data || allData?.data)?.find((t: any) => t.id === sessionId);
+
+          if (transaction) {
+            // Calculate hours from transaction data
+            const startTime = transaction.startTime ? new Date(transaction.startTime) : new Date();
+            const endTime = transaction.endTime ? new Date(transaction.endTime) : new Date();
+            const hours = (endTime.getTime() - startTime.getTime()) / (1000 * 60 * 60);
+
+            await printDirect({
+              storeName: 'Sunny Side up Work + Study',
+              sessionId: transaction.id || 'unknown',
+              customerName: transaction.user?.name || transaction.user?.email || 'Customer',
+              tableNumber: transaction.tables?.tableNumber || 'N/A',
+              startTime: transaction.startTime || new Date().toISOString(),
+              endTime: transaction.endTime || new Date().toISOString(),
+              hours: hours,
+              rate: transaction.tables?.hourlyRate || 0,
+              totalAmount: transaction.cost || 0,
+              paymentMethod: transaction.session?.paymentMethod || undefined,
+              wifiPassword: password,
+              package:transaction.rates?.description || "N/A",
+            });
+            
+            console.log('✅ Browser printing successful!');
+            return true;
+          }
+        } catch (error) {
+          console.warn('⚠️ Browser printing failed, falling back to backend:', error);
+        }
+      }
+      
+      // Fallback to backend printing
+      console.log('📡 Using backend printing...');
       return tableService.printReceipt(sessionId, password);
     },
     onSuccess: () => {
@@ -148,7 +191,9 @@ const TransactionsManagement: React.FC = () => {
       setWifiPassword("password1234");
       showConfirmation({
         header: 'Receipt Printed',
-        message: 'Receipt has been sent to the printer successfully!',
+        message: printerConnected 
+          ? 'Receipt printed directly from browser!' 
+          : 'Receipt sent to printer successfully!',
         confirmText: 'OK',
         cancelText: ''
       }, () => {});
@@ -157,7 +202,9 @@ const TransactionsManagement: React.FC = () => {
       console.error('Failed to print receipt:', error);
       showConfirmation({
         header: 'Print Failed',
-        message: 'Failed to print receipt. Please check the printer connection.',
+        message: printerConnected
+          ? 'Failed to print. Check printer connection or go to Settings to reconnect.'
+          : 'Failed to print receipt. Please check the printer connection.',
         confirmText: 'OK',
         cancelText: ''
       }, () => {});
@@ -251,6 +298,7 @@ const TransactionsManagement: React.FC = () => {
       promoId: selectedPromoId || undefined,
       amount: sessionPrice, // Use price from selected rate
       paymentMethod: paymentMethod,
+      rateId: selectedRateId,
       cash: paymentMethod === "Cash" ? cash : undefined,
       change: paymentMethod === "Cash" ? change : undefined,
     });

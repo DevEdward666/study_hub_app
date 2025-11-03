@@ -2,6 +2,7 @@ import { z } from "zod";
 import { UserSchema } from "./auth.schema";
 import { CreditTransactionSchema } from "./user.schema";
 import { StudyTableSchema, TableSessionSchema } from "./table.schema";
+import { RateSchema } from "./rate.schema";
 
 export const UserWithInfoSchema = UserSchema.extend({
   isAdmin: z.boolean(),
@@ -45,7 +46,7 @@ export const TransactionWithUserSchema = z.object({
   endTime: z.string().optional().nullable(),
   cost: z.number(),
   status: z.string(),
-
+  rates: RateSchema.optional().nullable(),
   id:z.string().optional().nullable(),
 });
 
@@ -80,6 +81,7 @@ export const getTransactionWithUserSchema = z.object({
   session: TableSessionSchema.optional().nullable(),
   user: UserSchema.optional().nullable(),
   tables:StudyTableSchema.optional().nullable(),
+  rates: RateSchema.optional().nullable(),
   startTime: z.string().optional().nullable(),
   endTime: z.string().optional().nullable(),
   cost: z.number(),
@@ -91,12 +93,12 @@ export const getTransactionWithUserTableSchema = z.object({
     z.object({
       user: UserSchema.optional().nullable(),
       tables: StudyTableSchema.optional().nullable(),
-  startTime: z.string().optional().nullable(),
-  endTime: z.string().optional().nullable(),
-  cost: z.number(),
-
-  id:z.string().optional().nullable(),
-  status: z.string(),
+      startTime: z.string().optional().nullable(),
+      endTime: z.string().optional().nullable(),
+      cost: z.number(),
+      rates: RateSchema.optional().nullable(),
+      id: z.string().optional().nullable(),
+      status: z.string(),
     })
   ),
 });
@@ -104,6 +106,7 @@ export const getTransactionWithUserColumn = z.object({
   id: z.string(),
   user: z.string(),
   tables: StudyTableSchema.optional().nullable(),
+  rates: RateSchema.optional().nullable(),
   cost: z.number(),
   startTime: z.string().optional().nullable(),
   endTime: z.string().optional().nullable(),

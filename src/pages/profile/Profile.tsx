@@ -80,7 +80,7 @@ const Profile: React.FC = () => {
     // Show confirmation toast
     showConfirmation({
       header: 'Sign Out',
-      message: `Are you sure you want to sign out?\n\nYou will be logged out of the StudyHub app and redirected to the login page.`,
+      message: `Are you sure you want to sign out?\n\nYou will be logged out of the Sunny Side Up app and redirected to the login page.`,
       confirmText: 'Sign Out',
       cancelText: 'Stay Logged In'
     }, async () => {

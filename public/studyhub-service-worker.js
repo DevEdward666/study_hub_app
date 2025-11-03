@@ -52,7 +52,7 @@ self.addEventListener("push", (event) => {
   console.log("Push notification received:", event);
 
   let notificationData = {
-    title: "StudyHub Notification",
+    title: "Sunny Side Up Notification",
     body: "You have a new notification",
     icon: "/icon.png",
     badge: "/badge.png",

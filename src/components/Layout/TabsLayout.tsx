@@ -123,7 +123,7 @@ useIonViewDidEnter(()=>{
 
           <nav className={`sidebar ${sidebarOpen ? 'sidebar-open' : ''}`}>
             <div className="sidebar-header">
-              <h2>StudyHub Admin</h2>
+              <h2>Sunny Side Up Admin</h2>
               <IonButton
                 fill="clear"
                 className="sidebar-close-btn"
@@ -201,13 +201,13 @@ useIonViewDidEnter(()=>{
               <span>WiFi Portal</span>
             </button> */}
 
-            {/* <button 
+            <button 
               onClick={() => navigateTo('/app/admin/global-settings')} 
               className={`sidebar-item ${isActiveRoute('/app/admin/global-settings') ? 'active' : ''}`}
             >
               <IonIcon icon={settingsOutline} />
               <span>Settings</span>
-            </button> */}
+            </button>
 
             <button 
               onClick={() => navigateTo('/app/admin/rate-management')} 
