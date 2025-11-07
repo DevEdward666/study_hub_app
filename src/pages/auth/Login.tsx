@@ -56,7 +56,12 @@ const Login: React.FC = () => {
     try {
       const res = await signIn.mutateAsync({ email, password });
       if(!!res.user) {
-         history.push("/app/dashboard");
+         // Check if user is admin and redirect to admin dashboard
+         if (res.user.role === 'Admin') {
+           history.push("/app/admin/dashboard");
+         } else {
+           history.push("/app/dashboard");
+         }
       }
     } catch (error) {
       const message = error instanceof Error ? error.message : "Login failed";
