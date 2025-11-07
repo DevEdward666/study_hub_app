@@ -57,44 +57,52 @@ import WiFiPortal from "./pages/WiFiPortal";
 import PublicWiFiPortal from "./pages/PublicWiFiPortal";
 import GlobalSettings from "./pages/GlobalSettings";
 import RateManagement from "./pages/RateManagement";
+import NotificationsPage from "./pages/NotificationsPage";
+
+/* Providers */
+import { NotificationProvider } from "./contexts/NotificationContext";
+
 setupIonicReact();
 
 const App: React.FC = () => (
   <IonApp>
-    <PushNotificationInitializer />
-    <IonReactRouter>
-      <IonRouterOutlet>
-        {/* Public Routes */}
-        <Route exact path="/login" component={Login} />
-        <Route exact path="/register" component={Register} />
-        <Route exact path="/admin/login" component={AdminLogin} />
-        <Route exact path="/wifi" component={PublicWiFiPortal} />
+    <QueryProvider>
+      <NotificationProvider>
+        <PushNotificationInitializer />
+        <IonReactRouter>
+          <IonRouterOutlet>
+            {/* Public Routes */}
+            <Route exact path="/login" component={Login} />
+            <Route exact path="/register" component={Register} />
+            <Route exact path="/admin/login" component={AdminLogin} />
+            <Route exact path="/wifi" component={PublicWiFiPortal} />
 
-        {/* Protected Routes with Regular Tabs */}
-        <Route path="/app">
-          <AuthGuard>
-            <TabsLayout>
-              <Route exact path="/app/dashboard" component={Dashboard} />
-              <Route exact path="/app/scanner" component={TableScanner} />
-              <Route exact path="/app/table/:id" component={TableDetails} />
-              <Route exact path="/app/credits" component={Credits} />
-              <Route exact path="/app/premise" component={PremiseAccess} />
-              <Route exact path="/app/history" component={History} />
-              <Route exact path="/app/profile" component={Profile} />
-              
-              {/* Admin Routes */}
-              <Route exact path="/app/admin/premise" component={PremiseManagement} />
-              <Route exact path="/app/admin/dashboard" component={TableDashboard} />
-              <Route exact path="/app/admin/tables" component={TablesManagement} />
-              <Route exact path="/app/admin/transactions" component={TransactionsManagement} />
-              <Route exact path="/app/admin/users" component={UsersManagement} />
-              <Route exact path="/app/admin/credits/promos" component={CreditsManagementPromos} />
-              <Route exact path="/app/admin/credits" component={CreditsManagement} />
-              <Route exact path="/app/admin/reports" component={ReportsPage} />
-              <Route exact path="/app/admin/wifi" component={WiFiPortal} />
-              <Route exact path="/app/admin/global-settings" component={GlobalSettings} />
-              <Route exact path="/app/admin/rate-management" component={RateManagement} />
-              <Route exact path="/app/admin/profile" component={Profile} />
+            {/* Protected Routes with Regular Tabs */}
+            <Route path="/app">
+              <AuthGuard>
+                <TabsLayout>
+                  <Route exact path="/app/dashboard" component={Dashboard} />
+                  <Route exact path="/app/scanner" component={TableScanner} />
+                  <Route exact path="/app/table/:id" component={TableDetails} />
+                  <Route exact path="/app/credits" component={Credits} />
+                  <Route exact path="/app/premise" component={PremiseAccess} />
+                  <Route exact path="/app/history" component={History} />
+                  <Route exact path="/app/profile" component={Profile} />
+                  
+                  {/* Admin Routes */}
+                  <Route exact path="/app/admin/premise" component={PremiseManagement} />
+                  <Route exact path="/app/admin/dashboard" component={TableDashboard} />
+                  <Route exact path="/app/admin/tables" component={TablesManagement} />
+                  <Route exact path="/app/admin/transactions" component={TransactionsManagement} />
+                  <Route exact path="/app/admin/users" component={UsersManagement} />
+                  <Route exact path="/app/admin/credits/promos" component={CreditsManagementPromos} />
+                  <Route exact path="/app/admin/credits" component={CreditsManagement} />
+                  <Route exact path="/app/admin/reports" component={ReportsPage} />
+                  <Route exact path="/app/admin/wifi" component={WiFiPortal} />
+                  <Route exact path="/app/admin/global-settings" component={GlobalSettings} />
+                  <Route exact path="/app/admin/rate-management" component={RateManagement} />
+                  <Route exact path="/app/admin/notifications" component={NotificationsPage} />
+                  <Route exact path="/app/admin/profile" component={Profile} />
 
               <Route exact path="/app">
                 <Redirect to="/app/dashboard" />
@@ -109,6 +117,8 @@ const App: React.FC = () => (
         </Route>
       </IonRouterOutlet>
     </IonReactRouter>
+      </NotificationProvider>
+    </QueryProvider>
   </IonApp>
 );
 

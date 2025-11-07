@@ -8,6 +8,7 @@ import {
   IonLabel,
   useIonViewDidEnter,
   IonButton,
+  IonBadge,
 } from "@ionic/react";
 import { useHistory, useLocation } from "react-router-dom";
 import {
@@ -32,10 +33,14 @@ import {
   wifiOutline,
   settingsOutline,
   cashOutline,
+  notificationsOutline,
 } from "ionicons/icons";
 import "./TabsLayout.css";
 import { useAdminStatus } from "@/hooks/AdminHooks";
 import { useNotifications } from "@/hooks/useNotifications";
+import { GlobalToast, useToastManager } from "@/components/GlobalToast/GlobalToast";
+import { signalRService, SessionEndedNotification } from "@/services/signalr.service";
+import { useNotificationContext } from "@/contexts/NotificationContext";
 
 interface TabsLayoutProps {
   children: React.ReactNode;
@@ -53,6 +58,72 @@ export const TabsLayout: React.FC<TabsLayoutProps> = ({ children }) => {
       permission: pushPermission,
       requestPermission: requestPushPermission
     } = useNotifications();
+  
+  // Toast manager
+  const { toasts, showToast, dismissToast } = useToastManager();
+  
+  // Notification context
+  const { addNotification, unreadCount } = useNotificationContext();
+  
+  // Track if SignalR is initialized to prevent multiple starts
+  const signalRInitialized = React.useRef(false);
+
+  // Setup SignalR for admin users
+  useEffect(() => {
+    // Only initialize SignalR if user is admin AND on admin path
+    if (!isAdmin || !isAdminPath) {
+      // If we leave admin area, stop SignalR
+      if (signalRInitialized.current) {
+        console.log('Leaving admin area, stopping SignalR...');
+        signalRService.stop();
+        signalRInitialized.current = false;
+      }
+      return;
+    }
+
+    // Prevent multiple initializations
+    if (signalRInitialized.current) {
+      console.log('SignalR already initialized, skipping...');
+      return;
+    }
+
+    const setupSignalR = async () => {
+      try {
+        console.log('Setting up SignalR for admin...');
+        
+        // Set up session ended handler (idempotent - can be called multiple times)
+        signalRService.onSessionEnded((notification: SessionEndedNotification) => {
+          console.log('Session ended notification:', notification);
+          
+          // Add to notification context (which will trigger table refresh)
+          addNotification(notification);
+          
+          // Format the message
+          const message = `🔔 Table ${notification.tableNumber} session ended for ${notification.userName}. Duration: ${notification.duration.toFixed(2)}hrs, Amount: ₱${notification.amount.toFixed(2)}`;
+          
+          // Show toast with sound and speech (pass table number for speech)
+          showToast(message, 'warning', 10000, true, notification.tableNumber);
+        });
+
+        // Start the connection
+        await signalRService.start();
+        signalRInitialized.current = true;
+        console.log('SignalR setup complete');
+      } catch (error) {
+        console.error('Failed to setup SignalR:', error);
+        signalRInitialized.current = false;
+      }
+    };
+
+    setupSignalR();
+
+    // Cleanup function - only called when component unmounts or deps change
+    return () => {
+      // Only stop if we're leaving the admin area entirely
+      // Don't stop on every re-render
+      console.log('SignalR useEffect cleanup triggered');
+    };
+  }, [isAdmin, isAdminPath, addNotification, showToast]); // Added dependencies
 
 useIonViewDidEnter(()=>{
     if( pushPermission !== "granted"){
@@ -193,6 +264,19 @@ useIonViewDidEnter(()=>{
               <span>Reports</span>
             </button>
 
+            <button 
+              onClick={() => navigateTo('/app/admin/notifications')} 
+              className={`sidebar-item ${isActiveRoute('/app/admin/notifications') ? 'active' : ''}`}
+            >
+              <IonIcon icon={notificationsOutline} />
+              <span>Notifications</span>
+              {unreadCount > 0 && (
+                <IonBadge color="danger" className="sidebar-badge">
+                  {unreadCount}
+                </IonBadge>
+              )}
+            </button>
+
             {/* <button 
               onClick={() => navigateTo('/app/admin/wifi')} 
               className={`sidebar-item ${isActiveRoute('/app/admin/wifi') ? 'active' : ''}`}
@@ -285,6 +369,9 @@ useIonViewDidEnter(()=>{
           </div>
         )}
       </main>
+
+      {/* Global Toast Notifications */}
+      <GlobalToast messages={toasts} onDismiss={dismissToast} />
     </div>
   );
 };

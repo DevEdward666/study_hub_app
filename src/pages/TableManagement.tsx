@@ -43,6 +43,8 @@ import {
 import { tableService } from "@/services/table.service";
 import { useMutation } from "@tanstack/react-query";
 import { SessionTimer } from "@/components/common/SessionTimer";
+import { useNotificationContext } from "@/contexts/NotificationContext";
+
 const TablesManagement: React.FC = () => {
   const {
     tables,
@@ -56,6 +58,9 @@ const TablesManagement: React.FC = () => {
   
   // Get hourly rate from global settings
   const { hourlyRate } = useHourlyRate();
+  
+  // Notification context for auto-refresh
+  const { shouldRefreshTables, resetTableRefresh } = useNotificationContext();
   
   const {
     tableState,
@@ -71,6 +76,15 @@ const TablesManagement: React.FC = () => {
     fetchFn: TableManagementServiceAPI.fetchTables,
     initialState: { pageSize: 10 },
   });
+
+  // Auto-refresh when notification received
+  React.useEffect(() => {
+    if (shouldRefreshTables) {
+      console.log('Notification received, refreshing table list...');
+      RefetchTable();
+      resetTableRefresh();
+    }
+  }, [shouldRefreshTables, RefetchTable, resetTableRefresh]);
 
   // Confirmation hook
   const {
@@ -91,25 +105,6 @@ const TablesManagement: React.FC = () => {
     return () => clearInterval(interval);
   }, [RefetchTable]);
 
-  // Clear ended sessions tracking when tables data changes
-  React.useEffect(() => {
-    if (tables) {
-      // Get current active session IDs
-      const activeSessionIds = new Set(
-        tables
-          .filter(table => table.currentSession?.id)
-          .map(table => table.currentSession!.id)
-      );
-      
-      // Remove ended session IDs that are no longer active
-      const currentEndedSessions = Array.from(endedSessionsRef.current);
-      currentEndedSessions.forEach(sessionId => {
-        if (!activeSessionIds.has(sessionId)) {
-          endedSessionsRef.current.delete(sessionId);
-        }
-      });
-    }
-  }, [tables]);
   const containerRef = useRef<HTMLDivElement | null>(null);
   const [qrSize, setQrSize] = useState<number>(128);
   const [openSelectedRow, setOpenSelectedRow] = useState({
@@ -134,8 +129,6 @@ const TablesManagement: React.FC = () => {
   const [toastMessage, setToastMessage] = useState("");
   const [toastColor, setToastColor] = useState<"success" | "danger" | "warning">("success");
 
-  // Track ended sessions to prevent duplicate endSession calls
-  const endedSessionsRef = useRef<Set<string>>(new Set());
 
   const { users } = useUsersManagement();
 
@@ -248,26 +241,6 @@ const TablesManagement: React.FC = () => {
     });
   };
 
-  const handleSessionTimeUp = useCallback((sessionId: string, tableNumber?: string) => {
-    // Prevent duplicate calls for the same session
-    if (endedSessionsRef.current.has(sessionId)) {
-      console.log(`TableManagement: Session ${sessionId} already processed, skipping...`);
-      return;
-    }
-
-    console.log(`TableManagement: Session time expired for Table ${tableNumber}, automatically ending session:`, sessionId);
-    
-    // Mark this session as being processed
-    endedSessionsRef.current.add(sessionId);
-    
-    // Send notification to admin about automatic session timeout
-    console.log("TableManagement: Session timeout notification for table", tableNumber);
-    
-    endSessionMutation.mutate(sessionId);
-    setToastMessage(`⏰ Time's up! Session for Table ${tableNumber} has been automatically ended.`);
-    setToastColor("warning");
-    setShowToast(true);
-  }, [endSessionMutation]); // Removed tables, setToastMessage, setToastColor, setShowToast to prevent unnecessary recreations
   const handleUpdateTable = async (e: React.FormEvent) => {
     e.preventDefault();
 
@@ -444,12 +417,10 @@ const TablesManagement: React.FC = () => {
       sortable: true,
       render: (value, row) => {
         // Check if table is occupied and has a session with endTime
-        console.log(row)
         if (value && row.currentSession?.endTime) {
           return (
             <SessionTimer
               endTime={row.currentSession.endTime}
-              onTimeUp={() => handleSessionTimeUp(row.currentSession!.id, row.tableNumber)}
             />
           );
         }

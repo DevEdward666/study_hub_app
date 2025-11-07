@@ -1,0 +1,32 @@
+.global-toast {
+  --border-radius: 12px;
+  --box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  font-weight: 500;
+  z-index: 99999 !important;
+}
+
+.global-toast-success {
+  --background: #10b981;
+  --color: white;
+}
+
+.global-toast-error {
+  --background: #ef4444;
+  --color: white;
+}
+
+.global-toast-warning {
+  --background: #f59e0b;
+  --color: white;
+}
+
+.global-toast-info {
+  --background: #3b82f6;
+  --color: white;
+}
+
+/* Ensure toast appears above everything */
+ion-toast {
+  z-index: 99999 !important;
+}
+
