@@ -26,12 +26,19 @@ export class SignalRService {
       return this.connection;
     }
 
+    console.log("Creating SignalR connection to:", `${this.baseUrl}/hubs/notifications`);
+
     this.connection = new signalR.HubConnectionBuilder()
       .withUrl(`${this.baseUrl}/hubs/notifications`, {
+        skipNegotiation: false,
+        transport: signalR.HttpTransportType.WebSockets | signalR.HttpTransportType.ServerSentEvents | signalR.HttpTransportType.LongPolling,
         withCredentials: false,
+        headers: {
+          // Add any auth headers if needed
+        }
       })
-      .withAutomaticReconnect()
-      .configureLogging(signalR.LogLevel.Information)
+      .withAutomaticReconnect([0, 2000, 5000, 10000, 30000])
+      .configureLogging(signalR.LogLevel.Debug) // Changed to Debug for more details
       .build();
 
     this.setupEventHandlers();
@@ -77,6 +84,8 @@ export class SignalRService {
     // Check current state
     const currentState = connection.state;
     
+    console.log("SignalR current state:", currentState);
+    
     if (currentState === signalR.HubConnectionState.Connected) {
       console.log("SignalR already connected");
       return;
@@ -107,17 +116,25 @@ export class SignalRService {
     this.isStarting = true;
 
     try {
+      console.log("Starting SignalR connection...");
       await connection.start();
-      console.log("SignalR connected successfully");
+      console.log("✅ SignalR connected successfully");
       this.isStarting = false;
       await this.joinAdminsGroup();
-    } catch (err) {
-      console.error("Error starting SignalR connection:", err);
+    } catch (err: any) {
+      console.error("❌ Error starting SignalR connection:", err);
+      console.error("Error details:", {
+        message: err?.message,
+        stack: err?.stack,
+        statusCode: err?.statusCode,
+        url: `${this.baseUrl}/hubs/notifications`
+      });
       this.isStarting = false;
       
       // Retry after 5 seconds only if still disconnected
       setTimeout(() => {
         if (connection?.state === signalR.HubConnectionState.Disconnected) {
+          console.log("Retrying SignalR connection...");
           this.start();
         }
       }, 5000);
@@ -174,7 +191,10 @@ export class SignalRService {
 }
 
 // Create singleton instance
-const apiBaseUrl = import.meta.env.VITE_API_URL || "https://3qrbqpcx-5212.asse.devtunnels.ms/api";
-const baseUrl = apiBaseUrl.replace("/api", "");
+const apiBaseUrl = import.meta.env.VITE_API_URL || "http://localhost:5212/api";
+// Remove /api suffix to get base URL for SignalR hub
+const baseUrl = apiBaseUrl.endsWith("/api") 
+  ? apiBaseUrl.substring(0, apiBaseUrl.length - 4) 
+  : apiBaseUrl.replace("/api/", "");
 export const signalRService = new SignalRService(baseUrl);
 

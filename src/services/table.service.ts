@@ -169,7 +169,7 @@ export class TableService {
     const baseURL = import.meta.env.VITE_API_BASE_URL || 'https://3qrbqpcx-5212.asse.devtunnels.ms/';
     const token = localStorage.getItem('auth_token');
     
-    const response = await fetch(`${baseURL}tables/sessions/${sessionId}/receipt-preview`, {
+    const response = await fetch(`${baseURL}/tables/sessions/${sessionId}/receipt-preview`, {
       method: 'GET',
       headers: {
         'Authorization': `Bearer ${token}`
