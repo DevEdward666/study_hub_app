@@ -3,8 +3,11 @@ import {
   IonContent,
   IonRefresher,
   IonRefresherContent,
+  IonBadge,
+  IonIcon,
   RefresherEventDetail,
 } from "@ionic/react";
+import { timeOutline } from "ionicons/icons";
 import {
   TableManagementServiceAPI,
   useTablesManagement,
@@ -18,25 +21,26 @@ import "../Admin/styles/admin.css";
 import "../Admin/styles/admin-responsive.css";
 import { useTable } from "@/shared/DynamicTable/DynamicTable";
 import { SessionTimer } from "@/components/common/SessionTimer";
+import { SubscriptionTimer } from "@/components/common/SubscriptionTimer";
 import { tableService } from "@/services/table.service";
 import { useHourlyRate } from "../hooks/GlobalSettingsHooks";
 import { useMutation } from "@tanstack/react-query";
 
 const TableDashboard: React.FC = () => {
   console.log('TableDashboard component is rendering...');
-  
+
   // Get hourly rate from global settings
   const { hourlyRate } = useHourlyRate();
-  
+
   // Simple fallback content
   const [showFallback, setShowFallback] = React.useState(false);
-  
+
   React.useEffect(() => {
     // Show fallback after 3 seconds if still loading
     const timer = setTimeout(() => {
       setShowFallback(true);
     }, 3000);
-    
+
     return () => clearTimeout(timer);
   }, []);
 
@@ -46,7 +50,7 @@ const TableDashboard: React.FC = () => {
     error,
     refetch,
   } = useTablesManagement();
-  
+
   const {
     tableState,
     updateState,
@@ -78,13 +82,13 @@ const TableDashboard: React.FC = () => {
   } = useNotifications();
 
   // Auto-refresh table data every 30 seconds to keep timers in sync
-  React.useEffect(() => {
-    const interval = setInterval(() => {
-      RefetchTable();
-    }, 30000);
+  // React.useEffect(() => {
+  //   const interval = setInterval(() => {
+  //     RefetchTable();
+  //   }, 30000);
 
-    return () => clearInterval(interval);
-  }, [RefetchTable]);
+  //   return () => clearInterval(interval);
+  // }, [RefetchTable]);
 
   const handleRefresh = (event: CustomEvent<RefresherEventDetail>) => {
     Promise.all([RefetchTable(), refetch()]).finally(() => {
@@ -98,14 +102,14 @@ const TableDashboard: React.FC = () => {
       <IonContent style={{ height: '100vh', background: '#f5f5f5' }}>
         <div style={{ padding: '20px', minHeight: '100%' }}>
           <div style={{ marginBottom: '16px' }}>
-            <h1 style={{ color: 'var(--ion-color-primary)', margin: '0 0 4px 0', fontSize: '28px' }}>📊 Table Dashboard</h1>
+            <h1 style={{ color: 'var(--ion-color-primary)', margin: '0 0 4px 0', fontSize: '28px' }}> <IonIcon icon="chartOutline"></IonIcon> Table Dashboard</h1>
             <p style={{ color: 'black', margin: '0', fontSize: '16px' }}>Real-time table monitoring and management</p>
           </div>
-          
-          <div style={{ 
-            background: 'white', 
-            padding: '20px', 
-            borderRadius: '8px', 
+
+          <div style={{
+            background: 'white',
+            padding: '20px',
+            borderRadius: '8px',
             boxShadow: '0 2px 4px rgba(0,0,0,0.1)',
             marginTop: '20px',
             textAlign: 'center'
@@ -123,7 +127,7 @@ const TableDashboard: React.FC = () => {
       <IonContent style={{ height: '100vh', background: '#f5f5f5' }}>
         <div style={{ padding: '20px', minHeight: '100%' }}>
           <div style={{ marginBottom: '16px' }}>
-            <h1 style={{ color: 'var(--ion-color-primary)', margin: '0 0 4px 0', fontSize: '28px' }}>📊 Table Dashboard</h1>
+            <h1 style={{ color: 'var(--ion-color-primary)', margin: '0 0 4px 0', fontSize: '28px' }}><IonIcon icon="chartOutline"></IonIcon> Table Dashboard</h1>
             <p style={{ color: 'black', margin: '0', fontSize: '16px' }}>Real-time table monitoring and management</p>
           </div>
           <LoadingSpinner message="Loading dashboard..." />
@@ -137,15 +141,15 @@ const TableDashboard: React.FC = () => {
       <IonContent style={{ height: '100vh', background: '#f5f5f5' }}>
         <div style={{ padding: '20px', minHeight: '100%' }}>
           <div style={{ marginBottom: '16px' }}>
-            <h1 style={{ color: 'var(--ion-color-primary)', margin: '0 0 4px 0', fontSize: '28px' }}>📊 Table Dashboard</h1>
+            <h1 style={{ color: 'var(--ion-color-primary)', margin: '0 0 4px 0', fontSize: '28px' }}><IonIcon icon="chartOutline"></IonIcon> Table Dashboard</h1>
             <p style={{ color: 'black', margin: '0', fontSize: '16px' }}>Real-time table monitoring and management</p>
           </div>
-          <ErrorMessage 
-            message="Failed to load dashboard data" 
+          <ErrorMessage
+            message="Failed to load dashboard data"
             onRetry={() => {
               refetch();
               RefetchTable();
-            }} 
+            }}
           />
         </div>
       </IonContent>
@@ -161,7 +165,7 @@ const TableDashboard: React.FC = () => {
       <div className="tables-management" style={{ padding: '20px', minHeight: '100%' }}>
         <div className="dashboard-section">
           <div className="page-header" style={{ marginBottom: '16px' }}>
-            <h1 style={{ color: 'var(--ion-color-primary)', margin: '0 0 4px 0', fontSize: '28px' }}>📊 Table Dashboard</h1>
+            <h1 style={{ color: 'var(--ion-color-primary)', margin: '0 0 4px 0', fontSize: '28px' }}><IonIcon icon="chartOutline"></IonIcon> Table Dashboard</h1>
             <p style={{ color: 'black', margin: '0', fontSize: '16px' }}>Real-time table monitoring and management</p>
           </div>
 
@@ -195,7 +199,7 @@ const TableDashboard: React.FC = () => {
                 <p>Total</p>
               </div>
             </div>
-        </div>
+          </div>
           {/* Cinema-style Table Grid */}
           <div className="cinema-grid-container">
             <h3 style={{ color: 'var(--ion-color-secondary)', marginBottom: '12px', fontSize: '18px' }}>Table Status</h3>
@@ -203,16 +207,14 @@ const TableDashboard: React.FC = () => {
               {data?.data?.map((table: any) => (
                 <div
                   key={table.id}
-                  className={`cinema-seat ${
-                    table.isDisabled ? 'disabled' : 
+                  className={`cinema-seat ${table.isDisabled ? 'disabled' :
                     table.isOccupied ? 'occupied' : 'available'
-                  }`}
+                    }`}
                   onClick={() => !table.isDisabled && console.log('Table clicked:', table)}
-                  title={`Table ${table.tableNumber} - ${table.location}\n${
-                    table.isDisabled ? 'Disabled' : 
-                    table.isOccupied ? `Occupied${table.currentSession?.user ? ` by ${table.currentSession.user.firstName} ${table.currentSession.user.lastName}` : ''}` : 
-                    'Available'
-                  }\nRate: ${hourlyRate} credits/hour\nCapacity: ${table.capacity} people`}
+                  title={`Table ${table.tableNumber} - ${table.location}\n${table.isDisabled ? 'Disabled' :
+                    table.isOccupied ? `Occupied${table.currentSession?.user ? ` by ${table.currentSession.user.firstName} ${table.currentSession.user.lastName}` : ''}` :
+                      'Available'
+                    }\nRate: ${hourlyRate} credits/hour\nCapacity: ${table.capacity} people`}
                 >
                   <div className="table-number">{table.tableNumber}</div>
                   {!table.isOccupied ? (
@@ -222,13 +224,34 @@ const TableDashboard: React.FC = () => {
                   ) : (
                     <>
                       <div className="table-status">Occupied</div>
-                      {table.currentSession?.endTime && (
+                      {table.currentSession && (
                         <div className="table-timer">
-                          <SessionTimer
-                            endTime={table.currentSession.endTime}
-                            onTimeUp={() => console.log(`Session time up for table ${table.tableNumber}`)}
-                            compact={true}
-                          />
+                          {/* Check if subscription-based session */}
+                          {((table.currentSession as any).isSubscriptionBased ||
+                            (table.currentSession as any).subscriptionId ||
+                            (table.currentSession as any).subscription) ? (
+                            /* Show real-time subscription timer */
+                            (table.currentSession as any).startTime && (
+                              <SubscriptionTimer
+                                startTime={(table.currentSession as any).startTime}
+                                remainingHours={(table.currentSession as any).subscription?.remainingHours}
+                                compact={true}
+                                showIcon={true}
+                              />
+                            )
+                          ) : (table.currentSession.endTime) ? (
+                            /* Show timer ONLY for non-subscription sessions with valid endTime */
+                            <SessionTimer
+                              endTime={table.currentSession.endTime}
+                              onTimeUp={() => console.log(`Session time up for table ${table.tableNumber}`)}
+                              compact={true}
+                            />
+                          ) : (
+                            /* Fallback for occupied but no timer */
+                            <IonBadge color="medium" style={{ fontSize: '10px' }}>
+                              Active
+                            </IonBadge>
+                          )}
                         </div>
                       )}
                     </>
@@ -236,7 +259,7 @@ const TableDashboard: React.FC = () => {
                 </div>
               ))}
             </div>
-            
+
             {(!data?.data || data.data.length === 0) && (
               <div className="empty-state" style={{ textAlign: 'center', padding: '20px' }}>
                 <h4 style={{ color: 'black', margin: '0 0 8px 0' }}>No tables found</h4>
@@ -258,31 +281,53 @@ const TableDashboard: React.FC = () => {
                       <strong>Table {table.tableNumber}</strong> - Session Active
                     </div>
                     <div className="activity-details">
-                      User: {table.currentSession?.user?.firstName} {table.currentSession?.user?.lastName} | 
-                      Location: {table.location} | 
-                      Rate: {hourlyRate} credits/hour | 
+                      User: {table.currentSession?.user?.firstName} {table.currentSession?.user?.lastName} |
+                      Location: {table.location} |
+                      {((table.currentSession as any)?.isSubscriptionBased ||
+                        (table.currentSession as any)?.subscriptionId ||
+                        (table.currentSession as any)?.subscription) ? (
+                        <>
+                          Subscription: {(table.currentSession as any)?.subscription?.packageName || 'Active'} |
+                          Remaining: {(table.currentSession as any)?.subscription?.remainingHours?.toFixed(1) || 'N/A'}h
+                        </>
+                      ) : (
+                        <>
+                          Rate: {hourlyRate} credits/hour
+                        </>
+                      )} |
                       Capacity: {table.capacity} people
                     </div>
                     <div className="activity-time">
-                      {table.currentSession?.endTime && (
+                      {((table.currentSession as any)?.isSubscriptionBased ||
+                        (table.currentSession as any)?.subscriptionId ||
+                        (table.currentSession as any)?.subscription) ? (
+                        <IonBadge color="success" style={{ fontSize: '10px' }}>
+                          <IonIcon icon={timeOutline} style={{ marginRight: '4px' }} />
+                          Subscription Active
+                        </IonBadge>
+                      ) : table.currentSession?.endTime ? (
                         <SessionTimer
                           endTime={table.currentSession.endTime}
                           onTimeUp={() => console.log(`Session time up for table ${table.tableNumber}`)}
                           compact={true}
                         />
+                      ) : (
+                        <IonBadge color="medium" style={{ fontSize: '10px' }}>
+                          Active
+                        </IonBadge>
                       )}
                     </div>
                   </div>
                 </div>
               )) || (
-                <div className="activity-item">
-                  <div className="activity-icon">○</div>
-                  <div className="activity-content">
-                    <div className="activity-main">No active sessions</div>
-                    <div className="activity-details">All tables are currently available for booking</div>
+                  <div className="activity-item">
+                    <div className="activity-icon">○</div>
+                    <div className="activity-content">
+                      <div className="activity-main">No active sessions</div>
+                      <div className="activity-details">All tables are currently available for booking</div>
+                    </div>
                   </div>
-                </div>
-              )}
+                )}
             </div>
           </div>
 
@@ -312,7 +357,7 @@ const TableDashboard: React.FC = () => {
                 <div style={{ background: 'white', padding: '16px', borderRadius: '8px', boxShadow: '0 2px 6px rgba(0,0,0,0.05)', border: '1px solid #f0f0f0' }}>
                   <h4 style={{ color: 'var(--ion-color-primary)', marginBottom: '8px', fontSize: '14px' }}>Average Session</h4>
                   <div style={{ fontSize: '20px', fontWeight: 'bold', color: 'black' }}>
-                    {data?.data?.filter((t: any) => t.currentSession).length ? 
+                    {data?.data?.filter((t: any) => t.currentSession).length ?
                       Math.round(data.data.filter((t: any) => t.currentSession).reduce((sum: number, t: any) => sum + (t.currentSession?.duration || 0), 0) / data.data.filter((t: any) => t.currentSession).length * 10) / 10 : 0}h
                   </div>
                   <p style={{ color: 'black', fontSize: '12px', margin: '4px 0 0 0', opacity: 0.7 }}>

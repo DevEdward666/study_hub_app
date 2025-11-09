@@ -59,6 +59,12 @@ import GlobalSettings from "./pages/GlobalSettings";
 import RateManagement from "./pages/RateManagement";
 import NotificationsPage from "./pages/NotificationsPage";
 
+/* Subscription Pages */
+import SubscriptionPackageManagement from "./pages/SubscriptionPackageManagement";
+import UserSubscriptionManagement from "./pages/UserSubscriptionManagement";
+import MySubscriptions from "./pages/MySubscriptions";
+import UserSessionManagement from "./pages/UserSessionManagement";
+
 /* Providers */
 import { NotificationProvider } from "./contexts/NotificationContext";
 
@@ -88,7 +94,7 @@ const App: React.FC = () => (
                   <Route exact path="/app/premise" component={PremiseAccess} />
                   <Route exact path="/app/history" component={History} />
                   <Route exact path="/app/profile" component={Profile} />
-                  
+
                   {/* Admin Routes */}
                   <Route exact path="/app/admin/premise" component={PremiseManagement} />
                   <Route exact path="/app/admin/dashboard" component={TableDashboard} />
@@ -102,21 +108,27 @@ const App: React.FC = () => (
                   <Route exact path="/app/admin/global-settings" component={GlobalSettings} />
                   <Route exact path="/app/admin/rate-management" component={RateManagement} />
                   <Route exact path="/app/admin/notifications" component={NotificationsPage} />
+                  <Route exact path="/app/admin/subscription-packages" component={SubscriptionPackageManagement} />
+                  <Route exact path="/app/admin/user-subscriptions" component={UserSubscriptionManagement} />
+                  <Route exact path="/app/admin/user-sessions" component={UserSessionManagement} />
                   <Route exact path="/app/admin/profile" component={Profile} />
 
-              <Route exact path="/app">
-                <Redirect to="/app/dashboard" />
-              </Route>
-            </TabsLayout>
-          </AuthGuard>
-        </Route>
+                  {/* User Subscription Route */}
+                  <Route exact path="/app/subscriptions" component={MySubscriptions} />
 
-        {/* Default redirect */}
-        <Route exact path="/">
-          <Redirect to="/app/dashboard" />
-        </Route>
-      </IonRouterOutlet>
-    </IonReactRouter>
+                  <Route exact path="/app">
+                    <Redirect to="/app/dashboard" />
+                  </Route>
+                </TabsLayout>
+              </AuthGuard>
+            </Route>
+
+            {/* Default redirect */}
+            <Route exact path="/">
+              <Redirect to="/app/admin/dashboard" />
+            </Route>
+          </IonRouterOutlet>
+        </IonReactRouter>
       </NotificationProvider>
     </QueryProvider>
   </IonApp>

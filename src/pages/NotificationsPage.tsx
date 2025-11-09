@@ -1,9 +1,5 @@
 import React, { useState } from 'react';
 import {
-  IonPage,
-  IonHeader,
-  IonToolbar,
-  IonTitle,
   IonContent,
   IonList,
   IonItem,
@@ -11,7 +7,6 @@ import {
   IonButton,
   IonIcon,
   IonBadge,
-  IonButtons,
   IonSegment,
   IonSegmentButton,
   IonRefresher,
@@ -52,7 +47,7 @@ const NotificationsPage: React.FC = () => {
   const testNotificationSound = () => {
     try {
       const audioContext = new (window.AudioContext || (window as any).webkitAudioContext)();
-      
+
       // Doorbell chime pattern
       const notes = [
         { frequency: 523.25, time: 0, duration: 0.2 },      // C5
@@ -63,22 +58,22 @@ const NotificationsPage: React.FC = () => {
       notes.forEach(note => {
         const oscillator = audioContext.createOscillator();
         const gainNode = audioContext.createGain();
-        
+
         oscillator.connect(gainNode);
         gainNode.connect(audioContext.destination);
-        
+
         oscillator.frequency.value = note.frequency;
         oscillator.type = 'sine';
-        
+
         const startTime = audioContext.currentTime + note.time;
         gainNode.gain.setValueAtTime(0, startTime);
         gainNode.gain.linearRampToValueAtTime(0.7, startTime + 0.01);
         gainNode.gain.exponentialRampToValueAtTime(0.01, startTime + note.duration);
-        
+
         oscillator.start(startTime);
         oscillator.stop(startTime + note.duration);
       });
-      
+
       // Test voice announcement
       if ('speechSynthesis' in window) {
         setTimeout(() => {
@@ -92,7 +87,7 @@ const NotificationsPage: React.FC = () => {
           window.speechSynthesis.speak(utterance);
         }, 800);
       }
-      
+
       console.log("🔔 Test notification sound played!");
     } catch (error) {
       console.error('Error playing test sound:', error);
@@ -128,58 +123,64 @@ const NotificationsPage: React.FC = () => {
   };
 
   return (
-    <IonPage>
-      <IonHeader>
-        <IonToolbar>
-          <IonTitle>
-            Notifications
-            {unreadCount > 0 && (
-              <IonBadge color="danger" className="notification-count-badge">
-                {unreadCount}
-              </IonBadge>
-            )}
-          </IonTitle>
-          <IonButtons slot="end">
-            <IonButton onClick={testNotificationSound} color="primary" title="Test notification sound">
-              <IonIcon icon={volumeHighOutline} />
+    <IonContent>
+      <IonRefresher slot="fixed" onIonRefresh={handleRefresh}>
+        <IonRefresherContent></IonRefresherContent>
+      </IonRefresher>
+
+      <div style={{ padding: '20px', maxWidth: '1200px', margin: '0 auto' }}>
+        {/* Header */}
+        <div style={{ marginBottom: '24px', display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: '16px' }}>
+          <div>
+            <h1 style={{ color: 'var(--ion-color-primary)', margin: '0 0 4px 0', fontSize: '28px', display: 'flex', alignItems: 'center', gap: '12px' }}>
+              <IonIcon icon={notificationsOutline} />
+              Notifications
+              {unreadCount > 0 && (
+                <IonBadge color="danger" style={{ marginLeft: '8px' }}>
+                  {unreadCount}
+                </IonBadge>
+              )}
+            </h1>
+            <p style={{ color: 'black', margin: '0', fontSize: '16px' }}>Session end notifications and alerts</p>
+          </div>
+          <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
+            <IonButton onClick={testNotificationSound} color="primary" fill="outline" size="small" title="Test notification sound">
+              <IonIcon icon={volumeHighOutline} slot="start" />
+              Test Sound
             </IonButton>
             {notifications.length > 0 && (
               <>
-                <IonButton onClick={markAllAsRead} title="Mark all as read">
-                  <IonIcon icon={checkmarkDoneOutline} />
+                <IonButton onClick={markAllAsRead} color="success" fill="outline" size="small" title="Mark all as read">
+                  <IonIcon icon={checkmarkDoneOutline} slot="start" />
+                  Mark All Read
                 </IonButton>
-                <IonButton onClick={clearAll} color="danger" title="Clear all">
-                  <IonIcon icon={trashOutline} />
+                <IonButton onClick={clearAll} color="danger" fill="outline" size="small" title="Clear all">
+                  <IonIcon icon={trashOutline} slot="start" />
+                  Clear All
                 </IonButton>
               </>
             )}
-          </IonButtons>
-        </IonToolbar>
-        <IonToolbar>
-          <IonSegment value={filter} onIonChange={(e) => setFilter(e.detail.value as FilterType)}>
-            <IonSegmentButton value="all">
-              <IonLabel>All ({notifications.length})</IonLabel>
-            </IonSegmentButton>
-            <IonSegmentButton value="unread">
-              <IonLabel>Unread ({unreadCount})</IonLabel>
-            </IonSegmentButton>
-            <IonSegmentButton value="read">
-              <IonLabel>Read ({notifications.length - unreadCount})</IonLabel>
-            </IonSegmentButton>
-          </IonSegment>
-        </IonToolbar>
-      </IonHeader>
+          </div>
+        </div>
 
-      <IonContent>
-        <IonRefresher slot="fixed" onIonRefresh={handleRefresh}>
-          <IonRefresherContent></IonRefresherContent>
-        </IonRefresher>
+        {/* Filter Segment */}
+        <IonSegment value={filter} onIonChange={(e) => setFilter(e.detail.value as FilterType)} style={{ marginBottom: '20px' }}>
+          <IonSegmentButton value="all">
+            <IonLabel>All ({notifications.length})</IonLabel>
+          </IonSegmentButton>
+          <IonSegmentButton value="unread">
+            <IonLabel>Unread ({unreadCount})</IonLabel>
+          </IonSegmentButton>
+          <IonSegmentButton value="read">
+            <IonLabel>Read ({notifications.length - unreadCount})</IonLabel>
+          </IonSegmentButton>
+        </IonSegment>
 
         {filteredNotifications.length === 0 ? (
-          <div className="empty-state">
-            <IonIcon icon={notificationsOutline} className="empty-icon" />
-            <h2>No notifications</h2>
-            <p>
+          <div className="empty-state" style={{ textAlign: 'center', padding: '60px 20px' }}>
+            <IonIcon icon={notificationsOutline} style={{ fontSize: '64px', color: '#ccc', marginBottom: '16px' }} />
+            <h2 style={{ color: '#666', fontSize: '20px', marginBottom: '8px' }}>No notifications</h2>
+            <p style={{ color: '#999', fontSize: '14px' }}>
               {filter === 'unread'
                 ? "You're all caught up!"
                 : filter === 'read'
@@ -188,7 +189,7 @@ const NotificationsPage: React.FC = () => {
             </p>
           </div>
         ) : (
-          <IonList>
+          <IonList style={{ background: 'transparent' }}>
             {filteredNotifications.map((notification) => (
               <IonCard
                 key={notification.id}
@@ -222,7 +223,7 @@ const NotificationsPage: React.FC = () => {
                 <IonCardContent>
                   <div className="notification-content">
                     <p className="notification-message">{notification.message}</p>
-                    
+
                     <div className="notification-details">
                       <div className="detail-item">
                         <strong>Customer:</strong> {notification.userName}
@@ -255,8 +256,8 @@ const NotificationsPage: React.FC = () => {
             ))}
           </IonList>
         )}
-      </IonContent>
-    </IonPage>
+      </div>
+    </IonContent>
   );
 };
 

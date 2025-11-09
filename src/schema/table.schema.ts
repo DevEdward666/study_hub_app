@@ -3,8 +3,11 @@ import { z } from "zod";
 export const CurrentSessionSchema = z.object({
   id: z.string(),
   startTime: z.string(),
-  endTime: z.string(),
-    customerName: z.string().optional().nullable(),
+  endTime: z.string().optional().nullable(), // Make optional for subscription sessions
+  customerName: z.string().optional().nullable(),
+  subscriptionId: z.string().optional().nullable(), // Add subscription fields
+  subscription: z.any().optional().nullable(), // Subscription details
+  isSubscriptionBased: z.boolean().optional().nullable(), // Flag for subscription sessions
 }).nullable().optional();
 
 export const StudyTableSchema = z.object({

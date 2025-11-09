@@ -3,6 +3,8 @@ import { z } from "zod";
 export const RateSchema = z.object({
   id: z.string().uuid(),
   hours: z.number(),
+  durationType: z.string().default("Hourly"), // Hourly, Daily, Weekly, Monthly
+  durationValue: z.number().default(1),
   price: z.number(),
   description: z.string().nullable(),
   isActive: z.boolean(),
@@ -12,7 +14,9 @@ export const RateSchema = z.object({
 });
 
 export const CreateRateRequestSchema = z.object({
-  hours: z.number().min(1).max(24),
+  hours: z.number().min(1).max(8760),
+  durationType: z.string().default("Hourly"),
+  durationValue: z.number().min(1).max(365).default(1),
   price: z.number().min(0.01),
   description: z.string().optional(),
   isActive: z.boolean().optional(),
@@ -21,7 +25,9 @@ export const CreateRateRequestSchema = z.object({
 
 export const UpdateRateRequestSchema = z.object({
   id: z.string().uuid(),
-  hours: z.number().min(1).max(24),
+  hours: z.number().min(1).max(8760),
+  durationType: z.string(),
+  durationValue: z.number().min(1).max(365),
   price: z.number().min(0.01),
   description: z.string().optional(),
   isActive: z.boolean(),

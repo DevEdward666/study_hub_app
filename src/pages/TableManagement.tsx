@@ -30,6 +30,7 @@ import {
   IonSelectOption,
   IonIcon,
   IonToast,
+  IonBadge,
 } from "@ionic/react";
 import { createTableStatusChip } from "@/shared/DynamicTable/Utls/TableUtils";
 import SlideoutModal from "@/shared/SideOutModal/SideoutModalComponent";
@@ -38,11 +39,13 @@ import {
   stopCircleOutline,
   createOutline,
   swapHorizontalOutline,
-  stopOutline
+  stopOutline,
+  timeOutline,
 } from "ionicons/icons";
 import { tableService } from "@/services/table.service";
 import { useMutation } from "@tanstack/react-query";
 import { SessionTimer } from "@/components/common/SessionTimer";
+import { SubscriptionTimer } from "@/components/common/SubscriptionTimer";
 import { useNotificationContext } from "@/contexts/NotificationContext";
 
 const TablesManagement: React.FC = () => {
@@ -55,13 +58,13 @@ const TablesManagement: React.FC = () => {
     updateTable,
     refetch,
   } = useTablesManagement();
-  
+
   // Get hourly rate from global settings
   const { hourlyRate } = useHourlyRate();
-  
+
   // Notification context for auto-refresh
   const { shouldRefreshTables, resetTableRefresh } = useNotificationContext();
-  
+
   const {
     tableState,
     updateState,
@@ -164,7 +167,7 @@ const TablesManagement: React.FC = () => {
     return [...tableData].sort((a, b) => {
       const aRunningTime = a.isOccupied && a.currentSession ? getRunningTimeMinutes(a.currentSession) : 0;
       const bRunningTime = b.isOccupied && b.currentSession ? getRunningTimeMinutes(b.currentSession) : 0;
-      
+
       if (sortOrder === 'asc') {
         return aRunningTime - bRunningTime;
       } else {
@@ -216,7 +219,7 @@ const TablesManagement: React.FC = () => {
         const session = selectedSessionForTransfer;
         const newTable = data?.data?.find(t => t.id === variables.newTableId);
         const oldTable = data?.data?.find(t => t.currentSession?.id === variables.sessionId);
-        
+
         console.log("Admin notification: Table changed");
         console.log("Admin notification sent for table change");
       } catch (notificationError) {
@@ -283,17 +286,17 @@ const TablesManagement: React.FC = () => {
           location: formData.location,
           capacity: parseInt(formData.capacity),
         });
-        
+
         // Send notification to admin about table update
         console.log("Table updated notification");
-        
+
         RefetchTable();
-        
+
         // Show success message
         setToastMessage(`✅ Table ${formData.tableNumber} updated successfully!`);
         setToastColor("success");
         setShowToast(true);
-        
+
         // Reset form
         setFormData({
           tableID: "",
@@ -331,10 +334,10 @@ const TablesManagement: React.FC = () => {
           location: formData.location,
           capacity: parseInt(formData.capacity),
         });
-        
+
         // Send notification to admin about new table creation
         console.log("New table created notification");
-        
+
         RefetchTable();
         // Reset form
         setFormData({
@@ -373,7 +376,7 @@ const TablesManagement: React.FC = () => {
       tableName: val.tableNumber,
     });
   };
-  const handleViewQR = () => {};
+  const handleViewQR = () => { };
   const columns: TableColumn<GetTablesTableColumn>[] = [
     { key: "tableNumber", label: "Table Number", sortable: false },
     {
@@ -402,7 +405,7 @@ const TablesManagement: React.FC = () => {
         }
         const runningMinutes = getRunningTimeMinutes(session);
         return (
-          <span style={{ 
+          <span style={{
             color: runningMinutes > 300 ? '#e74c3c' : runningMinutes > 180 ? '#f39c12' : '#27ae60',
             fontWeight: 'bold'
           }}>
@@ -416,14 +419,40 @@ const TablesManagement: React.FC = () => {
       label: "Status",
       sortable: true,
       render: (value, row) => {
-        // Check if table is occupied and has a session with endTime
-        if (value && row.currentSession?.endTime) {
-          return (
-            <SessionTimer
-              endTime={row.currentSession.endTime}
-            />
-          );
+        // For subscription-based sessions, show real-time timer
+        if (value && row.currentSession) {
+          const session = row.currentSession as any; // Type assertion for subscription fields
+
+          // Check if this is a subscription-based session
+          // Priority order for detecting subscription sessions:
+          const isSubscription = session.isSubscriptionBased || session.subscriptionId || session.subscription;
+
+          if (isSubscription && session.startTime) {
+            return (
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                <SubscriptionTimer
+                  startTime={session.startTime}
+                  remainingHours={session.subscription?.remainingHours}
+                  compact={true}
+                  showIcon={true}
+                />
+              </div>
+            );
+          }
+
+          // For non-subscription sessions (old way), show timer ONLY if endTime exists and is valid
+          if (session.endTime && !isSubscription) {
+            return (
+              <SessionTimer
+                endTime={session.endTime}
+              />
+            );
+          }
+
+          // If occupied but no timer and not subscription, show generic occupied status
+          return createTableStatusChip("Occupied");
         }
+
         return createTableStatusChip(value === true ? "Occupied" : "Available");
       },
     },
@@ -489,7 +518,7 @@ const TablesManagement: React.FC = () => {
         tableId: val,
       });
       console.log(selectedTable.data);
-      
+
       // Set editing table data
       setEditingTable(selectedTable.data);
       setFormData({
@@ -618,7 +647,7 @@ const TablesManagement: React.FC = () => {
     <IonContent>
       <div className="tables-management">
         <div className="page-header">
-          <h1 style={{ color: 'var(--ion-color-primary)' }}>🔧 Table Management</h1>
+          <h2 style={{ color: 'var(--ion-color-primary)' }}>Table Management</h2>
           <p>Create and manage study tables</p>
           <div style={{ display: 'flex', gap: '10px', alignItems: 'center', flexWrap: 'wrap' }}>
             {/* Running Time Sort Options */}
@@ -640,7 +669,7 @@ const TablesManagement: React.FC = () => {
               <IonSelectOption value="runningTime-asc">Running Time: Low to High</IonSelectOption>
               <IonSelectOption value="runningTime-desc">Running Time: High to Low</IonSelectOption>
             </IonSelect>
-            
+
             <button
               className="btn btn-primary"
               onClick={() => {
@@ -1015,10 +1044,10 @@ const TablesManagement: React.FC = () => {
               </IonItem>
 
               {getAvailableTables().length === 0 && (
-                <div style={{ 
-                  padding: "20px", 
-                  background: "#fff3cd", 
-                  border: "1px solid #ffeaa7", 
+                <div style={{
+                  padding: "20px",
+                  background: "#fff3cd",
+                  border: "1px solid #ffeaa7",
                   borderRadius: "8px",
                   marginTop: "20px"
                 }}>
@@ -1031,7 +1060,7 @@ const TablesManagement: React.FC = () => {
               {targetTableId && (
                 <div style={{ marginTop: "20px", padding: "15px", background: "#e8f5e8", borderRadius: "8px" }}>
                   <p style={{ margin: 0 }}>
-                    <strong>Selected Table:</strong> {data?.data?.find(t => t.id === targetTableId)?.tableNumber} - 
+                    <strong>Selected Table:</strong> {data?.data?.find(t => t.id === targetTableId)?.tableNumber} -
                     {data?.data?.find(t => t.id === targetTableId)?.location}
                   </p>
                 </div>

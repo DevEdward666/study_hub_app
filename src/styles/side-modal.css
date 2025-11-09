@@ -1,0 +1,59 @@
+/* Side Modal Styles */
+.side-modal {
+  --width: 90%;
+  --max-width: 600px;
+  --height: 100%;
+  --border-radius: 0;
+}
+
+.side-modal::part(content) {
+  position: absolute;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  width: var(--width);
+  max-width: var(--max-width);
+  height: var(--height);
+  border-radius: var(--border-radius);
+  box-shadow: -4px 0 24px rgba(0, 0, 0, 0.15);
+}
+
+.side-modal::part(backdrop) {
+  background: rgba(0, 0, 0, 0.4);
+}
+
+/* Animation */
+@keyframes slideInFromRight {
+  from {
+    transform: translateX(100%);
+  }
+  to {
+    transform: translateX(0);
+  }
+}
+
+@keyframes slideOutToRight {
+  from {
+    transform: translateX(0);
+  }
+  to {
+    transform: translateX(100%);
+  }
+}
+
+.side-modal.modal-entering::part(content) {
+  animation: slideInFromRight 0.3s ease-out;
+}
+
+.side-modal.modal-leaving::part(content) {
+  animation: slideOutToRight 0.3s ease-in;
+}
+
+/* Responsive - full width on mobile */
+@media (max-width: 768px) {
+  .side-modal {
+    --width: 100%;
+    --max-width: 100%;
+  }
+}
+

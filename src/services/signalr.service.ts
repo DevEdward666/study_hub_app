@@ -80,12 +80,12 @@ export class SignalRService {
     // Detect if we're on mobile (important for transport selection)
     const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
     const isAndroid = /Android/i.test(navigator.userAgent);
-    
+
     console.log(`Device detection: isMobile=${isMobile}, isAndroid=${isAndroid}`);
 
     // For Android, prefer LongPolling over WebSockets due to Chrome issues
     // For other platforms, prefer WebSockets
-    const transportOrder = isAndroid 
+    const transportOrder = isAndroid
       ? signalR.HttpTransportType.LongPolling | signalR.HttpTransportType.ServerSentEvents | signalR.HttpTransportType.WebSockets
       : signalR.HttpTransportType.WebSockets | signalR.HttpTransportType.ServerSentEvents | signalR.HttpTransportType.LongPolling;
 
@@ -152,7 +152,7 @@ export class SignalRService {
     this.connection.onclose((error?: Error) => {
       console.error("SignalR connection closed:", error);
       this.isStarting = false; // Reset starting flag on close
-      
+
       // On mobile, try to reconnect after a short delay if not intentionally stopped
       if (this.reconnectAttempts < this.maxReconnectAttempts) {
         console.log(`Will attempt to reconnect (${this.reconnectAttempts}/${this.maxReconnectAttempts})...`);
@@ -178,9 +178,9 @@ export class SignalRService {
 
     // Check current state
     const currentState = connection.state;
-    
+
     console.log("SignalR current state:", currentState);
-    
+
     if (currentState === signalR.HubConnectionState.Connected) {
       console.log("SignalR already connected");
       this.reconnectAttempts = 0; // Reset on successful connection
@@ -199,52 +199,37 @@ export class SignalRService {
 
     // Only start if disconnected
     if (currentState !== signalR.HubConnectionState.Disconnected) {
-      console.warn(`SignalR not in disconnected state: ${currentState}, attempting to stop first...`);
-      try {
-        await connection.stop();
-        // Wait a bit for cleanup
-        await new Promise(resolve => setTimeout(resolve, 100));
-      } catch (err) {
-        console.error("Error stopping connection before restart:", err);
-      }
+      console.log(`Cannot start SignalR from state: ${currentState}`);
+      return;
     }
 
     this.isStarting = true;
 
     try {
-      console.log("Starting SignalR connection...");
+      console.log("🔌 Starting SignalR connection...");
       await connection.start();
       console.log("✅ SignalR connected successfully");
-      console.log("Transport used:", (connection as any).connection?.transport?.name || 'unknown');
+      this.reconnectAttempts = 0;
       this.isStarting = false;
-      this.reconnectAttempts = 0; // Reset counter on successful connection
+
+      // Join admins group after successful connection
       await this.joinAdminsGroup();
-    } catch (err: any) {
-      console.error("❌ Error starting SignalR connection:", err);
-      console.error("Error details:", {
-        message: err?.message,
-        stack: err?.stack,
-        statusCode: err?.statusCode,
-        url: `${this.baseUrl}/hubs/notifications`,
-        isOnline: navigator.onLine,
-        userAgent: navigator.userAgent
-      });
+    } catch (error: any) {
+      console.warn("⚠️ SignalR connection failed (non-critical):", error?.message || error);
+      
+      // Log details for debugging but don't throw error
+      if (error?.message?.includes('timeout')) {
+        console.log("SignalR negotiation timeout - backend may not be available");
+        console.log("Real-time notifications will be disabled until connection succeeds");
+      } else if (error?.message?.includes('Failed to complete negotiation')) {
+        console.log("SignalR negotiation failed - check if backend hub is running");
+        console.log("Endpoint:", `${this.baseUrl}/hubs/notifications`);
+      }
+      
       this.isStarting = false;
       
-      // Retry logic with exponential backoff
-      this.reconnectAttempts++;
-      if (this.reconnectAttempts < this.maxReconnectAttempts) {
-        const delay = Math.min(5000 * Math.pow(2, this.reconnectAttempts - 1), 30000);
-        console.log(`Retrying SignalR connection in ${delay}ms (attempt ${this.reconnectAttempts}/${this.maxReconnectAttempts})...`);
-        
-        setTimeout(() => {
-          if (connection?.state === signalR.HubConnectionState.Disconnected && navigator.onLine) {
-            this.start();
-          }
-        }, delay);
-      } else {
-        console.error("Max reconnection attempts reached. Please refresh the page or check your connection.");
-      }
+      // Don't throw error - allow app to continue without SignalR
+      // It will retry automatically based on network events and visibility changes
     }
   }
 
@@ -310,10 +295,10 @@ export class SignalRService {
 }
 
 // Create singleton instance
-const apiBaseUrl = import.meta.env.VITE_API_URL || "http://localhost:5212/api";
+const apiBaseUrl = import.meta.env.VITE_API_URL || "https://3qrbqpcx-5173.asse.devtunnels.ms/api";
 // Remove /api suffix to get base URL for SignalR hub
-const baseUrl = apiBaseUrl.endsWith("/api") 
-  ? apiBaseUrl.substring(0, apiBaseUrl.length - 4) 
+const baseUrl = apiBaseUrl.endsWith("/api")
+  ? apiBaseUrl.substring(0, apiBaseUrl.length - 4)
   : apiBaseUrl.replace("/api/", "");
 export const signalRService = new SignalRService(baseUrl);
 

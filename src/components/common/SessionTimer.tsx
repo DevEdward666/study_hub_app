@@ -54,9 +54,10 @@ export const SessionTimer: React.FC<SessionTimerProps> = ({
 
   const getTimerColor = (): string => {
     const totalMinutes = Math.floor(timeRemaining / (1000 * 60));
-    if (totalMinutes <= 5) return 'danger';
-    if (totalMinutes <= 15) return 'warning';
-    return 'success';
+    console.log(totalMinutes)
+    if (totalMinutes < 15) return 'danger'; // Less than 15 minutes
+    if (totalMinutes < 30) return 'warning'; // Less than 30 minutes
+    return 'success'; // 30 minutes or more
   };
 
   if (timeRemaining === 0) {

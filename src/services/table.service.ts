@@ -93,6 +93,14 @@ export class TableService {
     );
   }
 
+  async startSubscriptionSession(tableId: string, subscriptionId: string, userId?: string): Promise<string> {
+    return apiClient.post(
+      '/tables/sessions/start-subscription',
+      ApiResponseSchema(z.string()),
+      { tableId, subscriptionId, userId }
+    );
+  }
+
   async endSession(sessionId: string, autoPrint: boolean = false, wifiPassword?: string): Promise<EndSessionResponse> {
     const response = await apiClient.post(
       '/tables/sessions/end',

@@ -21,6 +21,8 @@ import {
   IonToggle,
   IonTextarea,
   IonBadge,
+  IonSelect,
+  IonSelectOption,
 } from "@ionic/react";
 import {
   cashOutline,
@@ -39,6 +41,7 @@ import rateService from "../services/rate.service";
 import { Rate, CreateRateRequest, UpdateRateRequest } from "../schema/rate.schema";
 import "../Admin/styles/admin.css";
 import "../Admin/styles/admin-responsive.css";
+import "../styles/side-modal.css";
 
 const RateManagement: React.FC = () => {
   const [rates, setRates] = useState<Rate[]>([]);
@@ -56,6 +59,8 @@ const RateManagement: React.FC = () => {
   // Form states
   const [formData, setFormData] = useState<CreateRateRequest>({
     hours: 1,
+    durationType: "Hourly",
+    durationValue: 1,
     price: 0,
     description: "",
     isActive: true,
@@ -70,6 +75,53 @@ const RateManagement: React.FC = () => {
     handleCancel: cancelAction,
     handleDismiss: dismissConfirm,
   } = useConfirmation();
+
+  // Helper function to calculate hours based on duration type
+  const calculateHours = (type: string, value: number): number => {
+    switch (type) {
+      case "Hourly":
+        return value;
+      case "Daily":
+        return value * 24;
+      case "Weekly":
+        return value * 168;
+      case "Monthly":
+        return value * 720;
+      default:
+        return value;
+    }
+  };
+
+  // Helper function to format duration name
+  const formatDurationName = (rate: Rate): string => {
+    const value = rate.durationValue || 1;
+    const type = rate.durationType || "Hourly";
+    
+    if (type === "Hourly") {
+      return `${value} Hour${value > 1 ? 's' : ''}`;
+    }
+    if (type === "Daily") {
+      return `${value} Day${value > 1 ? 's' : ''}`;
+    }
+    if (type === "Weekly") {
+      return `${value} Week${value > 1 ? 's' : ''}`;
+    }
+    if (type === "Monthly") {
+      return `${value} Month${value > 1 ? 's' : ''}`;
+    }
+    return `${rate.hours} Hours`;
+  };
+
+  // Update hours when duration type or value changes
+  const handleDurationChange = (type: string, value: number) => {
+    const calculatedHours = calculateHours(type, value);
+    setFormData({
+      ...formData,
+      durationType: type,
+      durationValue: value,
+      hours: calculatedHours,
+    });
+  };
 
   useEffect(() => {
     loadRates();
@@ -93,6 +145,8 @@ const RateManagement: React.FC = () => {
   const handleCreate = () => {
     setFormData({
       hours: 1,
+      durationType: "Hourly",
+      durationValue: 1,
       price: 0,
       description: "",
       isActive: true,
@@ -105,6 +159,8 @@ const RateManagement: React.FC = () => {
     setSelectedRate(rate);
     setFormData({
       hours: rate.hours,
+      durationType: rate.durationType || "Hourly",
+      durationValue: rate.durationValue || 1,
       price: rate.price,
       description: rate.description || "",
       isActive: rate.isActive,
@@ -154,6 +210,8 @@ const RateManagement: React.FC = () => {
       const updateRequest: UpdateRateRequest = {
         id: selectedRate.id,
         hours: formData.hours,
+        durationType: formData.durationType || "Hourly",
+        durationValue: formData.durationValue || 1,
         price: formData.price,
         description: formData.description,
         isActive: formData.isActive ?? true,
@@ -221,7 +279,7 @@ const RateManagement: React.FC = () => {
             Rate Management
           </h1>
           <p style={{ color: "#666", marginTop: "8px" }}>
-            Manage hourly rates for table sessions (e.g., 1 hour for ₱35, 2 hours for ₱135)
+            Manage rates for table sessions - supports hourly, daily, weekly, and monthly packages
           </p>
         </div>
 
@@ -254,10 +312,13 @@ const RateManagement: React.FC = () => {
                         <IonIcon icon={timeOutline} style={{ fontSize: "24px", color: "var(--ion-color-primary)" }} />
                         <div>
                           <h3 style={{ margin: 0, fontSize: "20px", fontWeight: "bold" }}>
-                            {rate.hours} {rate.hours === 1 ? "Hour" : "Hours"}
+                            {formatDurationName(rate)}
                           </h3>
                           <p style={{ margin: "4px 0 0 0", fontSize: "24px", color: "var(--ion-color-success)", fontWeight: "bold" }}>
                             ₱{rate.price.toFixed(2)}
+                          </p>
+                          <p style={{ margin: "2px 0 0 0", fontSize: "12px", color: "#666" }}>
+                            {rate.hours} total hours
                           </p>
                         </div>
                         <IonBadge color={rate.isActive ? "success" : "medium"} style={{ marginLeft: "8px" }}>
@@ -289,7 +350,14 @@ const RateManagement: React.FC = () => {
         )}
 
         {/* Create Modal */}
-        <IonModal isOpen={showCreateModal} onDidDismiss={() => setShowCreateModal(false)}>
+        <IonModal 
+          isOpen={showCreateModal} 
+          onDidDismiss={() => setShowCreateModal(false)}
+          breakpoints={[0, 1]}
+          initialBreakpoint={1}
+          handle={false}
+          className="side-modal"
+        >
           <IonHeader>
             <IonToolbar>
               <IonTitle>Create New Rate</IonTitle>
@@ -302,15 +370,32 @@ const RateManagement: React.FC = () => {
           </IonHeader>
           <IonContent className="ion-padding">
             <IonItem>
-              <IonLabel position="stacked">Hours *</IonLabel>
+              <IonLabel position="stacked">Duration Type *</IonLabel>
+              <IonSelect
+                value={formData.durationType}
+                onIonChange={(e) => handleDurationChange(e.detail.value, formData.durationValue || 1)}
+              >
+                <IonSelectOption value="Hourly">Hourly</IonSelectOption>
+                <IonSelectOption value="Daily">Daily</IonSelectOption>
+                <IonSelectOption value="Weekly">Weekly</IonSelectOption>
+                <IonSelectOption value="Monthly">Monthly</IonSelectOption>
+              </IonSelect>
+            </IonItem>
+            <IonItem>
+              <IonLabel position="stacked">Duration Value *</IonLabel>
               <IonInput
                 type="number"
-                value={formData.hours}
-                onIonInput={(e) => setFormData({ ...formData, hours: parseInt(e.detail.value || "1") })}
-                placeholder="Enter number of hours"
+                value={formData.durationValue}
+                onIonInput={(e) => handleDurationChange(formData.durationType || "Hourly", parseInt(e.detail.value || "1"))}
+                placeholder={`Enter number of ${formData.durationType?.toLowerCase() || 'hours'}`}
                 min={1}
-                max={24}
+                max={365}
               />
+            </IonItem>
+            <IonItem lines="none">
+              <IonLabel color="medium" style={{ fontSize: "14px" }}>
+                Total Hours: <strong>{formData.hours}</strong> hours
+              </IonLabel>
             </IonItem>
             <IonItem>
               <IonLabel position="stacked">Price (₱) *</IonLabel>
@@ -357,7 +442,14 @@ const RateManagement: React.FC = () => {
         </IonModal>
 
         {/* Edit Modal */}
-        <IonModal isOpen={showEditModal} onDidDismiss={() => setShowEditModal(false)}>
+        <IonModal 
+          isOpen={showEditModal} 
+          onDidDismiss={() => setShowEditModal(false)}
+          breakpoints={[0, 1]}
+          initialBreakpoint={1}
+          handle={false}
+          className="side-modal"
+        >
           <IonHeader>
             <IonToolbar>
               <IonTitle>Edit Rate</IonTitle>
@@ -370,15 +462,32 @@ const RateManagement: React.FC = () => {
           </IonHeader>
           <IonContent className="ion-padding">
             <IonItem>
-              <IonLabel position="stacked">Hours *</IonLabel>
+              <IonLabel position="stacked">Duration Type *</IonLabel>
+              <IonSelect
+                value={formData.durationType}
+                onIonChange={(e) => handleDurationChange(e.detail.value, formData.durationValue || 1)}
+              >
+                <IonSelectOption value="Hourly">Hourly</IonSelectOption>
+                <IonSelectOption value="Daily">Daily</IonSelectOption>
+                <IonSelectOption value="Weekly">Weekly</IonSelectOption>
+                <IonSelectOption value="Monthly">Monthly</IonSelectOption>
+              </IonSelect>
+            </IonItem>
+            <IonItem>
+              <IonLabel position="stacked">Duration Value *</IonLabel>
               <IonInput
                 type="number"
-                value={formData.hours}
-                onIonInput={(e) => setFormData({ ...formData, hours: parseInt(e.detail.value || "1") })}
-                placeholder="Enter number of hours"
+                value={formData.durationValue}
+                onIonInput={(e) => handleDurationChange(formData.durationType || "Hourly", parseInt(e.detail.value || "1"))}
+                placeholder={`Enter number of ${formData.durationType?.toLowerCase() || 'hours'}`}
                 min={1}
-                max={24}
+                max={365}
               />
+            </IonItem>
+            <IonItem lines="none">
+              <IonLabel color="medium" style={{ fontSize: "14px" }}>
+                Total Hours: <strong>{formData.hours}</strong> hours
+              </IonLabel>
             </IonItem>
             <IonItem>
               <IonLabel position="stacked">Price (₱) *</IonLabel>

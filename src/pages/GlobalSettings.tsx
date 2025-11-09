@@ -52,6 +52,7 @@ import globalSettingsService, {
 import { PrinterSettings } from "../components/PrinterSettings";
 import "../Admin/styles/admin.css";
 import "../Admin/styles/admin-responsive.css";
+import "../styles/side-modal.css";
 
 const GlobalSettings: React.FC = () => {
   // State for settings data
@@ -543,7 +544,14 @@ const GlobalSettings: React.FC = () => {
         )}
 
         {/* Edit Setting Modal */}
-        <IonModal isOpen={showEditModal} onDidDismiss={() => setShowEditModal(false)}>
+        <IonModal 
+          isOpen={showEditModal} 
+          onDidDismiss={() => setShowEditModal(false)}
+          breakpoints={[0, 1]}
+          initialBreakpoint={1}
+          handle={false}
+          className="side-modal"
+        >
           <IonHeader>
             <IonToolbar>
               <IonTitle>Edit Setting</IonTitle>
@@ -620,7 +628,14 @@ const GlobalSettings: React.FC = () => {
         </IonModal>
 
         {/* Create Setting Modal */}
-        <IonModal isOpen={showCreateModal} onDidDismiss={() => setShowCreateModal(false)}>
+        <IonModal 
+          isOpen={showCreateModal} 
+          onDidDismiss={() => setShowCreateModal(false)}
+          breakpoints={[0, 1]}
+          initialBreakpoint={1}
+          handle={false}
+          className="side-modal"
+        >
           <IonHeader>
             <IonToolbar>
               <IonTitle>Create New Setting</IonTitle>
@@ -710,7 +725,14 @@ const GlobalSettings: React.FC = () => {
         </IonModal>
 
         {/* History Detail Modal */}
-        <IonModal isOpen={showHistoryModal} onDidDismiss={() => setShowHistoryModal(false)}>
+        <IonModal 
+          isOpen={showHistoryModal} 
+          onDidDismiss={() => setShowHistoryModal(false)}
+          breakpoints={[0, 1]}
+          initialBreakpoint={1}
+          handle={false}
+          className="side-modal"
+        >
           <IonHeader>
             <IonToolbar>
               <IonTitle>Setting History</IonTitle>

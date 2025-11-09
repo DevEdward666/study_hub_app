@@ -1,14 +1,13 @@
 import React, { useState, useCallback } from 'react';
-import { 
-  IonContent, 
-  IonPage, 
-  IonCard, 
-  IonCardContent, 
-  IonCardHeader, 
-  IonCardTitle, 
-  IonButton, 
-  IonIcon, 
-  IonToast, 
+import {
+  IonContent,
+  IonCard,
+  IonCardContent,
+  IonCardHeader,
+  IonCardTitle,
+  IonButton,
+  IonIcon,
+  IonToast,
   IonSpinner,
   IonGrid,
   IonRow,
@@ -19,9 +18,6 @@ import {
   IonSelectOption,
   IonInput,
   IonBadge,
-  IonHeader,
-  IonToolbar,
-  IonTitle,
   IonProgressBar,
   IonRefresher,
   IonRefresherContent,
@@ -40,9 +36,6 @@ import {
   cardOutline,
   peopleOutline,
   timeOutline,
-  checkmarkCircleOutline,
-  hourglassOutline,
-  closeCircleOutline,
   barChartOutline,
   pieChartOutline,
   analyticsOutline,
@@ -68,13 +61,6 @@ const TransactionSummarySchema = z.object({
   averageAmount: z.number().optional(),
 });
 
-const StatusBreakdownSchema = z.object({
-  status: z.string(),
-  count: z.number(),
-  totalAmount: z.number(),
-  percentage: z.number(),
-});
-
 const TopUserSchema = z.object({
   userId: z.string(),
   userName: z.string().nullable(),
@@ -85,7 +71,6 @@ const TopUserSchema = z.object({
 
 const TransactionReportSchema = z.object({
   summary: TransactionSummarySchema,
-  byStatus: z.array(StatusBreakdownSchema),
   topUsers: z.array(TopUserSchema),
   period: z.string(),
   startDate: z.string(),
@@ -112,7 +97,7 @@ const QuickStatsSchema = z.object({
   }),
 });
 
- const ReportsPage: React.FC = () => {
+const ReportsPage: React.FC = () => {
   const [selectedPeriod, setSelectedPeriod] = useState<ReportPeriod>('Daily');
   const [selectedView, setSelectedView] = useState<ReportView>('overview');
   const [selectedDate, setSelectedDate] = useState(new Date().toISOString().split('T')[0]);
@@ -141,7 +126,7 @@ const QuickStatsSchema = z.object({
   const handleExport = async (format: 'csv' | 'json') => {
     try {
       setIsExporting(true);
-      
+
       let params: any = {
         format,
         period: selectedPeriod
@@ -174,7 +159,7 @@ const QuickStatsSchema = z.object({
         },
         body: JSON.stringify(params)
       });
-      
+
       if (!response.ok) {
         throw new Error(`Export failed: ${response.statusText}`);
       }
@@ -198,7 +183,7 @@ const QuickStatsSchema = z.object({
         link.click();
         window.URL.revokeObjectURL(url);
       }
-      
+
       showMessage(`Report exported as ${format.toUpperCase()}`, 'success');
     } catch (error) {
       console.error('Export error:', error);
@@ -231,222 +216,267 @@ const QuickStatsSchema = z.object({
       const endpoint = buildEndpoint();
       return await apiClient.get(endpoint, ApiResponseSchema(TransactionReportResponseSchema));
     },
-    enabled: false,
+    enabled: true, // Auto-load on mount and when dependencies change
+    staleTime: 30000, // Consider data fresh for 30 seconds
   });
 
   const { data: report, isLoading, error } = reportQuery;
   const { data: quickStats, isLoading: statsLoading } = quickStatsQuery;
 
+  // Show loading state while initial data is loading
+  if (isLoading || statsLoading) {
+    return (
+      <IonContent style={{ height: '100vh', background: '#f5f5f5' }}>
+        <div style={{ padding: '20px', minHeight: '100%' }}>
+          <div style={{ marginBottom: '16px' }}>
+            <h1 style={{ color: 'var(--ion-color-primary)', margin: '0 0 4px 0', fontSize: '28px', display: 'flex', alignItems: 'center', gap: '12px' }}>
+              <IonIcon icon={statsChartOutline} />
+              Reports & Analytics
+            </h1>
+            <p style={{ color: 'black', margin: '0', fontSize: '16px' }}>Financial reports and business insights</p>
+          </div>
+          <LoadingSpinner message="Loading reports..." />
+        </div>
+      </IonContent>
+    );
+  }
+
   return (
-    <IonPage>
-      <IonHeader>
-        <IonToolbar>
-          <IonTitle>
-            <IonIcon icon={statsChartOutline} style={{ marginRight: '8px' }} />
-            Reports & Analytics
-          </IonTitle>
-        </IonToolbar>
-      </IonHeader>
+    <IonContent className="reports-page" style={{ '--background': '#f5f5f5' }}>
+      <IonRefresher slot="fixed" onIonRefresh={(e) => {
+        quickStatsQuery.refetch();
+        reportQuery.refetch();
+        e.detail.complete();
+      }}>
+        <IonRefresherContent />
+      </IonRefresher>
 
-      <IonContent className="reports-page">
-        <IonRefresher slot="fixed" onIonRefresh={(e) => {
-          quickStatsQuery.refetch();
-          e.detail.complete();
-        }}>
-          <IonRefresherContent />
-        </IonRefresher>
-
-        <div className="reports-container">
-          {/* Quick Stats Dashboard */}
-          <IonCard className="quick-stats-card">
-            <IonCardHeader>
-              <IonCardTitle >
-                <IonIcon icon={trendingUpOutline} style={{ marginRight: '8px', color: 'rgb(57, 53, 53)' }} />
-                <strong className='quick-stats-card-title'>Quick Statistics</strong>
-              </IonCardTitle>
-            </IonCardHeader>
-            <IonCardContent>
-              {statsLoading ? (
-                <div style={{ textAlign: 'center', padding: '20px' }}>
-                  <IonSpinner name="crescent" />
-                  <p>Loading statistics...</p>
-                </div>
-              ) : quickStats ? (
-                <IonGrid>
-                  <IonRow>
-                    <IonCol size="12" sizeMd="4">
-                      <div className="stat-period">
-                        <h3>
-                          <IonIcon icon={timeOutline} />
-                          Today
-                        </h3>
-                        <div className="stat-grid">
-                          <div className="stat-item">
-                            <IonIcon icon={cashOutline} />
-                            <div>
-                              <span className="stat-value">{quickStats.today.transactions}</span>
-                              <span className="stat-label">Transactions</span>
-                            </div>
-                          </div>
-                          <div className="stat-item">
-                            <IonIcon icon={trendingUpOutline} />
-                            <div>
-                              <span className="stat-value">{PesoFormat(quickStats.today.amount)}</span>
-                              <span className="stat-label">Total Amount</span>
-                            </div>
-                          </div>
-                        </div>
-                      </div>
-                    </IonCol>
-                    <IonCol size="12" sizeMd="4">
-                      <div className="stat-period">
-                        <h3>
-                          <IonIcon icon={calendarOutline} />
-                          This Week
-                        </h3>
-                        <div className="stat-grid">
-                          <div className="stat-item">
-                            <IonIcon icon={cashOutline} />
-                            <div>
-                              <span className="stat-value">{quickStats.thisWeek.transactions}</span>
-                              <span className="stat-label">Transactions</span>
-                            </div>
-                          </div>
-                          <div className="stat-item">
-                            <IonIcon icon={trendingUpOutline} />
-                            <div>
-                              <span className="stat-value">{PesoFormat(quickStats.thisWeek.amount)}</span>
-                              <span className="stat-label">Total Amount</span>
-                            </div>
-                          </div>
-                        </div>
-                      </div>
-                    </IonCol>
-                    <IonCol size="12" sizeMd="4">
-                      <div className="stat-period">
-                        <h3>
-                          <IonIcon icon={statsChartOutline} />
-                          This Month
-                        </h3>
-                        <div className="stat-grid">
-                          <div className="stat-item">
-                            <IonIcon icon={cashOutline} />
-                            <div>
-                              <span className="stat-value">{quickStats.thisMonth.transactions}</span>
-                              <span className="stat-label">Transactions</span>
-                            </div>
-                          </div>
-                          <div className="stat-item">
-                            <IonIcon icon={trendingUpOutline} />
-                            <div>
-                              <span className="stat-value">{PesoFormat(quickStats.thisMonth.amount)}</span>
-                              <span className="stat-label">Total Amount</span>
-                            </div>
-                          </div>
-                        </div>
-                      </div>
-                    </IonCol>
-                  </IonRow>
-                </IonGrid>
-              ) : (
-                <div style={{ textAlign: 'center', padding: '20px' }}>
-                  <p>Unable to load quick statistics</p>
-                </div>
-              )}
-            </IonCardContent>
-          </IonCard>
-
-          <IonCard className="report-controls-card">
-            <IonCardHeader>
-              <IonCardTitle>
-                <IonIcon icon={calendarOutline} style={{ marginRight: '8px' }} />
-                Detailed Report Configuration
-              </IonCardTitle>
-            </IonCardHeader>
-            <IonCardContent>
+      <div className="reports-container" style={{ padding: '20px', maxWidth: '1400px', margin: '0 auto' }}>
+        <div style={{ padding: '20px', minHeight: '100%' }}>
+          <div style={{ marginBottom: '16px' }}>
+            <h1 style={{ color: 'var(--ion-color-primary)', margin: '0 0 4px 0', fontSize: '28px', display: 'flex', alignItems: 'center', gap: '12px' }}>
+              <IonIcon icon={statsChartOutline} />
+              Reports & Analytics
+            </h1>
+            <p style={{ color: 'black', margin: '0', fontSize: '16px' }}>Financial reports and business insights</p>
+          </div>
+        </div>
+        {/* Quick Stats Dashboard */}
+        <IonCard className="quick-stats-card" style={{ marginBottom: '20px', boxShadow: '0 2px 8px rgba(0,0,0,0.1)' }}>
+          <IonCardHeader style={{ borderBottom: '1px solid #e0e0e0', paddingBottom: '12px' }}>
+            <IonCardTitle style={{ fontSize: '16px', fontWeight: 600, color: 'black', display: 'flex', alignItems: 'center', gap: '8px' }}>
+              <div style={{
+                width: '4px',
+                height: '24px',
+                background: 'var(--ion-color-primary)',
+                borderRadius: '2px'
+              }} />
+              Quick Statistics
+            </IonCardTitle>
+          </IonCardHeader>
+          <IonCardContent>
+            {statsLoading ? (
+              <div style={{ textAlign: 'center', padding: '20px' }}>
+                <IonSpinner name="crescent" />
+                <p>Loading statistics...</p>
+              </div>
+            ) : quickStats ? (
               <IonGrid>
                 <IonRow>
+                  <IonCol size="12" sizeMd="4">
+                    <div className="stat-period" style={{
+                      background: 'var(--ion-color-primary)',
+                      borderRadius: '12px',
+                      padding: '20px',
+                      color: 'white',
+                      minHeight: '140px'
+                    }}>
+                      <h3 style={{ fontSize: '14px', fontWeight: 500, marginBottom: '16px', opacity: 0.9 }}>
+                        Today
+                      </h3>
+                      <div className="stat-grid" style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+                        <div className="stat-item" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                          <div>
+                            <div style={{ fontSize: '28px', fontWeight: 700 }}>{quickStats.today.transactions}</div>
+                            <div style={{ fontSize: '12px', opacity: 0.8 }}>Transactions</div>
+                          </div>
+                        </div>
+                        <div className="stat-item" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', paddingTop: '12px', borderTop: '1px solid rgba(255,255,255,0.2)' }}>
+                          <div>
+                            <div style={{ fontSize: '24px', fontWeight: 700 }}>{PesoFormat(quickStats.today.amount)}</div>
+                            <div style={{ fontSize: '12px', opacity: 0.8 }}>Total Amount</div>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </IonCol>
+                  <IonCol size="12" sizeMd="4">
+                    <div className="stat-period" style={{
+                      background: 'var(--ion-color-secondary)',
+                      borderRadius: '12px',
+                      padding: '20px',
+                      color: 'white',
+                      minHeight: '140px'
+                    }}>
+                      <h3 style={{ fontSize: '14px', fontWeight: 500, marginBottom: '16px', opacity: 0.9 }}>
+                        This Week
+                      </h3>
+                      <div className="stat-grid" style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+                        <div className="stat-item" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                          <div>
+                            <div style={{ fontSize: '28px', fontWeight: 700 }}>{quickStats.thisWeek.transactions}</div>
+                            <div style={{ fontSize: '12px', opacity: 0.8 }}>Transactions</div>
+                          </div>
+                        </div>
+                        <div className="stat-item" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', paddingTop: '12px', borderTop: '1px solid rgba(255,255,255,0.2)' }}>
+                          <div>
+                            <div style={{ fontSize: '24px', fontWeight: 700 }}>{PesoFormat(quickStats.thisWeek.amount)}</div>
+                            <div style={{ fontSize: '12px', opacity: 0.8 }}>Total Amount</div>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </IonCol>
+                  <IonCol size="12" sizeMd="4">
+                    <div className="stat-period" style={{
+                      background: 'var(--ion-color-primary)',
+                      borderRadius: '12px',
+                      padding: '20px',
+                      color: 'white',
+                      minHeight: '140px'
+                    }}>
+                      <h3 style={{ fontSize: '14px', fontWeight: 500, marginBottom: '16px', opacity: 0.9 }}>
+                        This Month
+                      </h3>
+                      <div className="stat-grid" style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+                        <div className="stat-item" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                          <div>
+                            <div style={{ fontSize: '28px', fontWeight: 700 }}>{quickStats.thisMonth.transactions}</div>
+                            <div style={{ fontSize: '12px', opacity: 0.8 }}>Transactions</div>
+                          </div>
+                        </div>
+                        <div className="stat-item" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', paddingTop: '12px', borderTop: '1px solid rgba(255,255,255,0.2)' }}>
+                          <div>
+                            <div style={{ fontSize: '24px', fontWeight: 700 }}>{PesoFormat(quickStats.thisMonth.amount)}</div>
+                            <div style={{ fontSize: '12px', opacity: 0.8 }}>Total Amount</div>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </IonCol>
+                </IonRow>
+              </IonGrid>
+            ) : (
+              <div style={{ textAlign: 'center', padding: '20px' }}>
+                <p>Unable to load quick statistics</p>
+              </div>
+            )}
+          </IonCardContent>
+        </IonCard>
+
+        <IonCard className="report-controls-card" style={{ marginBottom: '20px', boxShadow: '0 2px 8px rgba(0,0,0,0.1)' }}>
+          <IonCardHeader style={{ borderBottom: '1px solid #e0e0e0', paddingBottom: '12px' }}>
+            <IonCardTitle style={{ fontSize: '16px', fontWeight: 600, color: 'black', display: 'flex', alignItems: 'center', gap: '8px' }}>
+              <div style={{
+                width: '4px',
+                height: '24px',
+                background: 'var(--ion-color-primary)',
+                borderRadius: '2px'
+              }} />
+              Detailed Report Configuration
+            </IonCardTitle>
+          </IonCardHeader>
+          <IonCardContent style={{ padding: '20px' }}>
+            <IonGrid>
+              <IonRow>
+                <IonCol size="12" sizeMd="3">
+                  <IonItem>
+                    <IonLabel position="stacked">Report Period</IonLabel>
+                    <IonSelect
+                      value={selectedPeriod}
+                      onIonChange={(e) => setSelectedPeriod(e.detail.value)}
+                      interface="popover"
+                    >
+                      {periods.map((period) => (
+                        <IonSelectOption key={period.value} value={period.value}>
+                          {period.label}
+                        </IonSelectOption>
+                      ))}
+                    </IonSelect>
+                  </IonItem>
+                </IonCol>
+
+                <IonCol size="12" sizeMd="3">
+                  {selectedPeriod === 'Daily' && (
+                    <IonItem>
+                      <IonLabel position="stacked">Select Date</IonLabel>
+                      <IonInput
+                        type="date"
+                        value={selectedDate}
+                        onIonInput={(e) => setSelectedDate(e.detail.value!)}
+                      />
+                    </IonItem>
+                  )}
+                  {selectedPeriod === 'Weekly' && (
+                    <IonItem>
+                      <IonLabel position="stacked">Week Starting</IonLabel>
+                      <IonInput
+                        type="date"
+                        value={selectedDate}
+                        onIonInput={(e) => setSelectedDate(e.detail.value!)}
+                      />
+                    </IonItem>
+                  )}
+                  {selectedPeriod === 'Monthly' && (
+                    <IonItem>
+                      <IonLabel position="stacked">Year</IonLabel>
+                      <IonInput
+                        type="number"
+                        value={selectedYear}
+                        onIonInput={(e) => setSelectedYear(parseInt(e.detail.value!, 10))}
+                        min="2020"
+                        max="2030"
+                      />
+                    </IonItem>
+                  )}
+                </IonCol>
+
+                {selectedPeriod === 'Monthly' && (
                   <IonCol size="12" sizeMd="3">
                     <IonItem>
-                      <IonLabel position="stacked">Report Period</IonLabel>
+                      <IonLabel position="stacked">Month</IonLabel>
                       <IonSelect
-                        value={selectedPeriod}
-                        onIonChange={(e) => setSelectedPeriod(e.detail.value)}
+                        value={selectedMonth}
+                        onIonChange={(e) => setSelectedMonth(parseInt(e.detail.value))}
                         interface="popover"
                       >
-                        {periods.map((period) => (
-                          <IonSelectOption key={period.value} value={period.value}>
-                            {period.label}
+                        {Array.from({ length: 12 }, (_, i) => i + 1).map((month) => (
+                          <IonSelectOption key={month} value={month}>
+                            {new Date(2000, month - 1).toLocaleString('en-US', { month: 'long' })}
                           </IonSelectOption>
                         ))}
                       </IonSelect>
                     </IonItem>
                   </IonCol>
+                )}
 
-                  <IonCol size="12" sizeMd="3">
-                    {selectedPeriod === 'Daily' && (
-                      <IonItem>
-                        <IonLabel position="stacked">Select Date</IonLabel>
-                        <IonInput
-                          type="date"
-                          value={selectedDate}
-                          onIonInput={(e) => setSelectedDate(e.detail.value!)}
-                        />
-                      </IonItem>
-                    )}
-                    {selectedPeriod === 'Weekly' && (
-                      <IonItem>
-                        <IonLabel position="stacked">Week Starting</IonLabel>
-                        <IonInput
-                          type="date"
-                          value={selectedDate}
-                          onIonInput={(e) => setSelectedDate(e.detail.value!)}
-                        />
-                      </IonItem>
-                    )}
-                    {selectedPeriod === 'Monthly' && (
-                      <IonItem>
-                        <IonLabel position="stacked">Year</IonLabel>
-                        <IonInput
-                          type="number"
-                          value={selectedYear}
-                          onIonInput={(e) => setSelectedYear(parseInt(e.detail.value!, 10))}
-                          min="2020"
-                          max="2030"
-                        />
-                      </IonItem>
-                    )}
-                  </IonCol>
-
-                  {selectedPeriod === 'Monthly' && (
-                    <IonCol size="12" sizeMd="3">
-                      <IonItem>
-                        <IonLabel position="stacked">Month</IonLabel>
-                        <IonSelect
-                          value={selectedMonth}
-                          onIonChange={(e) => setSelectedMonth(parseInt(e.detail.value))}
-                          interface="popover"
-                        >
-                          {Array.from({ length: 12 }, (_, i) => i + 1).map((month) => (
-                            <IonSelectOption key={month} value={month}>
-                              {new Date(2000, month - 1).toLocaleString('en-US', { month: 'long' })}
-                            </IonSelectOption>
-                          ))}
-                        </IonSelect>
-                      </IonItem>
-                    </IonCol>
-                  )}
-
-                  <IonCol size="12" sizeMd="3">
-                    <IonButton 
-                      expand="block" 
-                      onClick={() => reportQuery.refetch()} 
+                <IonCol size="12" sizeMd="3">
+                  <div style={{ paddingTop: '26px' }}>
+                    <IonButton
+                      expand="block"
+                      onClick={() => reportQuery.refetch()}
                       disabled={isLoading}
+                      color="primary"
+                      style={{
+                        height: '56px',
+                        fontWeight: 600,
+                        fontSize: '15px'
+                      }}
                     >
                       {isLoading ? (
                         <>
-                          <IonSpinner name="crescent" />
-                          &nbsp; Loading...
+                          <IonSpinner name="crescent" style={{ marginRight: '8px' }} />
+                          Loading...
                         </>
                       ) : (
                         <>
@@ -455,238 +485,276 @@ const QuickStatsSchema = z.object({
                         </>
                       )}
                     </IonButton>
-                  </IonCol>
-                </IonRow>
-              </IonGrid>
+                  </div>
+                </IonCol>
+              </IonRow>
+            </IonGrid>
+          </IonCardContent>
+        </IonCard>
+
+        {isLoading ? (
+          <IonCard>
+            <IonCardContent>
+              <LoadingSpinner message="Generating detailed report..." />
             </IonCardContent>
           </IonCard>
+        ) : error ? (
+          <IonCard>
+            <IonCardContent>
+              <ErrorMessage
+                message={`Failed to load report data: ${error instanceof Error ? error.message : 'Unknown error'}`}
+                onRetry={() => reportQuery.refetch()}
+              />
+            </IonCardContent>
+          </IonCard>
+        ) : report ? (
+          <div className="report-content">
+            {/* Export buttons */}
+            <IonCard style={{ marginBottom: '20px', boxShadow: '0 2px 8px rgba(0,0,0,0.1)' }}>
+              <IonCardHeader style={{ borderBottom: '1px solid #e0e0e0', paddingBottom: '12px' }}>
+                <IonCardTitle style={{ fontSize: '16px', fontWeight: 600, color: 'black', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                  <div style={{
+                    width: '4px',
+                    height: '24px',
+                    background: 'var(--ion-color-primary)',
+                    borderRadius: '2px'
+                  }} />
+                  Export Options
+                </IonCardTitle>
+              </IonCardHeader>
+              <IonCardContent style={{ padding: '20px' }}>
+                <IonGrid>
+                  <IonRow>
+                    <IonCol size="6">
+                      <IonButton
+                        expand="block"
+                        fill="outline"
+                        onClick={() => handleExport('csv')}
+                        disabled={isExporting}
+                      >
+                        <IonIcon icon={downloadOutline} slot="start" />
+                        {isExporting ? 'Exporting...' : 'Export CSV'}
+                      </IonButton>
+                    </IonCol>
+                    <IonCol size="6">
+                      <IonButton
+                        expand="block"
+                        fill="outline"
+                        onClick={() => handleExport('json')}
+                        disabled={isExporting}
+                      >
+                        <IonIcon icon={downloadOutline} slot="start" />
+                        {isExporting ? 'Exporting...' : 'Export JSON'}
+                      </IonButton>
+                    </IonCol>
+                  </IonRow>
+                </IonGrid>
+                {isExporting && <IonProgressBar type="indeterminate" />}
+              </IonCardContent>
+            </IonCard>
 
-          {isLoading ? (
-            <IonCard>
-              <IonCardContent>
-                <LoadingSpinner message="Generating detailed report..." />
-              </IonCardContent>
-            </IonCard>
-          ) : error ? (
-            <IonCard>
-              <IonCardContent>
-                <ErrorMessage 
-                  message={`Failed to load report data: ${error instanceof Error ? error.message : 'Unknown error'}`}
-                  onRetry={() => reportQuery.refetch()}
-                />
-              </IonCardContent>
-            </IonCard>
-          ) : report ? (
-            <div className="report-content">
-              {/* Export buttons */}
-              <IonCard>
-                <IonCardHeader>
-                  <IonCardTitle>
-                    <IonIcon icon={downloadOutline} style={{ marginRight: '8px' }} />
-                    Export Options
-                  </IonCardTitle>
+            {/* Report Summary */}
+            {report.report?.summary && (
+              <IonCard style={{ marginBottom: '20px', boxShadow: '0 2px 8px rgba(0,0,0,0.1)' }}>
+                <IonCardHeader style={{ borderBottom: '1px solid #e0e0e0', paddingBottom: '12px' }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '12px' }}>
+                    <IonCardTitle style={{ fontSize: '16px', fontWeight: 600, color: 'black', display: 'flex', alignItems: 'center', gap: '8px', margin: 0 }}>
+                      <div style={{
+                        width: '4px',
+                        height: '24px',
+                        background: 'var(--ion-color-primary)',
+                        borderRadius: '2px'
+                      }} />
+                      {selectedPeriod} Report Summary
+                    </IonCardTitle>
+                    <IonBadge color="medium" style={{ fontSize: '11px', padding: '6px 12px' }}>
+                      {new Date(report.generatedAt).toLocaleString()}
+                    </IonBadge>
+                  </div>
                 </IonCardHeader>
-                <IonCardContent>
+                <IonCardContent style={{ padding: '20px' }}>
                   <IonGrid>
                     <IonRow>
-                      <IonCol size="6">
-                        <IonButton 
-                          expand="block" 
-                          fill="outline" 
-                          onClick={() => handleExport('csv')}
-                          disabled={isExporting}
-                        >
-                          <IonIcon icon={downloadOutline} slot="start" />
-                          {isExporting ? 'Exporting...' : 'Export CSV'}
-                        </IonButton>
+                      <IonCol size="6" sizeMd="4">
+                        <div className="summary-item" style={{
+                          background: 'var(--ion-color-primary)',
+                          borderRadius: '12px',
+                          padding: '20px',
+                          color: 'white',
+                          minHeight: '100px',
+                          display: 'flex',
+                          flexDirection: 'column',
+                          justifyContent: 'space-between'
+                        }}>
+                          <div style={{ fontSize: '12px', opacity: 0.9, marginBottom: '8px' }}>Total Transactions</div>
+                          <div style={{ fontSize: '32px', fontWeight: 700 }}>{report.report.summary.totalTransactions}</div>
+                        </div>
                       </IonCol>
-                      <IonCol size="6">
-                        <IonButton 
-                          expand="block" 
-                          fill="outline" 
-                          onClick={() => handleExport('json')}
-                          disabled={isExporting}
-                        >
-                          <IonIcon icon={downloadOutline} slot="start" />
-                          {isExporting ? 'Exporting...' : 'Export JSON'}
-                        </IonButton>
+                      <IonCol size="6" sizeMd="4">
+                        <div className="summary-item" style={{
+                          background: 'var(--ion-color-secondary)',
+                          borderRadius: '12px',
+                          padding: '20px',
+                          color: 'white',
+                          minHeight: '100px',
+                          display: 'flex',
+                          flexDirection: 'column',
+                          justifyContent: 'space-between'
+                        }}>
+                          <div style={{ fontSize: '12px', opacity: 0.9, marginBottom: '8px' }}>Total Amount</div>
+                          <div style={{ fontSize: '28px', fontWeight: 700 }}>{PesoFormat(report.report.summary.totalAmount)}</div>
+                        </div>
                       </IonCol>
+
+                      {report.report.summary.averageAmount !== undefined && report.report.summary.averageAmount !== null && (
+                        <IonCol size="6" sizeMd="4">
+                          <div className="summary-item" style={{
+                            background: 'var(--ion-color-primary)',
+                            borderRadius: '12px',
+                            padding: '20px',
+                            color: 'white',
+                            minHeight: '100px',
+                            display: 'flex',
+                            flexDirection: 'column',
+                            justifyContent: 'space-between'
+                          }}>
+                            <div style={{ fontSize: '12px', opacity: 0.9, marginBottom: '8px' }}>Average Amount</div>
+                            <div style={{ fontSize: '28px', fontWeight: 700 }}>{PesoFormat(report.report.summary.averageAmount)}</div>
+                          </div>
+                        </IonCol>
+                      )}
                     </IonRow>
                   </IonGrid>
-                  {isExporting && <IonProgressBar type="indeterminate" />}
                 </IonCardContent>
               </IonCard>
+            )}
 
-              {/* Report Summary */}
-              {report.report?.summary && (
-                <IonCard>
-                  <IonCardHeader>
-                    <IonCardTitle>
-                      <IonIcon icon={statsChartOutline} style={{ marginRight: '8px' }} />
-                      {selectedPeriod} Report Summary
-                      <IonBadge slot="end" color="primary">
-                        {new Date(report.generatedAt).toLocaleString()}
-                      </IonBadge>
-                    </IonCardTitle>
-                  </IonCardHeader>
-                  <IonCardContent>
-                    <IonGrid>
-                      <IonRow>
-                        <IonCol size="6" sizeMd="6">
-                          <div className="summary-item">
-                            <IonIcon icon={cashOutline} className="summary-icon" />
-                            <div className="summary-content">
-                              <div className="summary-label">Total Transactions</div>
-                              <div className="summary-value">{report.report.summary.totalTransactions}</div>
-                            </div>
-                          </div>
-                        </IonCol>
-                        <IonCol size="6" sizeMd="6">
-                          <div className="summary-item">
-                            <IonIcon icon={trendingUpOutline} className="summary-icon" />
-                            <div className="summary-content">
-                              <div className="summary-label">Total Amount</div>
-                              <div className="summary-value">{PesoFormat(report.report.summary.totalAmount)}</div>
-                            </div>
-                          </div>
-                        </IonCol>
-                 
-                        {report.report.summary.averageAmount !== undefined && (
-                          <IonCol size="6" sizeMd="3">
-                            <div className="summary-item">
-                              <IonIcon icon={trendingUpOutline} className="summary-icon" color="secondary" />
-                              <div className="summary-content">
-                                <div className="summary-label">Average Amount</div>
-                                <div className="summary-value">{PesoFormat(report.report.summary.averageAmount)}</div>
-                              </div>
-                            </div>
-                          </IonCol>
-                        )}
-                      </IonRow>
-                    </IonGrid>
-                  </IonCardContent>
-                </IonCard>
-              )}
-
-              {/* Status Distribution */}
-              {report.report?.byStatus && report.report.byStatus.length > 0 && (
-                <IonCard>
-                  <IonCardHeader>
-                    <IonCardTitle>
-                      <IonIcon icon={cardOutline} style={{ marginRight: '8px' }} />
-                      Status Distribution
-                    </IonCardTitle>
-                  </IonCardHeader>
-                  <IonCardContent>
-                    <div className="table-container">
-                      {report.report.byStatus.map((status, index: number) => (
-                        <div key={index} className="table-row">
-                          <div className="row-content">
-                            <div className="row-main">
-                              <IonBadge 
-                                color={
-                                  status.status.toLowerCase() === 'approved' ? 'success' : 
-                                  status.status.toLowerCase() === 'pending' ? 'warning' : 
-                                  status.status.toLowerCase() === 'rejected' ? 'danger' : 'medium'
-                                }
-                              >
-                                {status.status}
-                              </IonBadge>
-                              <span className="row-count">{status.count} transactions</span>
-                            </div>
-                            <div className="row-details">
-                              <span className="row-amount">{PesoFormat(status.totalAmount)}</span>
-                              <span className="row-percentage">{status.percentage.toFixed(1)}%</span>
-                            </div>
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-                  </IonCardContent>
-                </IonCard>
-              )}
-
-              {/* Top Users */}
-              {report.report?.topUsers && report.report.topUsers.length > 0 && (
-                <IonCard>
-                  <IonCardHeader>
-                    <IonCardTitle>
-                      <IonIcon icon={peopleOutline} style={{ marginRight: '8px' }} />
-                      Top Users
-                    </IonCardTitle>
-                  </IonCardHeader>
-                  <IonCardContent>
-                    <div className="top-users-list">
-                      {report.report.topUsers.map((user, index: number) => (
-                        <div key={user.userId} className="user-item">
-                          <div className="user-rank">
-                            <IonBadge color={index < 3 ? 'primary' : 'medium'}>
-                              #{index + 1}
-                            </IonBadge>
-                          </div>
-                          <div className="user-info">
-                            <div className="user-name">{user.userName || 'N/A'}</div>
-                            <div className="user-email">{user.userEmail}</div>
-                          </div>
-                          <div className="user-stats">
-                            <div className="user-stat">
-                              <span className="stat-value">{user.transactionCount}</span>
-                              <span className="stat-label">Transactions</span>
-                            </div>
-                            <div className="user-stat">
-                              <span className="stat-value">{PesoFormat(user.totalAmount)}</span>
-                              <span className="stat-label">Total Amount</span>
-                            </div>
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-                  </IonCardContent>
-                </IonCard>
-              )}
-
-              {/* Report Metadata */}
-              <IonCard>
-                <IonCardHeader>
-                  <IonCardTitle>Report Details</IonCardTitle>
+            {/* Top Users */}
+            {report.report?.topUsers && report.report.topUsers.length > 0 && (
+              <IonCard style={{ marginBottom: '20px', boxShadow: '0 2px 8px rgba(0,0,0,0.1)' }}>
+                <IonCardHeader style={{ borderBottom: '1px solid #e0e0e0', paddingBottom: '12px' }}>
+                  <IonCardTitle style={{ fontSize: '16px', fontWeight: 600, color: 'black', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                    <div style={{
+                      width: '4px',
+                      height: '24px',
+                      background: 'var(--ion-color-primary)',
+                      borderRadius: '2px'
+                    }} />
+                    Top Users
+                  </IonCardTitle>
                 </IonCardHeader>
-                <IonCardContent>
-                  <div className="report-metadata">
-                    <div className="metadata-item">
-                      <strong>Period:</strong> {report.report.period}
-                    </div>
-                    <div className="metadata-item">
-                      <strong>Date Range:</strong> {new Date(report.report.startDate).toLocaleDateString()} - {new Date(report.report.endDate).toLocaleDateString()}
-                    </div>
-                    <div className="metadata-item">
-                      <strong>Generated At:</strong> {new Date(report.generatedAt).toLocaleString()}
-                    </div>
+                <IonCardContent style={{ padding: '20px' }}>
+                  <div className="top-users-list" style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+                    {report.report.topUsers.map((user, index: number) => (
+                      <div key={user.userId} className="user-item" style={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '16px',
+                        padding: '16px',
+                        background: index < 3 ? '#f5f5f5' : 'white',
+                        borderRadius: '8px',
+                        border: '1px solid #e0e0e0',
+                        transition: 'transform 0.2s ease',
+                        cursor: 'default'
+                      }}>
+                        <div className="user-rank" style={{
+                          minWidth: '40px',
+                          height: '40px',
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          borderRadius: '50%',
+                          background: index < 3 ? 'var(--ion-color-primary)' : '#e0e0e0',
+                          color: 'white',
+                          fontWeight: 700,
+                          fontSize: '16px'
+                        }}>
+                          #{index + 1}
+                        </div>
+                        <div className="user-info" style={{ flex: 1, minWidth: 0 }}>
+                          <div className="user-name" style={{
+                            fontWeight: 600,
+                            fontSize: '15px',
+                            color: 'black',
+                            overflow: 'hidden',
+                            textOverflow: 'ellipsis',
+                            whiteSpace: 'nowrap'
+                          }}>
+                            {user.userName || 'N/A'}
+                          </div>
+                          <div className="user-email" style={{
+                            fontSize: '13px',
+                            color: '#666',
+                            overflow: 'hidden',
+                            textOverflow: 'ellipsis',
+                            whiteSpace: 'nowrap',
+                            marginTop: '2px'
+                          }}>
+                            {user.userEmail}
+                          </div>
+                        </div>
+                        <div className="user-stats" style={{
+                          display: 'flex',
+                          gap: '20px',
+                          flexShrink: 0
+                        }}>
+                          <div className="user-stat" style={{ textAlign: 'right' }}>
+                            <div style={{ fontSize: '18px', fontWeight: 700, color: 'black' }}>{user.transactionCount}</div>
+                            <div style={{ fontSize: '11px', color: '#666', marginTop: '2px' }}>Transactions</div>
+                          </div>
+                          <div className="user-stat" style={{ textAlign: 'right' }}>
+                            <div style={{ fontSize: '18px', fontWeight: 700, color: 'black' }}>{PesoFormat(user.totalAmount)}</div>
+                            <div style={{ fontSize: '11px', color: '#666', marginTop: '2px' }}>Total Amount</div>
+                          </div>
+                        </div>
+                      </div>
+                    ))}
                   </div>
                 </IonCardContent>
               </IonCard>
-            </div>
-          ) : (
+            )}
+
+            {/* Report Metadata */}
             <IonCard>
+              <IonCardHeader>
+                <IonCardTitle>Report Details</IonCardTitle>
+              </IonCardHeader>
               <IonCardContent>
-                <div className="no-report">
-                  <IonIcon icon={statsChartOutline} size="large" />
-                  <h3>No Report Data</h3>
-                  <p>Select a period and generate a report to view detailed transaction data</p>
+                <div className="report-metadata">
+                  <div className="metadata-item">
+                    <strong>Period:</strong> {report.report.period}
+                  </div>
+                  <div className="metadata-item">
+                    <strong>Date Range:</strong> {new Date(report.report.startDate).toLocaleDateString()} - {new Date(report.report.endDate).toLocaleDateString()}
+                  </div>
+                  <div className="metadata-item">
+                    <strong>Generated At:</strong> {new Date(report.generatedAt).toLocaleString()}
+                  </div>
                 </div>
               </IonCardContent>
             </IonCard>
-          )}
-        </div>
+          </div>
+        ) : (
+          <IonCard>
+            <IonCardContent>
+              <div className="no-report">
+                <IonIcon icon={statsChartOutline} size="large" />
+                <h3>No Report Data</h3>
+                <p>Select a period and generate a report to view detailed transaction data</p>
+              </div>
+            </IonCardContent>
+          </IonCard>
+        )}
+      </div>
 
-        <IonToast
-          isOpen={showToast}
-          onDidDismiss={() => setShowToast(false)}
-          message={toastMessage}
-          duration={3000}
-          color={toastColor}
-        />
-      </IonContent>
-    </IonPage>
+      <IonToast
+        isOpen={showToast}
+        onDidDismiss={() => setShowToast(false)}
+        message={toastMessage}
+        duration={3000}
+        color={toastColor}
+      />
+    </IonContent>
   );
 }
 export default ReportsPage;

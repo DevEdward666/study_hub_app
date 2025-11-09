@@ -5,8 +5,8 @@ import { ApiResponse } from "../schema/api.schema";
 class ApiClient {
   private client: AxiosInstance;
   constructor(
-  baseURL: string = import.meta.env.VITE_API_BASE_URL || "https://3qrbqpcx-5212.asse.devtunnels.ms/"
-) {
+    baseURL: string = import.meta.env.VITE_API_BASE_URL || "https://3qrbqpcx-5212.asse.devtunnels.ms/api/"
+  ) {
     this.client = axios.create({
       baseURL,
       headers: {
@@ -67,7 +67,7 @@ class ApiClient {
           url,
           data,
         }
-    );
+      );
 
       const validatedResponse = schema.parse(response.data);
 
@@ -86,7 +86,7 @@ class ApiClient {
         });
         throw new Error(`Invalid API response format: ${error.issues.map((e: z.ZodIssue) => `${e.path.join('.')}: ${e.message}`).join(', ')}`);
       }
-      
+
       // Log API errors for debugging
       if (axios.isAxiosError(error)) {
         console.error('API Error:', {
@@ -97,7 +97,7 @@ class ApiClient {
           message: error.message
         });
       }
-      
+
       throw error;
     }
   }
