@@ -131,36 +131,39 @@ const NotificationsPage: React.FC = () => {
       <div style={{ padding: '20px', maxWidth: '1200px', margin: '0 auto' }}>
         {/* Header */}
         <div style={{ marginBottom: '24px', display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: '16px' }}>
-          <div>
-            <h1 style={{ color: 'var(--ion-color-primary)', margin: '0 0 4px 0', fontSize: '28px', display: 'flex', alignItems: 'center', gap: '12px' }}>
-              <IonIcon icon={notificationsOutline} />
-              Notifications
-              {unreadCount > 0 && (
-                <IonBadge color="danger" style={{ marginLeft: '8px' }}>
-                  {unreadCount}
-                </IonBadge>
-              )}
-            </h1>
-            <p style={{ color: 'black', margin: '0', fontSize: '16px' }}>Session end notifications and alerts</p>
-          </div>
-          <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
-            <IonButton onClick={testNotificationSound} color="primary" fill="outline" size="small" title="Test notification sound">
-              <IonIcon icon={volumeHighOutline} slot="start" />
-              Test Sound
-            </IonButton>
-            {notifications.length > 0 && (
-              <>
-                <IonButton onClick={markAllAsRead} color="success" fill="outline" size="small" title="Mark all as read">
-                  <IonIcon icon={checkmarkDoneOutline} slot="start" />
-                  Mark All Read
+          <div className="header-content">
+            <div className="header-text">
+              <h2 style={{ color: 'var(--ion-color-primary)' }}>   <IonIcon icon={notificationsOutline} />
+                Notifications
+                {unreadCount > 0 && (
+                  <IonBadge color="danger" style={{ marginLeft: '8px' }}>
+                    {unreadCount}
+                  </IonBadge>
+                )}</h2>
+            </div>
+
+            <div className="header-actions">
+              <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
+                <IonButton onClick={testNotificationSound} color="primary" fill="outline" size="small" title="Test notification sound">
+                  <IonIcon icon={volumeHighOutline} slot="start" />
+                  Test Sound
                 </IonButton>
-                <IonButton onClick={clearAll} color="danger" fill="outline" size="small" title="Clear all">
-                  <IonIcon icon={trashOutline} slot="start" />
-                  Clear All
-                </IonButton>
-              </>
-            )}
+                {notifications.length > 0 && (
+                  <>
+                    <IonButton onClick={markAllAsRead} color="success" fill="outline" size="small" title="Mark all as read">
+                      <IonIcon icon={checkmarkDoneOutline} slot="start" />
+                      Mark All Read
+                    </IonButton>
+                    <IonButton onClick={clearAll} color="danger" fill="outline" size="small" title="Clear all">
+                      <IonIcon icon={trashOutline} slot="start" />
+                      Clear All
+                    </IonButton>
+                  </>
+                )}
+              </div>
+            </div>
           </div>
+
         </div>
 
         {/* Filter Segment */}
@@ -184,8 +187,8 @@ const NotificationsPage: React.FC = () => {
               {filter === 'unread'
                 ? "You're all caught up!"
                 : filter === 'read'
-                ? 'No read notifications'
-                : 'Session end notifications will appear here'}
+                  ? 'No read notifications'
+                  : 'Session end notifications will appear here'}
             </p>
           </div>
         ) : (

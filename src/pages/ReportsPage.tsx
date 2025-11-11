@@ -228,12 +228,16 @@ const ReportsPage: React.FC = () => {
     return (
       <IonContent style={{ height: '100vh', background: '#f5f5f5' }}>
         <div style={{ padding: '20px', minHeight: '100%' }}>
-          <div style={{ marginBottom: '16px' }}>
-            <h1 style={{ color: 'var(--ion-color-primary)', margin: '0 0 4px 0', fontSize: '28px', display: 'flex', alignItems: 'center', gap: '12px' }}>
-              <IonIcon icon={statsChartOutline} />
-              Reports & Analytics
-            </h1>
-            <p style={{ color: 'black', margin: '0', fontSize: '16px' }}>Financial reports and business insights</p>
+          <div className="page-header">
+            <div className="header-content">
+              <div className="header-text">
+                <h2 style={{ color: 'var(--ion-color-primary)' }}>   <IonIcon icon={statsChartOutline} />
+                  Reports & Analytics</h2>
+                <p>Financial reports and business insights</p>
+              </div>
+
+
+            </div>
           </div>
           <LoadingSpinner message="Loading reports..." />
         </div>
@@ -252,13 +256,15 @@ const ReportsPage: React.FC = () => {
       </IonRefresher>
 
       <div className="reports-container" style={{ padding: '20px', maxWidth: '1400px', margin: '0 auto' }}>
-        <div style={{ padding: '20px', minHeight: '100%' }}>
-          <div style={{ marginBottom: '16px' }}>
-            <h1 style={{ color: 'var(--ion-color-primary)', margin: '0 0 4px 0', fontSize: '28px', display: 'flex', alignItems: 'center', gap: '12px' }}>
-              <IonIcon icon={statsChartOutline} />
-              Reports & Analytics
-            </h1>
-            <p style={{ color: 'black', margin: '0', fontSize: '16px' }}>Financial reports and business insights</p>
+        <div className="page-header">
+          <div className="header-content">
+            <div className="header-text">
+              <h2 style={{ color: 'var(--ion-color-primary)' }}>   <IonIcon icon={statsChartOutline} />
+                Reports & Analytics</h2>
+              <p>Financial reports and business insights</p>
+            </div>
+
+
           </div>
         </div>
         {/* Quick Stats Dashboard */}

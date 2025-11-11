@@ -463,17 +463,19 @@ const TablesManagement: React.FC = () => {
       width: "300px",
       render: (value, row) => (
         <div className="table-actions-container actions-row-layout">
-          {/* Edit Button */}
-          <IonButton
-            size="small"
-            fill="outline"
-            color="medium"
-            className="action-btn edit-btn"
-            onClick={() => handleSetUpdate(value)}
-          >
-            <IonIcon icon={createOutline} slot="start" />
-            Edit
-          </IonButton>
+          {/* Edit Button - Only show when table is Available (not occupied) */}
+          {!row.isOccupied && (
+            <IonButton
+              size="small"
+              fill="outline"
+              color="medium"
+              className="action-btn edit-btn"
+              onClick={() => handleSetUpdate(value)}
+            >
+              <IonIcon icon={createOutline} slot="start" />
+              Edit
+            </IonButton>
+          )}
 
           {/* Session Actions */}
           {row.isOccupied && row.currentSession ? (

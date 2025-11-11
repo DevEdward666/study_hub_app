@@ -101,10 +101,11 @@ const TableDashboard: React.FC = () => {
     return (
       <IonContent style={{ height: '100vh', background: '#f5f5f5' }}>
         <div style={{ padding: '20px', minHeight: '100%' }}>
-          <div style={{ marginBottom: '16px' }}>
-            <h1 style={{ color: 'var(--ion-color-primary)', margin: '0 0 4px 0', fontSize: '28px' }}> <IonIcon icon="chartOutline"></IonIcon> Table Dashboard</h1>
+          <div className="page-header" style={{ marginBottom: '16px' }}>
+            <h1 style={{ color: 'var(--ion-color-primary)', margin: '0 0 4px 0', fontSize: '28px' }}><IonIcon icon="chartOutline"></IonIcon> Table Dashboard</h1>
             <p style={{ color: 'black', margin: '0', fontSize: '16px' }}>Real-time table monitoring and management</p>
           </div>
+
 
           <div style={{
             background: 'white',
@@ -126,10 +127,11 @@ const TableDashboard: React.FC = () => {
     return (
       <IonContent style={{ height: '100vh', background: '#f5f5f5' }}>
         <div style={{ padding: '20px', minHeight: '100%' }}>
-          <div style={{ marginBottom: '16px' }}>
+          <div className="page-header" style={{ marginBottom: '16px' }}>
             <h1 style={{ color: 'var(--ion-color-primary)', margin: '0 0 4px 0', fontSize: '28px' }}><IonIcon icon="chartOutline"></IonIcon> Table Dashboard</h1>
             <p style={{ color: 'black', margin: '0', fontSize: '16px' }}>Real-time table monitoring and management</p>
           </div>
+
           <LoadingSpinner message="Loading dashboard..." />
         </div>
       </IonContent>
@@ -140,10 +142,11 @@ const TableDashboard: React.FC = () => {
     return (
       <IonContent style={{ height: '100vh', background: '#f5f5f5' }}>
         <div style={{ padding: '20px', minHeight: '100%' }}>
-          <div style={{ marginBottom: '16px' }}>
+          <div className="page-header" style={{ marginBottom: '16px' }}>
             <h1 style={{ color: 'var(--ion-color-primary)', margin: '0 0 4px 0', fontSize: '28px' }}><IonIcon icon="chartOutline"></IonIcon> Table Dashboard</h1>
             <p style={{ color: 'black', margin: '0', fontSize: '16px' }}>Real-time table monitoring and management</p>
           </div>
+
           <ErrorMessage
             message="Failed to load dashboard data"
             onRetry={() => {

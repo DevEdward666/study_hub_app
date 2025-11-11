@@ -198,15 +198,15 @@ const UserSessionManagement: React.FC = () => {
   return (
     <IonContent>
       <div style={{ padding: "20px", maxWidth: "1400px", margin: "0 auto" }}>
-        {/* Header */}
-        <div style={{ marginBottom: "24px" }}>
-          <h2 style={{ color: "var(--ion-color-primary)", display: "flex", alignItems: "center", gap: "12px" }}>
-            <IonIcon icon={desktopOutline} />
-            User & Session Management
-          </h2>
-          <p style={{ color: "#666", marginTop: "8px" }}>
-            Assign tables to users, pause/resume sessions, track hours
-          </p>
+        <div className="page-header">
+          <div className="header-content">
+            <div className="header-text">
+              <h2 style={{ color: 'var(--ion-color-primary)' }}> <IonIcon icon={desktopOutline} />
+                User & Session Management</h2>
+              <p>   Assign tables to users, pause/resume sessions, track hours</p>
+            </div>
+
+          </div>
         </div>
 
         {/* Stats Cards */}

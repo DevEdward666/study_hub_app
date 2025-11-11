@@ -23,10 +23,10 @@ import {
   createTableStatusChip,
   formatDate,
 } from "@/shared/DynamicTable/Utls/TableUtils";
-import { 
-  IonButton, 
-  IonSegment, 
-  IonSegmentButton, 
+import {
+  IonButton,
+  IonSegment,
+  IonSegmentButton,
   IonLabel,
   IonSelect,
   IonSelectOption,
@@ -53,7 +53,7 @@ const TransactionsManagement: React.FC = () => {
 
   // Get rates from rate management
   const { data: rates, isLoading: isLoadingRates } = useActiveRates();
-  
+
   // Keep hourly rate as fallback for backward compatibility
   const { hourlyRate } = useHourlyRate();
 
@@ -129,7 +129,7 @@ const TransactionsManagement: React.FC = () => {
       setPaymentMethod("Cash");
       setCash(0);
       setChange(0);
-      
+
       // Refresh all data to ensure consistency
       await Promise.all([
         refetchPendingTable(),
@@ -149,7 +149,7 @@ const TransactionsManagement: React.FC = () => {
       if (printerConnected) {
         try {
           console.log('🖨️ Attempting browser printing...');
-          
+
           // Get transaction details - find in either pending or all data
           const transaction = (pendingData?.data || allData?.data)?.find((t: any) => t.id === sessionId);
 
@@ -171,9 +171,9 @@ const TransactionsManagement: React.FC = () => {
               totalAmount: transaction.cost || 0,
               paymentMethod: transaction.session?.paymentMethod || undefined,
               wifiPassword: password,
-              package:transaction.rates?.description || "N/A",
+              package: transaction.rates?.description || "N/A",
             });
-            
+
             console.log('✅ Browser printing successful!');
             return true;
           }
@@ -181,7 +181,7 @@ const TransactionsManagement: React.FC = () => {
           console.warn('⚠️ Browser printing failed, falling back to backend:', error);
         }
       }
-      
+
       // Fallback to backend printing
       console.log('📡 Using backend printing...');
       return tableService.printReceipt(sessionId, password);
@@ -191,12 +191,12 @@ const TransactionsManagement: React.FC = () => {
       setWifiPassword("password1234");
       showConfirmation({
         header: 'Receipt Printed',
-        message: printerConnected 
-          ? 'Receipt printed directly from browser!' 
+        message: printerConnected
+          ? 'Receipt printed directly from browser!'
           : 'Receipt sent to printer successfully!',
         confirmText: 'OK',
         cancelText: ''
-      }, () => {});
+      }, () => { });
     },
     onError: (error: any) => {
       console.error('Failed to print receipt:', error);
@@ -207,7 +207,7 @@ const TransactionsManagement: React.FC = () => {
           : 'Failed to print receipt. Please check the printer connection.',
         confirmText: 'OK',
         cancelText: ''
-      }, () => {});
+      }, () => { });
     },
   });
 
@@ -220,9 +220,9 @@ const TransactionsManagement: React.FC = () => {
   // Confirm print with password
   const handleConfirmPrint = () => {
     if (selectedSessionId) {
-      printReceiptMutation.mutate({ 
-        sessionId: selectedSessionId, 
-        password: wifiPassword 
+      printReceiptMutation.mutate({
+        sessionId: selectedSessionId,
+        password: wifiPassword
       });
     }
   };
@@ -253,17 +253,17 @@ const TransactionsManagement: React.FC = () => {
         message: 'Please select a user before starting the session.',
         confirmText: 'OK',
         cancelText: ''
-      }, () => {});
+      }, () => { });
       return;
     }
-    
+
     if (!selectedTableId) {
       showConfirmation({
         header: 'Table Required',
         message: 'Please select a table before starting the session.',
         confirmText: 'OK',
         cancelText: ''
-      }, () => {});
+      }, () => { });
       return;
     }
 
@@ -275,7 +275,7 @@ const TransactionsManagement: React.FC = () => {
         message: `Cash amount (₱${cash.toFixed(2)}) is less than the total amount (₱${totalAmount.toFixed(2)}).\n\nPlease enter sufficient cash to proceed.`,
         confirmText: 'OK',
         cancelText: ''
-      }, () => {});
+      }, () => { });
       return;
     }
 
@@ -286,7 +286,7 @@ const TransactionsManagement: React.FC = () => {
         message: 'Selected table not found. Please try again.',
         confirmText: 'OK',
         cancelText: ''
-      }, () => {});
+      }, () => { });
       return;
     }
 
@@ -313,7 +313,7 @@ const TransactionsManagement: React.FC = () => {
     handleCancel: cancelAction,
     handleDismiss: dismissConfirm
   } = useConfirmation();
-  
+
   const {
     tableState: pendingTableState,
     updateState: updatePendingState,
@@ -347,7 +347,7 @@ const TransactionsManagement: React.FC = () => {
     // Find the transaction details to get user info and amount
     const currentData = selectedTab === "active" ? pendingData : allData;
     const transaction = currentData?.data.find((t: any) => t.id === transactionId);
-    
+
     // Show confirmation dialog
     showConfirmation({
       header: 'Approve Transaction',
@@ -361,14 +361,14 @@ const TransactionsManagement: React.FC = () => {
     }, async () => {
       try {
         await approve.mutateAsync(transactionId);
-        
+
         // Send notification to user about credit approval
         if (transaction && transaction.user) {
           try {
             // Note: In a real implementation, the API would return the updated balance
             // For now, we'll use the amount as placeholder
             const newBalance = transaction?.session?.amount; // This should come from API response
-            
+
             await notifyCreditApproved(
               transaction.user.id,
               transactionId,
@@ -380,7 +380,7 @@ const TransactionsManagement: React.FC = () => {
             // Don't block the approval flow if notification fails
           }
         }
-        
+
         refetchPendingTable();
         refetchAllTable();
       } catch (error) {
@@ -418,8 +418,8 @@ const TransactionsManagement: React.FC = () => {
       <ErrorMessage message="Failed to load transactions" onRetry={refetch} />
     );
   }
-  const handleRowClick = () => {};
-  
+  const handleRowClick = () => { };
+
   const pendingColumns: TableColumn<GetTransactionWithUserTableColumn>[] = [
     {
       key: "user",
@@ -505,7 +505,7 @@ const TransactionsManagement: React.FC = () => {
   ];
 
   const allColumns: TableColumn<GetTransactionWithUserTableColumn>[] = [
-   {
+    {
       key: "user",
       label: "User",
       sortable: true,
@@ -586,7 +586,7 @@ const TransactionsManagement: React.FC = () => {
       ),
     },
   ];
-  
+
   const currentData = selectedTab === "active" ? pendingData : allData;
   const currentColumns = selectedTab === "active" ? pendingColumns : allColumns;
   const currentTableState = selectedTab === "active" ? pendingTableState : allTableState;
@@ -606,16 +606,16 @@ const TransactionsManagement: React.FC = () => {
       <ErrorMessage message="Failed to load transactions" onRetry={refetch} />
     );
   }
-  
+
   return (
     <div className="transactions-management">
       <div className="page-header">
         <div className="header-content">
           <div className="header-text">
-            <h1>Transaction Management</h1>
+            <h2 style={{ color: 'var(--ion-color-primary)' }}>Transaction Management</h2>
             <p>Review credit purchase requests and transaction history</p>
           </div>
-          <div className="header-actions">
+          {/* <div className="header-actions">
             <IonButton
               color="primary"
               fill="solid"
@@ -624,7 +624,7 @@ const TransactionsManagement: React.FC = () => {
               <IonIcon icon={addOutline} slot="start" />
               Add New Transaction
             </IonButton>
-          </div>
+          </div> */}
         </div>
       </div>
 
@@ -734,7 +734,7 @@ const TransactionsManagement: React.FC = () => {
               ))}
             </IonSelect>
           </IonItem>
-          
+
           {/* Rate Selection */}
           <IonItem style={{ marginBottom: "20px" }}>
             <IonLabel>Rate Package *</IonLabel>
@@ -885,9 +885,9 @@ const TransactionsManagement: React.FC = () => {
             />
           </IonItem>
 
-          <div style={{ 
-            padding: "15px", 
-            background: "#f0f9ff", 
+          <div style={{
+            padding: "15px",
+            background: "#f0f9ff",
             borderRadius: "8px",
             border: "1px solid #0ea5e9"
           }}>

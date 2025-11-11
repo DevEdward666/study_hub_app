@@ -345,13 +345,13 @@ const UserSubscriptionManagement: React.FC = () => {
           </IonHeader>
           <IonContent className="ion-padding">
             <IonItem>
-              <IonLabel position="stacked">User *</IonLabel>
+              <IonLabel position="stacked">Customer *</IonLabel>
               <IonSelect
                 value={formData.userId}
                 onIonChange={(e) => setFormData({ ...formData, userId: e.detail.value })}
-                placeholder="Select user"
+                placeholder="Select customer"
               >
-                {users?.map((user) => (
+                {users?.filter((user) => user.role?.toLowerCase() === 'customer').map((user) => (
                   <IonSelectOption key={user.id} value={user.id}>
                     {user.name || user.email}
                   </IonSelectOption>

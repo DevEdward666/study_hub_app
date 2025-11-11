@@ -43,6 +43,9 @@ import { LoadingSpinner } from "../../components/common/LoadingSpinner";
 import { ConfirmToast } from "../../components/common/ConfirmToast";
 import { ServiceWorkerDebug } from "../../components/debug/ServiceWorkerDebug";
 import "./Profile.css";
+import "../../Admin/styles/admin.css";
+import "../../Admin/styles/admin-responsive.css";
+import "../../styles/side-modal.css";
 import { useHistory } from "react-router-dom";
 
 const Profile: React.FC = () => {
@@ -55,7 +58,7 @@ const Profile: React.FC = () => {
   const { user, signOut, refetchUser } = useAuth();
   const { credits, sessions, refetchCredits } = useUser();
   const history = useHistory();
-  
+
   // Confirmation toast hook
   const {
     isOpen: isConfirmOpen,
@@ -166,269 +169,208 @@ const Profile: React.FC = () => {
   }
 
   return (
-    <IonPage>
-      <IonHeader>
-        <IonToolbar>
-          <IonTitle>Profile</IonTitle>
-        </IonToolbar>
-      </IonHeader>
+    <IonContent fullscreen className="profile-content">
 
-      <IonContent fullscreen className="profile-content">
-        <IonRefresher slot="fixed" onIonRefresh={handleRefresh}>
-          <IonRefresherContent />
-        </IonRefresher>
+      <div className="page-header">
+        <div className="header-content">
+          <div className="header-text">
+            <h2 style={{ color: 'var(--ion-color-primary)' }}>
+              Profile</h2>
+          </div>
+        </div>
+      </div>
+      <IonRefresher slot="fixed" onIonRefresh={handleRefresh}>
+        <IonRefresherContent />
+      </IonRefresher>
 
-        <div className="profile-container">
-          {/* Profile Header */}
-          <IonCard className="profile-header-card">
-            <IonCardContent>
-              <div className="profile-header">
-                <div className="profile-avatar-section">
-                  <IonAvatar className="profile-avatar">
+      <IonCard className="profile-container">
+        {/* Profile Header */}
+        <IonCard className="profile-header-card">
+          <IonCardContent>
+            <div className="profile-header">
+              <div className="profile-avatar-section">
+                <IonAvatar className="profile-avatar">
+                  {user.image ? (
+                    <img src={user.image} alt="Profile" />
+                  ) : (
+                    <div className="avatar-placeholder">
+                      {getInitials(user.name!)}
+                    </div>
+                  )}
+                </IonAvatar>
+
+                <div className="profile-basic-info">
+                  <h2>{user.name || "User"}</h2>
+                  <p>{user.email}</p>
+                  {user.emailVerified && (
+                    <IonBadge color="success" className="verified-badge">
+                      <IonIcon icon={checkmarkOutline} />
+                      Verified
+                    </IonBadge>
+                  )}
+                </div>
+              </div>
+
+              <IonButton
+                fill="outline"
+                size="small"
+                onClick={() => setIsEditModalOpen(true)}
+                className="edit-profile-btn"
+              >
+                <IonIcon icon={pencilOutline} slot="start" />
+                Edit
+              </IonButton>
+            </div>
+          </IonCardContent>
+        </IonCard>
+
+        {/* Account Information */}
+        <IonCard className="account-info-card">
+          <IonCardHeader>
+            <IonCardTitle>
+              <IonIcon icon={personOutline} />
+              Account Information
+            </IonCardTitle>
+          </IonCardHeader>
+          <IonCardContent>
+            <IonList className="info-list">
+              <IonItem className="info-item">
+                <IonIcon icon={mailOutline} slot="start" />
+                <IonLabel>
+                  <h3>Email</h3>
+                  <p>{user.email}</p>
+                </IonLabel>
+                {user.emailVerified && (
+                  <IonIcon
+                    icon={shieldCheckmarkOutline}
+                    slot="end"
+                    color="success"
+                  />
+                )}
+              </IonItem>
+
+              <IonItem className="info-item">
+                <IonIcon icon={calendarOutline} slot="start" />
+                <IonLabel>
+                  <h3>Member Since</h3>
+                  <p>{formatJoinDate(user.createdAt)}</p>
+                </IonLabel>
+              </IonItem>
+            </IonList>
+          </IonCardContent>
+        </IonCard>
+
+
+
+        {/* Debug Component - Only show in development */}
+        {import.meta.env.DEV && (
+          <ServiceWorkerDebug />
+        )}
+
+        {/* Account Actions */}
+        <div className="account-actions">
+          <IonButton
+            expand="block"
+            fill="outline"
+            color="danger"
+            onClick={handleSignOut}
+            disabled={signOut.isPending}
+            className="sign-out-button"
+          >
+            <IonIcon icon={logOutOutline} slot="start" />
+            {signOut.isPending ? "Signing out..." : "Sign Out"}
+          </IonButton>
+        </div>
+      </IonCard>
+
+      {/* Edit Profile Modal */}
+      <IonModal
+        isOpen={isEditModalOpen}
+        onDidDismiss={() => setIsEditModalOpen(false)}
+      >
+        <IonHeader>
+          <IonToolbar>
+            <IonTitle>Edit Profile</IonTitle>
+            <IonButton
+              slot="end"
+              fill="clear"
+              onClick={() => setIsEditModalOpen(false)}
+            >
+              <IonIcon icon={closeOutline} />
+            </IonButton>
+          </IonToolbar>
+        </IonHeader>
+
+        <IonContent className="edit-modal-content">
+          <div className="edit-form">
+            <IonCard>
+              <IonCardContent>
+                <div className="edit-avatar-section">
+                  <IonAvatar className="edit-avatar">
                     {user.image ? (
                       <img src={user.image} alt="Profile" />
                     ) : (
                       <div className="avatar-placeholder">
-                        {getInitials(user.name!)}
+                        {getInitials(editName)}
                       </div>
                     )}
                   </IonAvatar>
-
-                  <div className="profile-basic-info">
-                    <h2>{user.name || "User"}</h2>
-                    <p>{user.email}</p>
-                    {user.emailVerified && (
-                      <IonBadge color="success" className="verified-badge">
-                        <IonIcon icon={checkmarkOutline} />
-                        Verified
-                      </IonBadge>
-                    )}
-                  </div>
+                  <IonButton fill="outline" size="small">
+                    Change Photo
+                  </IonButton>
                 </div>
 
-                <IonButton
-                  fill="outline"
-                  size="small"
-                  onClick={() => setIsEditModalOpen(true)}
-                  className="edit-profile-btn"
-                >
-                  <IonIcon icon={pencilOutline} slot="start" />
-                  Edit
-                </IonButton>
-              </div>
-            </IonCardContent>
-          </IonCard>
-
-          {/* Account Information */}
-          <IonCard className="account-info-card">
-            <IonCardHeader>
-              <IonCardTitle>
-                <IonIcon icon={personOutline} />
-                Account Information
-              </IonCardTitle>
-            </IonCardHeader>
-            <IonCardContent>
-              <IonList className="info-list">
-                <IonItem className="info-item">
-                  <IonIcon icon={mailOutline} slot="start" />
-                  <IonLabel>
-                    <h3>Email</h3>
-                    <p>{user.email}</p>
-                  </IonLabel>
-                  {user.emailVerified && (
-                    <IonIcon
-                      icon={shieldCheckmarkOutline}
-                      slot="end"
-                      color="success"
+                <div className="edit-fields">
+                  <IonItem>
+                    <IonLabel position="stacked">Full Name</IonLabel>
+                    <IonInput
+                      value={editName}
+                      placeholder="Enter your full name"
+                      onIonInput={(e) => setEditName(e.detail.value!)}
                     />
-                  )}
-                </IonItem>
+                  </IonItem>
 
-                <IonItem className="info-item">
-                  <IonIcon icon={calendarOutline} slot="start" />
-                  <IonLabel>
-                    <h3>Member Since</h3>
-                    <p>{formatJoinDate(user.createdAt)}</p>
-                  </IonLabel>
-                </IonItem>
-              </IonList>
-            </IonCardContent>
-          </IonCard>
-
-          {/* Activity Stats */}
-          <IonCard className="stats-card">
-            <IonCardHeader>
-              <IonCardTitle>Your Activity</IonCardTitle>
-            </IonCardHeader>
-            <IonCardContent>
-              <div className="stats-grid">
-                <div className="stat-item">
-                  <div className="stat-value">{stats.completedSessions}</div>
-                  <div className="stat-label">Sessions</div>
+                  <IonItem>
+                    <IonLabel position="stacked">Email</IonLabel>
+                    <IonInput value={user.email} readonly disabled />
+                  </IonItem>
                 </div>
-                <div className="stat-item">
-                  <div className="stat-value">{stats.totalHours}h</div>
-                  <div className="stat-label">Study Time</div>
+
+                <div className="edit-actions">
+                  <IonButton
+                    expand="block"
+                    onClick={handleSaveProfile}
+                    disabled={!editName.trim()}
+                  >
+                    <IonIcon icon={checkmarkOutline} slot="start" />
+                    Save Changes
+                  </IonButton>
                 </div>
-                <div className="stat-item">
-                  <div className="stat-value">{stats.totalCreditsUsed}</div>
-                  <div className="stat-label">Credits Used</div>
-                </div>
-                <div className="stat-item">
-                  <div className="stat-value">{credits?.balance || 0}</div>
-                  <div className="stat-label">Current Credits</div>
-                </div>
-              </div>
-            </IonCardContent>
-          </IonCard>
-
-          {/* Settings */}
-          <IonCard className="settings-card">
-            <IonCardHeader>
-              <IonCardTitle>
-                <IonIcon icon={settingsOutline} />
-                Settings & Preferences
-              </IonCardTitle>
-            </IonCardHeader>
-            <IonCardContent>
-              <IonList className="settings-list">
-                <IonItem>
-                  <IonLabel>
-                    <h3>Push Notifications</h3>
-                    <p>Receive session reminders and updates</p>
-                  </IonLabel>
-                  <IonToggle slot="end" checked={true} />
-                </IonItem>
-
-                <IonItem>
-                  <IonLabel>
-                    <h3>Session Reminders</h3>
-                    <p>Get notified before your session expires</p>
-                  </IonLabel>
-                  <IonToggle slot="end" checked={true} />
-                </IonItem>
-
-                <IonItem>
-                  <IonLabel>
-                    <h3>Credit Alerts</h3>
-                    <p>Alert when credits are running low</p>
-                  </IonLabel>
-                  <IonToggle slot="end" checked={false} />
-                </IonItem>
-              </IonList>
-            </IonCardContent>
-          </IonCard>
-
-          {/* Debug Component - Only show in development */}
-          {import.meta.env.DEV && (
-            <ServiceWorkerDebug />
-          )}
-
-          {/* Account Actions */}
-          <div className="account-actions">
-            <IonButton
-              expand="block"
-              fill="outline"
-              color="danger"
-              onClick={handleSignOut}
-              disabled={signOut.isPending}
-              className="sign-out-button"
-            >
-              <IonIcon icon={logOutOutline} slot="start" />
-              {signOut.isPending ? "Signing out..." : "Sign Out"}
-            </IonButton>
+              </IonCardContent>
+            </IonCard>
           </div>
-        </div>
+        </IonContent>
+      </IonModal>
 
-        {/* Edit Profile Modal */}
-        <IonModal
-          isOpen={isEditModalOpen}
-          onDidDismiss={() => setIsEditModalOpen(false)}
-        >
-          <IonHeader>
-            <IonToolbar>
-              <IonTitle>Edit Profile</IonTitle>
-              <IonButton
-                slot="end"
-                fill="clear"
-                onClick={() => setIsEditModalOpen(false)}
-              >
-                <IonIcon icon={closeOutline} />
-              </IonButton>
-            </IonToolbar>
-          </IonHeader>
+      <IonToast
+        isOpen={showToast}
+        onDidDismiss={() => setShowToast(false)}
+        message={toastMessage}
+        duration={3000}
+        color={toastColor}
+      />
 
-          <IonContent className="edit-modal-content">
-            <div className="edit-form">
-              <IonCard>
-                <IonCardContent>
-                  <div className="edit-avatar-section">
-                    <IonAvatar className="edit-avatar">
-                      {user.image ? (
-                        <img src={user.image} alt="Profile" />
-                      ) : (
-                        <div className="avatar-placeholder">
-                          {getInitials(editName)}
-                        </div>
-                      )}
-                    </IonAvatar>
-                    <IonButton fill="outline" size="small">
-                      Change Photo
-                    </IonButton>
-                  </div>
-
-                  <div className="edit-fields">
-                    <IonItem>
-                      <IonLabel position="stacked">Full Name</IonLabel>
-                      <IonInput
-                        value={editName}
-                        placeholder="Enter your full name"
-                        onIonInput={(e) => setEditName(e.detail.value!)}
-                      />
-                    </IonItem>
-
-                    <IonItem>
-                      <IonLabel position="stacked">Email</IonLabel>
-                      <IonInput value={user.email} readonly disabled />
-                    </IonItem>
-                  </div>
-
-                  <div className="edit-actions">
-                    <IonButton
-                      expand="block"
-                      onClick={handleSaveProfile}
-                      disabled={!editName.trim()}
-                    >
-                      <IonIcon icon={checkmarkOutline} slot="start" />
-                      Save Changes
-                    </IonButton>
-                  </div>
-                </IonCardContent>
-              </IonCard>
-            </div>
-          </IonContent>
-        </IonModal>
-
-        <IonToast
-          isOpen={showToast}
-          onDidDismiss={() => setShowToast(false)}
-          message={toastMessage}
-          duration={3000}
-          color={toastColor}
-        />
-
-        <ConfirmToast
-          isOpen={isConfirmOpen}
-          onDidDismiss={dismissConfirm}
-          onConfirm={confirmAction}
-          onCancel={cancelAction}
-          message={confirmOptions.message}
-          header={confirmOptions.header}
-          confirmText={confirmOptions.confirmText}
-          cancelText={confirmOptions.cancelText}
-        />
-      </IonContent>
-    </IonPage>
+      <ConfirmToast
+        isOpen={isConfirmOpen}
+        onDidDismiss={dismissConfirm}
+        onConfirm={confirmAction}
+        onCancel={cancelAction}
+        message={confirmOptions.message}
+        header={confirmOptions.header}
+        confirmText={confirmOptions.confirmText}
+        cancelText={confirmOptions.cancelText}
+      />
+    </IonContent>
   );
 };
 

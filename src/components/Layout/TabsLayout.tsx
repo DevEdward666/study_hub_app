@@ -194,7 +194,7 @@ export const TabsLayout: React.FC<TabsLayoutProps> = ({ children }) => {
 
           <nav className={`sidebar ${sidebarOpen ? 'sidebar-open' : ''}`}>
             <div className="sidebar-header">
-              <h2>Sunny Side Up Admin</h2>
+              <h3>Sunny Side Up Admin</h3>
               <IonButton
                 fill="clear"
                 className="sidebar-close-btn"
