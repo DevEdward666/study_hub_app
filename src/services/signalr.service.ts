@@ -233,7 +233,7 @@ export class SignalRService {
       await this.joinAdminsGroup();
     } catch (error: any) {
       console.warn("⚠️ SignalR connection failed (non-critical):", error?.message || error);
-      
+
       // Log details for debugging but don't throw error
       if (error?.message?.includes('timeout')) {
         console.log("SignalR negotiation timeout - backend may not be available");
@@ -242,9 +242,9 @@ export class SignalRService {
         console.log("SignalR negotiation failed - check if backend hub is running");
         console.log("Endpoint:", `${this.baseUrl}/hubs/notifications`);
       }
-      
+
       this.isStarting = false;
-      
+
       // Don't throw error - allow app to continue without SignalR
       // It will retry automatically based on network events and visibility changes
     }
@@ -297,7 +297,7 @@ export class SignalRService {
   onSessionEnded(callback: (notification: SessionEndedNotification) => void) {
     console.log('📝 Registering SessionEnded handler');
     this.onSessionEndedCallback = callback;
-    
+
     // If connection already exists and has event handlers set up,
     // we need to ensure the handler is active
     // The event listener was already registered in setupEventHandlers(),
@@ -323,7 +323,7 @@ export class SignalRService {
 }
 
 // Create singleton instance
-const apiBaseUrl = import.meta.env.VITE_API_URL || "https://3qrbqpcx-5212.asse.devtunnels.ms/api";
+const apiBaseUrl = import.meta.env.VITE_API_URL || "https://studyhubapi-i0o7.onrender.com/api";
 
 // Validate and construct base URL for SignalR hub
 let baseUrl: string;
@@ -336,7 +336,7 @@ try {
   } else {
     baseUrl = apiBaseUrl;
   }
-  
+
   // Validate the URL
   new URL(baseUrl); // This will throw if invalid
   console.log("SignalR base URL:", baseUrl);
