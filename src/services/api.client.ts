@@ -5,7 +5,7 @@ import { ApiResponse } from "../schema/api.schema";
 class ApiClient {
   private client: AxiosInstance;
   constructor(
-    baseURL: string = import.meta.env.VITE_API_BASE_URL || "https://3qrbqpcx-5212.asse.devtunnels.ms/api/"
+    baseURL: string = import.meta.env.VITE_API_BASE_URL || "https://3qrbqpcx-5212.asse.devtunnels.ms/api"
   ) {
     this.client = axios.create({
       baseURL,

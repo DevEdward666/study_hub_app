@@ -98,7 +98,7 @@ export class SignalRService {
     };
 
     this.connection = new signalR.HubConnectionBuilder()
-      .withUrl(`${this.baseUrl}/hubs/notifications`, {
+      .withUrl(`${this.baseUrl}hubs/notifications`, {
         skipNegotiation: false,
         transport: transportOrder,
         withCredentials: true, // Enable credentials for CORS
