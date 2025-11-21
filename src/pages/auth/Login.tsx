@@ -26,8 +26,20 @@ const Login: React.FC = () => {
   const [toastMessage, setToastMessage] = useState("");
   const [errors, setErrors] = useState<{ [key: string]: string }>({});
 
-  const { signIn } = useAuth();
+  const { signIn, user, isLoading } = useAuth();
   const history = useHistory();
+
+  // Redirect if user is already logged in
+  useEffect(() => {
+    if (user && !isLoading) {
+      // Check user role and redirect accordingly
+      if (user.role === 'Admin' || user.role === 'Super Admin') {
+        history.replace("/app/admin/dashboard");
+      } else {
+        history.replace("/app/dashboard");
+      }
+    }
+  }, [user, isLoading, history]);
 
   const validateForm = (): boolean => {
     try {
@@ -57,10 +69,10 @@ const Login: React.FC = () => {
       const res = await signIn.mutateAsync({ email, password });
       if(!!res.user) {
          // Check if user is admin and redirect to admin dashboard
-         if (res.user.role === 'Admin') {
-           history.push("/app/admin/dashboard");
+         if (res.user.role === 'Admin' || res.user.role === 'Super Admin') {
+           history.replace("/app/admin/dashboard");
          } else {
-           history.push("/app/dashboard");
+           history.replace("/app/dashboard");
          }
       }
     } catch (error) {
@@ -79,13 +91,18 @@ const Login: React.FC = () => {
       </IonHeader>
 
       <IonContent fullscreen className="login-content">
-        <div className="login-container">
-          <div className="login-header">
-            <h1>Welcome to StudyHub</h1>
-            <p>Sign in to access your account</p>
+        {isLoading ? (
+          <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100%' }}>
+            <IonSpinner name="crescent" />
           </div>
+        ) : (
+          <div className="login-container">
+            <div className="login-header">
+              <h1>Welcome to StudyHub</h1>
+              <p>Sign in to access your account</p>
+            </div>
 
-          <form onSubmit={handleSubmit} className="login-form">
+            <form onSubmit={handleSubmit} className="login-form">
             <IonItem className={errors.email ? "ion-invalid" : ""}>
               <IonLabel position="stacked">Email</IonLabel>
               <IonInput
@@ -144,6 +161,7 @@ const Login: React.FC = () => {
             </p>
           </div>
         </div>
+        )}
 
         <IonToast
           isOpen={showToast}

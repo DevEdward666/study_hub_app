@@ -1,5 +1,5 @@
 // src/pages/auth/Register.tsx
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import {
   IonContent,
   IonPage,
@@ -31,8 +31,20 @@ const Register: React.FC = () => {
   const [toastMessage, setToastMessage] = useState('');
   const [errors, setErrors] = useState<{[key: string]: string}>({});
 
-  const { signUp } = useAuth();
+  const { signUp, user, isLoading } = useAuth();
   const history = useHistory();
+
+  // Redirect if user is already logged in
+  useEffect(() => {
+    if (user && !isLoading) {
+      // Check user role and redirect accordingly
+      if (user.role === 'Admin' || user.role === 'Super Admin') {
+        history.replace("/app/admin/dashboard");
+      } else {
+        history.replace("/app/dashboard");
+      }
+    }
+  }, [user, isLoading, history]);
 
   const validateForm = (): boolean => {
     try {
@@ -68,8 +80,17 @@ const Register: React.FC = () => {
     }
 
     try {
-      await signUp.mutateAsync({ email, password, name });
-      history.push('/app/dashboard');
+      const res = await signUp.mutateAsync({ email, password, name });
+      if (res?.user) {
+        // Check user role and redirect accordingly
+        if (res.user.role === 'Admin' || res.user.role === 'Super Admin') {
+          history.replace("/app/admin/dashboard");
+        } else {
+          history.replace("/app/dashboard");
+        }
+      } else {
+        history.replace('/app/dashboard');
+      }
     } catch (error) {
       const message = error instanceof Error ? error.message : 'Registration failed';
       setToastMessage(message);
@@ -89,13 +110,18 @@ const Register: React.FC = () => {
       </IonHeader>
       
       <IonContent fullscreen className="register-content">
-        <div className="register-container">
-          <div className="register-header">
-            <h1>Create Account</h1>
-            <p>Join Sunny Side Up to get started</p>
+        {isLoading ? (
+          <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100%' }}>
+            <IonSpinner name="crescent" />
           </div>
+        ) : (
+          <div className="register-container">
+            <div className="register-header">
+              <h1>Create Account</h1>
+              <p>Join Sunny Side Up to get started</p>
+            </div>
 
-          <form onSubmit={handleSubmit} className="register-form">
+            <form onSubmit={handleSubmit} className="register-form">
             <IonItem className={errors.name ? 'ion-invalid' : ''}>
               <IonLabel position="stacked">Full Name</IonLabel>
               <IonInput
@@ -177,6 +203,7 @@ const Register: React.FC = () => {
             </IonButton>
           </form>
         </div>
+        )}
 
         <IonToast
           isOpen={showToast}

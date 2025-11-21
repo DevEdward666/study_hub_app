@@ -43,7 +43,6 @@ import { LoadingSpinner } from '../../components/common/LoadingSpinner';
 import { ErrorMessage } from '../../components/common/ErrorMessage';
 import { ConfirmToast } from '../../components/common/ConfirmToast';
 import PromoSelector from '../../components/common/PromoSelector';
-import { useHourlyRate } from '../../hooks/GlobalSettingsHooks';
 import './TableDetails.css';
 
 interface TableParams {
@@ -53,7 +52,7 @@ interface TableParams {
 const TableDetails: React.FC = () => {
   const { id } = useParams<TableParams>();
   const history = useHistory();
-  
+
   const [showToast, setShowToast] = useState(false);
   const [toastMessage, setToastMessage] = useState('');
   const [toastColor, setToastColor] = useState<'success' | 'danger' | 'warning'>('success');
@@ -62,8 +61,6 @@ const TableDetails: React.FC = () => {
   const [selectedPromoId, setSelectedPromoId] = useState<string | null>(null);
   const [promoDiscount, setPromoDiscount] = useState<number>(0);
 
-  // Get hourly rate from global settings
-  const { hourlyRate } = useHourlyRate();
 
   // Confirmation hook
   const {
@@ -75,21 +72,21 @@ const TableDetails: React.FC = () => {
     handleDismiss: dismissConfirm
   } = useConfirmation();
 
-  const { 
-    tables, 
-    activeSession, 
-    startSession, 
-    endSession, 
+  const {
+    tables,
+    activeSession,
+    startSession,
+    endSession,
     refetchTables,
-    refetchActiveSession 
+    refetchActiveSession
   } = useTables();
-  
+
   const { credits, refetchCredits } = useUser();
 
   // Find the table by ID
   const table = tables.find(t => t.id === id);
   const isCurrentTable = activeSession?.table.id === id;
-  const hasInsufficientCredits = (credits?.balance || 0) < hourlyRate;
+  const hasInsufficientCredits = (credits?.balance || 0);
 
   const handleRefresh = async (event: CustomEvent<RefresherEventDetail>) => {
     await Promise.all([
@@ -109,7 +106,7 @@ const TableDetails: React.FC = () => {
     if (!table) return;
 
     if (hasInsufficientCredits) {
-      setToastMessage(`Insufficient credits. You need ${hourlyRate} credits to start a session.`);
+      // setToastMessage(`Insufficient credits. You need ${hourlyRate} credits to start a session.`);
       setToastColor('warning');
       setShowToast(true);
       return;
@@ -129,12 +126,12 @@ const TableDetails: React.FC = () => {
   const confirmStartSession = async () => {
     if (!table) return;
 
-    const finalCredits = hourlyRate - promoDiscount;
+    const finalCredits = promoDiscount;
     const promoText = selectedPromoId ? `\nPromo Applied: -${promoDiscount} credits\nFinal Credits: ${finalCredits}` : '';
 
     const confirmStart = showConfirmation({
       header: 'Start Study Session',
-      message: `Start study session at Table ${table.tableNumber}?\n\nLocation: ${table.location}\nHourly rate: ${hourlyRate} credits${promoText}\nCurrent balance: ${credits?.balance || 0} credits\n\nYour session will begin and credits will be deducted.`,
+      message: `Start study session at Table ${table.tableNumber}?\n\nLocation: ${table.location}\nHourly rate:  credits${promoText}\nCurrent balance: ${credits?.balance || 0} credits\n\nYour session will begin and credits will be deducted.`,
       confirmText: 'Start Session',
       cancelText: 'Cancel'
     }, async () => {
@@ -143,7 +140,7 @@ const TableDetails: React.FC = () => {
         const amount = finalCredits;
         const endTime = new Date();
         endTime.setHours(endTime.getHours() + 1);
-        
+
         await startSession.mutateAsync({
           tableId: table.id,
           qrCode: table.qrCode,
@@ -152,17 +149,17 @@ const TableDetails: React.FC = () => {
           endTime: endTime.toISOString(),
           amount: amount,
         });
-        
+
         setToastMessage('Session started successfully!');
         setToastColor('success');
         setShowToast(true);
         setShowPromoModal(false);
-        
+
         // Navigate back to dashboard
         setTimeout(() => {
           history.push('/app/dashboard');
         }, 1000);
-        
+
       } catch (error) {
         const message = error instanceof Error ? error.message : 'Failed to start session';
         setToastMessage(message);
@@ -183,12 +180,12 @@ const TableDetails: React.FC = () => {
     }, async () => {
       try {
         await endSession.mutateAsync(activeSession.id);
-        
+
         setToastMessage('Session ended successfully!');
         setToastColor('success');
         setShowToast(true);
         setShowEndSessionAlert(false);
-        
+
       } catch (error) {
         const message = error instanceof Error ? error.message : 'Failed to end session';
         setToastMessage(message);
@@ -200,21 +197,21 @@ const TableDetails: React.FC = () => {
 
   const getSessionDuration = (): string => {
     if (!activeSession) return '';
-    
+
     const now = new Date().getTime();
     const start = new Date(activeSession.startTime || 0).getTime();
     const durationMs = now - start;
-    
+
     const hours = Math.floor(durationMs / (1000 * 60 * 60));
     const minutes = Math.floor((durationMs % (1000 * 60 * 60)) / (1000 * 60));
-    
+
     if (hours > 0) {
       return `${hours}h ${minutes}m`;
     }
     return `${minutes}m`;
   };
 
-  const estimatedCost = Math.ceil((new Date().getTime() - new Date(activeSession?.startTime || 0).getTime()) / (1000 * 60 * 60)) * hourlyRate;
+  const estimatedCost = Math.ceil((new Date().getTime() - new Date(activeSession?.startTime || 0).getTime()) / (1000 * 60 * 60));
 
   if (!table) {
     return (
@@ -228,8 +225,8 @@ const TableDetails: React.FC = () => {
           </IonToolbar>
         </IonHeader>
         <IonContent>
-          <ErrorMessage 
-            message="Table not found" 
+          <ErrorMessage
+            message="Table not found"
             onRetry={() => history.goBack()}
           />
         </IonContent>
@@ -247,7 +244,7 @@ const TableDetails: React.FC = () => {
           <IonTitle>Table {table.tableNumber}</IonTitle>
         </IonToolbar>
       </IonHeader>
-      
+
       <IonContent fullscreen className="table-details-content">
         <IonRefresher slot="fixed" onIonRefresh={handleRefresh}>
           <IonRefresherContent />
@@ -260,12 +257,12 @@ const TableDetails: React.FC = () => {
               <IonCardTitle className="table-title">
                 <div className="title-content">
                   <h1>Table {table.tableNumber}</h1>
-                  <IonBadge 
-                    color={table.isOccupied ? (isCurrentTable ? 'success' : 'danger') : 'medium'} 
+                  <IonBadge
+                    color={table.isOccupied ? (isCurrentTable ? 'success' : 'danger') : 'medium'}
                     className="status-badge"
                   >
-                    {table.isOccupied 
-                      ? (isCurrentTable ? 'Your Session' : 'Occupied') 
+                    {table.isOccupied
+                      ? (isCurrentTable ? 'Your Session' : 'Occupied')
                       : 'Available'
                     }
                   </IonBadge>
@@ -281,7 +278,7 @@ const TableDetails: React.FC = () => {
                     <p>{table.location}</p>
                   </IonLabel>
                 </IonItem>
-                
+
                 <IonItem className="spec-item">
                   <IonIcon icon={peopleOutline} slot="start" />
                   <IonLabel>
@@ -289,12 +286,11 @@ const TableDetails: React.FC = () => {
                     <p>{table.capacity} {table.capacity === 1 ? 'person' : 'people'}</p>
                   </IonLabel>
                 </IonItem>
-                
+
                 <IonItem className="spec-item">
                   <IonIcon icon={cardOutline} slot="start" />
                   <IonLabel>
                     <h3>Hourly Rate</h3>
-                    <p>{hourlyRate} credits/hour</p>
                   </IonLabel>
                 </IonItem>
               </div>
@@ -320,7 +316,7 @@ const TableDetails: React.FC = () => {
                         <span className="stat-value">{getSessionDuration()}</span>
                       </div>
                     </div>
-                    
+
                     <div className="stat">
                       <IonIcon icon={cardOutline} />
                       <div className="stat-content">
@@ -329,7 +325,7 @@ const TableDetails: React.FC = () => {
                       </div>
                     </div>
                   </div>
-                  
+
                   <div className="session-info">
                     <p><strong>Started:</strong> {new Date(activeSession.startTime || 0).toLocaleString()}</p>
                     <p><strong>Current Usage:</strong> {activeSession.amount} credits</p>
@@ -350,7 +346,7 @@ const TableDetails: React.FC = () => {
                     <span className="balance-value">{credits?.balance || 0}</span>
                   </div>
                 </div>
-                
+
                 {hasInsufficientCredits && !isCurrentTable && (
                   <div className="insufficient-credits">
                     <IonIcon icon={closeCircleOutline} />
@@ -401,7 +397,7 @@ const TableDetails: React.FC = () => {
                 color="success"
                 size="large"
                 onClick={handleStartSession}
-                disabled={startSession.isPending || hasInsufficientCredits}
+                disabled={startSession.isPending}
                 className="action-button"
               >
                 {startSession.isPending ? (
@@ -518,18 +514,17 @@ const TableDetails: React.FC = () => {
                   <IonCardContent>
                     <div style={{ marginBottom: '16px' }}>
                       <p><strong>Location:</strong> {table.location}</p>
-                      <p><strong>Hourly Rate:</strong> {hourlyRate} credits</p>
                       <p><strong>Your Balance:</strong> {credits?.balance || 0} credits</p>
                     </div>
 
                     <PromoSelector
-                      sessionCost={hourlyRate}
+                      sessionCost={0}
                       selectedPromoId={selectedPromoId}
                       onPromoSelect={handlePromoSelect}
                       disabled={false}
                     />
 
-                    <div style={{ 
+                    <div style={{
                       marginTop: '20px',
                       padding: '16px',
                       backgroundColor: '#f5f5f5',
@@ -541,7 +536,7 @@ const TableDetails: React.FC = () => {
                         marginBottom: '8px'
                       }}>
                         <span>Hourly Rate:</span>
-                        <span>{hourlyRate} credits</span>
+                        <span> credits</span>
                       </div>
                       {promoDiscount > 0 && (
                         <div style={{
@@ -563,7 +558,7 @@ const TableDetails: React.FC = () => {
                         paddingTop: '8px'
                       }}>
                         <span>Total per Hour:</span>
-                        <span>{hourlyRate - promoDiscount} credits</span>
+                        <span>{promoDiscount} credits</span>
                       </div>
                     </div>
 

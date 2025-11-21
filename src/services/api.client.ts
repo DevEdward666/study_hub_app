@@ -15,6 +15,7 @@ class ApiClient {
       timeout: 10000,
     });
 
+    console.log("API Client initialized with baseURL:", baseURL);
     this.setupInterceptors();
   }
 

@@ -22,6 +22,7 @@ import {
   IonProgressBar,
   IonTextarea,
   IonSearchbar,
+  IonFooter,
 } from "@ionic/react";
 import {
   addOutline,
@@ -32,6 +33,7 @@ import {
   statsChartOutline,
   playOutline,
   desktopOutline,
+  checkmarkCircleOutline,
 } from "ionicons/icons";
 import { LoadingSpinner } from "../components/common/LoadingSpinner";
 import {
@@ -42,6 +44,7 @@ import {
 import { useUsersManagement, useTablesManagement } from "../hooks/AdminDataHooks";
 import { AdminPurchaseSubscription } from "../schema/subscription.schema";
 import { tableService } from "../services/table.service";
+import SlideoutModal from "@/shared/SideOutModal/SideoutModalComponent";
 import "../Admin/styles/admin.css";
 import "../styles/side-modal.css";
 
@@ -61,6 +64,24 @@ const UserSubscriptionManagement: React.FC = () => {
   const [searchText, setSearchText] = useState("");
   const [statusFilter, setStatusFilter] = useState("All");
   const [pendingSubscriptionId, setPendingSubscriptionId] = useState("");
+
+  // Search modal states
+  const [showCustomerSearchModal, setShowCustomerSearchModal] = useState(false);
+  const [showPackageSearchModal, setShowPackageSearchModal] = useState(false);
+  const [showPaymentSearchModal, setShowPaymentSearchModal] = useState(false);
+  const [showTableSearchModal, setShowTableSearchModal] = useState(false);
+
+  // Search text states
+  const [customerSearchText, setCustomerSearchText] = useState("");
+  const [packageSearchText, setPackageSearchText] = useState("");
+  const [paymentSearchText, setPaymentSearchText] = useState("");
+  const [tableSearchText, setTableSearchText] = useState("");
+
+  // WiFi password modal states
+  const [showPasswordModal, setShowPasswordModal] = useState(false);
+  const [wifiPassword, setWifiPassword] = useState("password1234");
+  const [selectedSessionId, setSelectedSessionId] = useState("");
+  const [printReceiptMutation, setPrintReceiptMutation] = useState({ isPending: false });
 
   const [formData, setFormData] = useState<AdminPurchaseSubscription>({
     userId: "",
@@ -91,12 +112,29 @@ const UserSubscriptionManagement: React.FC = () => {
       return;
     }
 
+    // Validate cash for Cash payment method
+    const selectedPkg = packages?.find((p) => p.id === formData.packageId);
+    if (formData.paymentMethod === "Cash") {
+      if ((formData.cash || 0) < (selectedPkg?.price || 0)) {
+        setToastMessage("❌ Insufficient cash amount. Cash must be at least ₱" + selectedPkg?.price.toFixed(2));
+        setToastColor("danger");
+        setShowToast(true);
+        return;
+      }
+    }
+
     try {
-      await purchaseMutation.mutateAsync(formData);
+      const result = await purchaseMutation.mutateAsync(formData);
       setToastMessage("✅ Subscription purchased successfully!");
       setToastColor("success");
       setShowToast(true);
       setShowPurchaseModal(false);
+      
+      // Show WiFi password modal for receipt printing
+      if (result && result.id) {
+        setSelectedSessionId(result.id);
+        setShowPasswordModal(true);
+      }
     } catch (error: any) {
       setToastMessage(`❌ Failed to purchase subscription: ${error.message}`);
       setToastColor("danger");
@@ -115,7 +153,7 @@ const UserSubscriptionManagement: React.FC = () => {
     // Validate cash for Cash payment method
     const selectedPkg = packages?.find((p) => p.id === formData.packageId);
     if (formData.paymentMethod === "Cash" && (formData.cash || 0) < (selectedPkg?.price || 0)) {
-      setToastMessage("❌ Insufficient cash amount");
+      setToastMessage("❌ Insufficient cash amount. Cash must be at least ₱" + selectedPkg?.price.toFixed(2));
       setToastColor("danger");
       setShowToast(true);
       return;
@@ -136,7 +174,7 @@ const UserSubscriptionManagement: React.FC = () => {
     try {
       // First create the subscription purchase
       const subscription = await purchaseMutation.mutateAsync(formData);
-      
+
       // Store subscription ID for starting session
       setPendingSubscriptionId(subscription.id);
 
@@ -150,7 +188,7 @@ const UserSubscriptionManagement: React.FC = () => {
       setToastMessage("✅ Transaction created & session started!");
       setToastColor("success");
       setShowToast(true);
-      
+
       // Close both modals
       setShowPurchaseModal(false);
       setShowTableSelectionModal(false);
@@ -160,6 +198,12 @@ const UserSubscriptionManagement: React.FC = () => {
       // Refresh data
       await refetchSubs();
       await refetchTables();
+
+      // Show WiFi password modal for receipt printing
+      if (subscription && subscription.id) {
+        setSelectedSessionId(subscription.id);
+        setShowPasswordModal(true);
+      }
     } catch (error: any) {
       setToastMessage(`❌ Failed: ${error.message}`);
       setToastColor("danger");
@@ -168,10 +212,42 @@ const UserSubscriptionManagement: React.FC = () => {
   };
 
   // Get available tables
-  const availableTables = tables?.filter(t => 
-    !t.currentSession || 
+  const availableTables = tables?.filter(t =>
+    !t.currentSession ||
     (t.currentSession && !(t.currentSession as any).id)
   ) || [];
+
+  // Filtered data for search modals
+  const filteredCustomers = users?.filter((user) =>
+    user.role?.toLowerCase() === 'customer' &&
+    (!customerSearchText ||
+      user.name?.toLowerCase().includes(customerSearchText.toLowerCase()) ||
+      user.email?.toLowerCase().includes(customerSearchText.toLowerCase()))
+  ) || [];
+
+  const filteredPackages = packages?.filter((pkg) =>
+    !packageSearchText ||
+    pkg.name?.toLowerCase().includes(packageSearchText.toLowerCase()) ||
+    pkg.price?.toString().includes(packageSearchText)
+  ) || [];
+
+  const paymentMethods = [
+    { value: "Cash", label: "Cash" },
+    { value: "GCash", label: "GCash" },
+    { value: "Card", label: "Card" },
+    { value: "Bank Transfer", label: "Bank Transfer" }
+  ];
+
+  const filteredPaymentMethods = paymentMethods.filter((method) =>
+    !paymentSearchText ||
+    method.label.toLowerCase().includes(paymentSearchText.toLowerCase())
+  );
+
+  const filteredAvailableTables = availableTables.filter((table: any) =>
+    !tableSearchText ||
+    table.tableNumber?.toString().includes(tableSearchText) ||
+    table.capacity?.toString().includes(tableSearchText)
+  );
 
   const getStatusColor = (status: string) => {
     switch (status.toLowerCase()) {
@@ -196,6 +272,39 @@ const UserSubscriptionManagement: React.FC = () => {
       sub.packageName?.toLowerCase().includes(searchText.toLowerCase());
     return matchesStatus && matchesSearch;
   });
+
+  const handleConfirmPrint = async () => {
+    if (!wifiPassword) {
+      setToastMessage("❌ WiFi password is required");
+      setToastColor("danger");
+      setShowToast(true);
+      return;
+    }
+
+    setPrintReceiptMutation({ isPending: true });
+
+    try {
+      // Here you would call your print receipt API
+      // For now, we'll just simulate success
+      await new Promise(resolve => setTimeout(resolve, 1000));
+      
+      setToastMessage("✅ Receipt printed successfully!");
+      setToastColor("success");
+      setShowToast(true);
+      setShowPasswordModal(false);
+      setWifiPassword("password1234");
+      setSelectedSessionId("");
+      
+      // Refresh subscriptions
+      await refetchSubs();
+    } catch (error: any) {
+      setToastMessage(`❌ Failed to print receipt: ${error.message}`);
+      setToastColor("danger");
+      setShowToast(true);
+    } finally {
+      setPrintReceiptMutation({ isPending: false });
+    }
+  };
 
   if (isLoading) {
     return <LoadingSpinner message="Loading subscriptions..." />;
@@ -344,52 +453,28 @@ const UserSubscriptionManagement: React.FC = () => {
             </IonToolbar>
           </IonHeader>
           <IonContent className="ion-padding">
-            <IonItem>
+            <IonItem button onClick={() => setShowCustomerSearchModal(true)} detail>
               <IonLabel position="stacked">Customer *</IonLabel>
-              <IonSelect
-                value={formData.userId}
-                onIonChange={(e) => setFormData({ ...formData, userId: e.detail.value })}
-                placeholder="Select customer"
-              >
-                {users?.filter((user) => user.role?.toLowerCase() === 'customer').map((user) => (
-                  <IonSelectOption key={user.id} value={user.id}>
-                    {user.name || user.email}
-                  </IonSelectOption>
-                ))}
-              </IonSelect>
+              <IonLabel color={formData.userId ? "dark" : "medium"}>
+                {formData.userId
+                  ? (users?.find(u => u.id === formData.userId)?.name ||
+                    users?.find(u => u.id === formData.userId)?.email)
+                  : "Select customer"}
+              </IonLabel>
             </IonItem>
-            <IonItem>
+
+            <IonItem button onClick={() => setShowPackageSearchModal(true)} detail>
               <IonLabel position="stacked">Package *</IonLabel>
-              <IonSelect
-                value={formData.packageId}
-                onIonChange={(e) => {
-                  const selectedPkg = packages?.find((p) => p.id === e.detail.value);
-                  setFormData({
-                    ...formData,
-                    packageId: e.detail.value,
-                    cash: selectedPkg?.price || 0,
-                  });
-                }}
-                placeholder="Select package"
-              >
-                {packages?.map((pkg) => (
-                  <IonSelectOption key={pkg.id} value={pkg.id}>
-                    {pkg.name} - ₱{pkg.price.toFixed(2)}
-                  </IonSelectOption>
-                ))}
-              </IonSelect>
+              <IonLabel color={formData.packageId ? "dark" : "medium"}>
+                {formData.packageId
+                  ? `${packages?.find(p => p.id === formData.packageId)?.name} - ₱${packages?.find(p => p.id === formData.packageId)?.price.toFixed(2)}`
+                  : "Select package"}
+              </IonLabel>
             </IonItem>
-            <IonItem>
+
+            <IonItem button onClick={() => setShowPaymentSearchModal(true)} detail>
               <IonLabel position="stacked">Payment Method *</IonLabel>
-              <IonSelect
-                value={formData.paymentMethod}
-                onIonChange={(e) => setFormData({ ...formData, paymentMethod: e.detail.value })}
-              >
-                <IonSelectOption value="Cash">Cash</IonSelectOption>
-                <IonSelectOption value="GCash">GCash</IonSelectOption>
-                <IonSelectOption value="Card">Card</IonSelectOption>
-                <IonSelectOption value="Bank Transfer">Bank Transfer</IonSelectOption>
-              </IonSelect>
+              <IonLabel color="dark">{formData.paymentMethod}</IonLabel>
             </IonItem>
             {formData.paymentMethod === "Cash" && (
               <>
@@ -422,18 +507,18 @@ const UserSubscriptionManagement: React.FC = () => {
               />
             </IonItem>
             <div style={{ marginTop: "24px", display: "flex", gap: "12px" }}>
-              <IonButton 
-                expand="block" 
-                onClick={handleSavePurchase} 
+              <IonButton
+                expand="block"
+                onClick={handleSavePurchase}
                 disabled={purchaseMutation.isPending}
                 color="primary"
                 style={{ flex: 1 }}
               >
                 {purchaseMutation.isPending ? "Processing..." : "Create Transaction"}
               </IonButton>
-              <IonButton 
-                expand="block" 
-                onClick={handleCreateAndStartSession} 
+              <IonButton
+                expand="block"
+                onClick={handleCreateAndStartSession}
                 disabled={purchaseMutation.isPending}
                 color="secondary"
                 style={{ flex: 1 }}
@@ -475,8 +560,8 @@ const UserSubscriptionManagement: React.FC = () => {
               <>
                 <div style={{ marginBottom: "24px", padding: "16px", background: "#f5f5f5", borderRadius: "8px" }}>
                   <h3 style={{ margin: "0 0 8px 0" }}>
-                    {users?.find(u => u.id === formData.userId)?.name || 
-                     users?.find(u => u.id === formData.userId)?.email}
+                    {users?.find(u => u.id === formData.userId)?.name ||
+                      users?.find(u => u.id === formData.userId)?.email}
                   </h3>
                   <p style={{ margin: "4px 0", fontSize: "14px" }}>
                     📦 {packages?.find(p => p.id === formData.packageId)?.name}
@@ -486,19 +571,13 @@ const UserSubscriptionManagement: React.FC = () => {
                   </p>
                 </div>
 
-                <IonItem>
+                <IonItem button onClick={() => setShowTableSearchModal(true)} detail>
                   <IonLabel position="stacked">Select Table *</IonLabel>
-                  <IonSelect
-                    value={selectedTableId}
-                    onIonChange={(e) => setSelectedTableId(e.detail.value)}
-                    placeholder="Choose a table"
-                  >
-                    {availableTables.map((table: any) => (
-                      <IonSelectOption key={table.id} value={table.id}>
-                        <IonIcon icon={desktopOutline} /> Table {table.tableNumber} - {table.capacity} seats
-                      </IonSelectOption>
-                    ))}
-                  </IonSelect>
+                  <IonLabel color={selectedTableId ? "dark" : "medium"}>
+                    {selectedTableId
+                      ? `Table ${availableTables.find((t: any) => t.id === selectedTableId)?.tableNumber} - ${availableTables.find((t: any) => t.id === selectedTableId)?.capacity} seats`
+                      : "Choose a table"}
+                  </IonLabel>
                 </IonItem>
 
                 {availableTables.length === 0 && (
@@ -510,8 +589,8 @@ const UserSubscriptionManagement: React.FC = () => {
                 )}
 
                 <div style={{ marginTop: "24px" }}>
-                  <IonButton 
-                    expand="block" 
+                  <IonButton
+                    expand="block"
                     onClick={handleConfirmTableSelection}
                     disabled={!selectedTableId || availableTables.length === 0 || purchaseMutation.isPending}
                   >
@@ -523,6 +602,363 @@ const UserSubscriptionManagement: React.FC = () => {
             )}
           </IonContent>
         </IonModal>
+
+        {/* Customer Search Modal */}
+        <IonModal
+          isOpen={showCustomerSearchModal}
+          onDidDismiss={() => {
+            setShowCustomerSearchModal(false);
+            setCustomerSearchText("");
+          }}
+          breakpoints={[0, 1]}
+          initialBreakpoint={1}
+          handle={false}
+          className="side-modal"
+        >
+          <IonHeader>
+            <IonToolbar>
+              <IonTitle>Select Customer</IonTitle>
+              <IonButtons slot="end">
+                <IonButton onClick={() => {
+                  setShowCustomerSearchModal(false);
+                  setCustomerSearchText("");
+                }}>
+                  <IonIcon icon={closeOutline} />
+                </IonButton>
+              </IonButtons>
+            </IonToolbar>
+          </IonHeader>
+          <IonContent className="ion-padding">
+            <IonSearchbar
+              value={customerSearchText}
+              onIonInput={(e) => setCustomerSearchText(e.detail.value || "")}
+              placeholder="Search customers by name or email..."
+              style={{ marginBottom: "16px" }}
+            />
+            <IonList>
+              {filteredCustomers.length > 0 ? (
+                filteredCustomers.map((user) => (
+                  <IonItem
+                    key={user.id}
+                    button
+                    onClick={() => {
+                      setFormData({ ...formData, userId: user.id });
+                      setShowCustomerSearchModal(false);
+                      setCustomerSearchText("");
+                    }}
+                    detail={false}
+                    style={{
+                      background: formData.userId === user.id ? "var(--ion-color-light)" : "transparent"
+                    }}
+                  >
+                    <IonIcon icon={personOutline} slot="start" color="primary" />
+                    <IonLabel>
+                      <h3>{user.name || user.email}</h3>
+                      {user.name && <p>{user.email}</p>}
+                    </IonLabel>
+                    {formData.userId === user.id && (
+                      <IonIcon icon={checkmarkCircleOutline} slot="end" color="success" />
+                    )}
+                  </IonItem>
+                ))
+              ) : (
+                <IonItem>
+                  <IonLabel color="medium">
+                    <p style={{ textAlign: "center", padding: "20px" }}>
+                      No customers found
+                    </p>
+                  </IonLabel>
+                </IonItem>
+              )}
+            </IonList>
+          </IonContent>
+        </IonModal>
+
+        {/* Package Search Modal */}
+        <IonModal
+          isOpen={showPackageSearchModal}
+          onDidDismiss={() => {
+            setShowPackageSearchModal(false);
+            setPackageSearchText("");
+          }}
+          breakpoints={[0, 1]}
+          initialBreakpoint={1}
+          handle={false}
+          className="side-modal"
+        >
+          <IonHeader>
+            <IonToolbar>
+              <IonTitle>Select Package</IonTitle>
+              <IonButtons slot="end">
+                <IonButton onClick={() => {
+                  setShowPackageSearchModal(false);
+                  setPackageSearchText("");
+                }}>
+                  <IonIcon icon={closeOutline} />
+                </IonButton>
+              </IonButtons>
+            </IonToolbar>
+          </IonHeader>
+          <IonContent className="ion-padding">
+            <IonSearchbar
+              value={packageSearchText}
+              onIonInput={(e) => setPackageSearchText(e.detail.value || "")}
+              placeholder="Search packages by name or price..."
+              style={{ marginBottom: "16px" }}
+            />
+            <IonList>
+              {filteredPackages.length > 0 ? (
+                filteredPackages.map((pkg) => (
+                  <IonItem
+                    key={pkg.id}
+                    button
+                    onClick={() => {
+                      setFormData({
+                        ...formData,
+                        packageId: pkg.id,
+                        cash: pkg.price || 0,
+                      });
+                      setShowPackageSearchModal(false);
+                      setPackageSearchText("");
+                    }}
+                    detail={false}
+                    style={{
+                      background: formData.packageId === pkg.id ? "var(--ion-color-light)" : "transparent"
+                    }}
+                  >
+                    <IonIcon icon={cardOutline} slot="start" color="success" />
+                    <IonLabel>
+                      <h3>{pkg.name}</h3>
+                      <p>₱{pkg.price.toFixed(2)} • {pkg.durationValue} {pkg.packageType}</p>
+                    </IonLabel>
+                    {formData.packageId === pkg.id && (
+                      <IonIcon icon={checkmarkCircleOutline} slot="end" color="success" />
+                    )}
+                  </IonItem>
+                ))
+              ) : (
+                <IonItem>
+                  <IonLabel color="medium">
+                    <p style={{ textAlign: "center", padding: "20px" }}>
+                      No packages found
+                    </p>
+                  </IonLabel>
+                </IonItem>
+              )}
+            </IonList>
+          </IonContent>
+        </IonModal>
+
+        {/* Payment Method Search Modal */}
+        <IonModal
+          isOpen={showPaymentSearchModal}
+          onDidDismiss={() => {
+            setShowPaymentSearchModal(false);
+            setPaymentSearchText("");
+          }}
+          breakpoints={[0, 1]}
+          initialBreakpoint={1}
+          handle={false}
+          className="side-modal"
+        >
+          <IonHeader>
+            <IonToolbar>
+              <IonTitle>Select Payment Method</IonTitle>
+              <IonButtons slot="end">
+                <IonButton onClick={() => {
+                  setShowPaymentSearchModal(false);
+                  setPaymentSearchText("");
+                }}>
+                  <IonIcon icon={closeOutline} />
+                </IonButton>
+              </IonButtons>
+            </IonToolbar>
+          </IonHeader>
+          <IonContent className="ion-padding">
+            <IonSearchbar
+              value={paymentSearchText}
+              onIonInput={(e) => setPaymentSearchText(e.detail.value || "")}
+              placeholder="Search payment methods..."
+              style={{ marginBottom: "16px" }}
+            />
+            <IonList>
+              {filteredPaymentMethods.length > 0 ? (
+                filteredPaymentMethods.map((method) => (
+                  <IonItem
+                    key={method.value}
+                    button
+                    onClick={() => {
+                      setFormData({ ...formData, paymentMethod: method.value });
+                      setShowPaymentSearchModal(false);
+                      setPaymentSearchText("");
+                    }}
+                    detail={false}
+                    style={{
+                      background: formData.paymentMethod === method.value ? "var(--ion-color-light)" : "transparent"
+                    }}
+                  >
+                    <IonIcon icon={cardOutline} slot="start" color="tertiary" />
+                    <IonLabel>
+                      <h3>{method.label}</h3>
+                    </IonLabel>
+                    {formData.paymentMethod === method.value && (
+                      <IonIcon icon={checkmarkCircleOutline} slot="end" color="success" />
+                    )}
+                  </IonItem>
+                ))
+              ) : (
+                <IonItem>
+                  <IonLabel color="medium">
+                    <p style={{ textAlign: "center", padding: "20px" }}>
+                      No payment methods found
+                    </p>
+                  </IonLabel>
+                </IonItem>
+              )}
+            </IonList>
+          </IonContent>
+        </IonModal>
+
+        {/* Table Search Modal */}
+        <IonModal
+          isOpen={showTableSearchModal}
+          onDidDismiss={() => {
+            setShowTableSearchModal(false);
+            setTableSearchText("");
+          }}
+          breakpoints={[0, 1]}
+          initialBreakpoint={1}
+          handle={false}
+          className="side-modal"
+        >
+          <IonHeader>
+            <IonToolbar>
+              <IonTitle>Select Table</IonTitle>
+              <IonButtons slot="end">
+                <IonButton onClick={() => {
+                  setShowTableSearchModal(false);
+                  setTableSearchText("");
+                }}>
+                  <IonIcon icon={closeOutline} />
+                </IonButton>
+              </IonButtons>
+            </IonToolbar>
+          </IonHeader>
+          <IonContent className="ion-padding">
+            <IonSearchbar
+              value={tableSearchText}
+              onIonInput={(e) => setTableSearchText(e.detail.value || "")}
+              placeholder="Search tables by number or capacity..."
+              style={{ marginBottom: "16px" }}
+            />
+            <IonList>
+              {filteredAvailableTables.length > 0 ? (
+                filteredAvailableTables.map((table: any) => (
+                  <IonItem
+                    key={table.id}
+                    button
+                    onClick={() => {
+                      setSelectedTableId(table.id);
+                      setShowTableSearchModal(false);
+                      setTableSearchText("");
+                    }}
+                    detail={false}
+                    style={{
+                      background: selectedTableId === table.id ? "var(--ion-color-light)" : "transparent"
+                    }}
+                  >
+                    <IonIcon icon={desktopOutline} slot="start" color="primary" />
+                    <IonLabel>
+                      <h3>Table {table.tableNumber}</h3>
+                      <p>Capacity: {table.capacity} seats</p>
+                    </IonLabel>
+                    {selectedTableId === table.id && (
+                      <IonIcon icon={checkmarkCircleOutline} slot="end" color="success" />
+                    )}
+                  </IonItem>
+                ))
+              ) : (
+                <IonItem>
+                  <IonLabel color="medium">
+                    <p style={{ textAlign: "center", padding: "20px" }}>
+                      {availableTables.length === 0 ? "No tables available" : "No tables found"}
+                    </p>
+                  </IonLabel>
+                </IonItem>
+              )}
+            </IonList>
+          </IonContent>
+        </IonModal>
+
+        {/* WiFi Password Modal for Receipt Printing */}
+        <SlideoutModal
+          isOpen={showPasswordModal}
+          onClose={() => {
+            setShowPasswordModal(false);
+            setWifiPassword("password1234");
+            setSelectedSessionId("");
+          }}
+          title="Print Receipt - WiFi Password"
+          position="end"
+          size="small"
+        >
+          <div style={{ padding: "20px" }}>
+            <p style={{ marginBottom: "20px", color: "#666" }}>
+              Enter the WiFi password to be printed on the receipt as a QR code.
+            </p>
+
+            <IonItem style={{ marginBottom: "20px" }}>
+              <IonLabel position="stacked">WiFi Password *</IonLabel>
+              <IonInput
+                type="text"
+                value={wifiPassword}
+                placeholder="Enter WiFi password"
+                onIonInput={(e) => setWifiPassword(e.detail.value || "")}
+              />
+            </IonItem>
+
+            <div style={{
+              padding: "15px",
+              background: "#f0f9ff",
+              borderRadius: "8px",
+              border: "1px solid #0ea5e9"
+            }}>
+              <p style={{ margin: 0, fontSize: "14px", color: "#0369a1" }}>
+                <strong>📱 QR Code Preview:</strong>
+              </p>
+              <p style={{ margin: "8px 0 0 0", fontSize: "13px", color: "#0c4a6e" }}>
+                Password: <strong>{wifiPassword || "(empty)"}</strong>
+              </p>
+              <p style={{ margin: "8px 0 0 0", fontSize: "12px", color: "#64748b" }}>
+                This will be printed as a scannable QR code on the receipt.
+              </p>
+            </div>
+          </div>
+
+          <IonFooter className="ion-no-border">
+            <IonToolbar>
+              <IonButtons slot="end" className="modal-action-buttons">
+                <IonButton
+                  onClick={() => {
+                    setShowPasswordModal(false);
+                    setWifiPassword("password1234");
+                    setSelectedSessionId("");
+                  }}
+                >
+                  Cancel
+                </IonButton>
+                <IonButton
+                  onClick={handleConfirmPrint}
+                  disabled={!wifiPassword || printReceiptMutation.isPending}
+                  color="primary"
+                  fill="solid"
+                >
+                  {printReceiptMutation.isPending ? "Printing..." : "Print Receipt"}
+                </IonButton>
+              </IonButtons>
+            </IonToolbar>
+          </IonFooter>
+        </SlideoutModal>
 
         <IonToast
           isOpen={showToast}

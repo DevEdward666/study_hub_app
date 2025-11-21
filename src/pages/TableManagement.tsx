@@ -9,7 +9,6 @@ import { LoadingSpinner } from "../components/common/LoadingSpinner";
 import { ErrorMessage } from "../components/common/ErrorMessage";
 import { useConfirmation } from "../hooks/useConfirmation";
 import { ConfirmToast } from "../components/common/ConfirmToast";
-import { useHourlyRate } from "../hooks/GlobalSettingsHooks";
 import "../Admin/styles/admin.css";
 import "../Admin/styles/admin-responsive.css";
 import QRCode from "react-qr-code";
@@ -58,9 +57,6 @@ const TablesManagement: React.FC = () => {
     updateTable,
     refetch,
   } = useTablesManagement();
-
-  // Get hourly rate from global settings
-  const { hourlyRate } = useHourlyRate();
 
   // Notification context for auto-refresh
   const { shouldRefreshTables, resetTableRefresh } = useNotificationContext();
@@ -391,7 +387,7 @@ const TablesManagement: React.FC = () => {
       sortable: false,
       render: (value, row) => (
         <span style={{ color: '#28a745', fontWeight: '600' }}>
-          ₱{hourlyRate} <small style={{ color: '#666', fontWeight: 'normal' }}>(Global)</small>
+          ₱ <small style={{ color: '#666', fontWeight: 'normal' }}>(Global)</small>
         </span>
       ),
     },

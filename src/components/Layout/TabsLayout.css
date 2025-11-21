@@ -521,3 +521,38 @@
     margin-left: 0;
   }
 }
+
+/* ============================================
+   SESSION ENDED MODAL
+   ============================================ */
+.session-ended-modal {
+  --width: 90%;
+  --max-width: 500px;
+  --height: auto;
+  --border-radius: 16px;
+}
+
+.session-ended-modal ion-modal {
+  --backdrop-opacity: 0.7;
+}
+
+@keyframes pulse {
+  0%,
+  100% {
+    transform: scale(1);
+    box-shadow: 0 0 0 0 rgba(255, 107, 107, 0.7);
+  }
+
+  50% {
+    transform: scale(1.05);
+    box-shadow: 0 0 0 20px rgba(255, 107, 107, 0);
+  }
+}
+
+/* Tablet/Desktop - Larger modal */
+@media (min-width: 768px) {
+  .session-ended-modal {
+    --width: 600px;
+    --max-width: 600px;
+  }
+}

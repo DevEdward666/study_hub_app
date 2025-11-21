@@ -10,7 +10,6 @@ import { useConfirmation } from "../hooks/useConfirmation";
 import { useThermalPrinter } from "../hooks/useThermalPrinter";
 import { LoadingSpinner } from "../components/common/LoadingSpinner";
 import { ErrorMessage } from "../components/common/ErrorMessage";
-import { useHourlyRate } from "../hooks/GlobalSettingsHooks";
 import { useActiveRates } from "../hooks/RateHooks";
 import { ConfirmToast } from "../components/common/ConfirmToast";
 import "../Admin/styles/admin.css";
@@ -54,8 +53,6 @@ const TransactionsManagement: React.FC = () => {
   // Get rates from rate management
   const { data: rates, isLoading: isLoadingRates } = useActiveRates();
 
-  // Keep hourly rate as fallback for backward compatibility
-  const { hourlyRate } = useHourlyRate();
 
   // Add New Transaction Modal State
   const [showNewTransactionModal, setShowNewTransactionModal] = useState(false);
@@ -76,7 +73,7 @@ const TransactionsManagement: React.FC = () => {
   // Helper functions to get selected rate data
   const selectedRate = rates?.find(rate => rate.id === selectedRateId);
   const sessionHours = selectedRate?.hours || 1;
-  const sessionPrice = selectedRate?.price || hourlyRate;
+  const sessionPrice = selectedRate?.price || 0;
 
   // Fetch tables and users for the new transaction modal
   const { tables, isLoading: isLoadingTables, refetch: refetchTables } = useTablesManagement();

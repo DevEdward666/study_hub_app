@@ -690,154 +690,156 @@ const UsersManagement: React.FC = () => {
         title="Create New User"
         size="medium"
       >
-        <div className="create-user-form" style={{ padding: "20px" }}>
+        <IonContent>
+          <div className="create-user-form" style={{ padding: "20px", marginBottom: "40px" }}>
 
-          <div className="form-section">
-            <IonItem className={userFormErrors.name ? 'ion-invalid' : ''}>
-              <IonLabel position="stacked">Full Name *</IonLabel>
-              <IonInput
-                type="text"
-                value={newUserData.name}
-                placeholder="Enter full name"
-                onIonInput={(e) => setNewUserData({ ...newUserData, name: e.detail.value! })}
-                required
-              />
-            </IonItem>
-            {userFormErrors.name && (
-              <IonText color="danger" className="error-text">
-                {userFormErrors.name}
-              </IonText>
-            )}
-          </div>
-
-          <div className="form-section">
-            <IonItem className={userFormErrors.email ? 'ion-invalid' : ''}>
-              <IonLabel position="stacked">Email Address *</IonLabel>
-              <IonInput
-                type="email"
-                value={newUserData.email}
-                placeholder="Enter email address"
-                onIonInput={(e) => setNewUserData({ ...newUserData, email: e.detail.value! })}
-                required
-              />
-            </IonItem>
-            {userFormErrors.email && (
-              <IonText color="danger" className="error-text">
-                {userFormErrors.email}
-              </IonText>
-            )}
-          </div>
-
-          <div className="form-section">
-            <IonItem>
-              <IonLabel position="stacked">Role *</IonLabel>
-              <IonSelect
-                value={newUserData.role}
-                placeholder="Select role"
-                onIonChange={(e) => setNewUserData({ ...newUserData, role: e.detail.value })}
-              >
-                <IonSelectOption value="Customer">Customer</IonSelectOption>
-                <IonSelectOption value="Staff">Staff</IonSelectOption>
-                <IonSelectOption value="Admin">Admin</IonSelectOption>
-                <IonSelectOption value="Super Admin">Super Admin</IonSelectOption>
-              </IonSelect>
-            </IonItem>
-            <IonText color="medium" style={{ fontSize: "0.85em", marginTop: "4px", display: "block", paddingLeft: "16px" }}>
-              <small>Customer: Regular customer | Staff: Employee access | Admin: Admin dashboard | Super Admin: Full system access</small>
-            </IonText>
-          </div>
-
-          <div className="form-section">
-            <IonItem className={userFormErrors.password ? 'ion-invalid' : ''}>
-              <IonLabel position="stacked">Password *</IonLabel>
-              <IonInput
-                type="password"
-                value={newUserData.password}
-                placeholder="Create a password"
-                onIonInput={(e) => setNewUserData({ ...newUserData, password: e.detail.value! })}
-                required
-              />
-            </IonItem>
-            {userFormErrors.password && (
-              <IonText color="danger" className="error-text">
-                {userFormErrors.password}
-              </IonText>
-            )}
-          </div>
-
-          <div className="form-section">
-            <IonItem className={userFormErrors.confirmPassword ? 'ion-invalid' : ''}>
-              <IonLabel position="stacked">Confirm Password *</IonLabel>
-              <IonInput
-                type="password"
-                value={newUserData.confirmPassword}
-                placeholder="Confirm password"
-                onIonInput={(e) => setNewUserData({ ...newUserData, confirmPassword: e.detail.value! })}
-                required
-              />
-            </IonItem>
-            {userFormErrors.confirmPassword && (
-              <IonText color="danger" className="error-text">
-                {userFormErrors.confirmPassword}
-              </IonText>
-            )}
-          </div>
-
-          <div className="create-user-summary" style={{
-            marginTop: "20px",
-            padding: "16px",
-            backgroundColor: "#f5f5f5",
-            borderRadius: "8px"
-          }}>
-            <h4 style={{ margin: "0 0 12px 0", color: "var(--ion-color-primary)" }}>User Summary</h4>
-            <div className="summary-row" style={{
-              display: "flex",
-              justifyContent: "space-between",
-              marginBottom: "8px"
-            }}>
-              <span><strong>Name:</strong></span>
-              <span>{newUserData.name || "Not set"}</span>
+            <div className="form-section">
+              <IonItem className={userFormErrors.name ? 'ion-invalid' : ''}>
+                <IonLabel position="stacked">Full Name *</IonLabel>
+                <IonInput
+                  type="text"
+                  value={newUserData.name}
+                  placeholder="Enter full name"
+                  onIonInput={(e) => setNewUserData({ ...newUserData, name: e.detail.value! })}
+                  required
+                />
+              </IonItem>
+              {userFormErrors.name && (
+                <IonText color="danger" className="error-text">
+                  {userFormErrors.name}
+                </IonText>
+              )}
             </div>
-            <div className="summary-row" style={{
-              display: "flex",
-              justifyContent: "space-between",
-              marginBottom: "8px"
-            }}>
-              <span><strong>Email:</strong></span>
-              <span>{newUserData.email || "Not set"}</span>
+
+            <div className="form-section">
+              <IonItem className={userFormErrors.email ? 'ion-invalid' : ''}>
+                <IonLabel position="stacked">Email Address *</IonLabel>
+                <IonInput
+                  type="email"
+                  value={newUserData.email}
+                  placeholder="Enter email address"
+                  onIonInput={(e) => setNewUserData({ ...newUserData, email: e.detail.value! })}
+                  required
+                />
+              </IonItem>
+              {userFormErrors.email && (
+                <IonText color="danger" className="error-text">
+                  {userFormErrors.email}
+                </IonText>
+              )}
             </div>
-            <div className="summary-row" style={{
-              display: "flex",
-              justifyContent: "space-between",
-              marginBottom: "8px"
+
+            <div className="form-section">
+              <IonItem>
+                <IonLabel position="stacked">Role *</IonLabel>
+                <IonSelect
+                  value={newUserData.role}
+                  placeholder="Select role"
+                  onIonChange={(e) => setNewUserData({ ...newUserData, role: e.detail.value })}
+                >
+                  <IonSelectOption value="Customer">Customer</IonSelectOption>
+                  <IonSelectOption value="Staff">Staff</IonSelectOption>
+                  <IonSelectOption value="Admin">Admin</IonSelectOption>
+                  <IonSelectOption value="Super Admin">Super Admin</IonSelectOption>
+                </IonSelect>
+              </IonItem>
+              <IonText color="medium" style={{ fontSize: "0.85em", marginTop: "4px", display: "block", paddingLeft: "16px" }}>
+                <small>Customer: Regular customer | Staff: Employee access | Admin: Admin dashboard | Super Admin: Full system access</small>
+              </IonText>
+            </div>
+
+            <div className="form-section">
+              <IonItem className={userFormErrors.password ? 'ion-invalid' : ''}>
+                <IonLabel position="stacked">Password *</IonLabel>
+                <IonInput
+                  type="password"
+                  value={newUserData.password}
+                  placeholder="Create a password"
+                  onIonInput={(e) => setNewUserData({ ...newUserData, password: e.detail.value! })}
+                  required
+                />
+              </IonItem>
+              {userFormErrors.password && (
+                <IonText color="danger" className="error-text">
+                  {userFormErrors.password}
+                </IonText>
+              )}
+            </div>
+
+            <div className="form-section">
+              <IonItem className={userFormErrors.confirmPassword ? 'ion-invalid' : ''}>
+                <IonLabel position="stacked">Confirm Password *</IonLabel>
+                <IonInput
+                  type="password"
+                  value={newUserData.confirmPassword}
+                  placeholder="Confirm password"
+                  onIonInput={(e) => setNewUserData({ ...newUserData, confirmPassword: e.detail.value! })}
+                  required
+                />
+              </IonItem>
+              {userFormErrors.confirmPassword && (
+                <IonText color="danger" className="error-text">
+                  {userFormErrors.confirmPassword}
+                </IonText>
+              )}
+            </div>
+
+            <div className="create-user-summary" style={{
+              marginTop: "20px",
+              padding: "16px",
+              backgroundColor: "#f5f5f5",
+              borderRadius: "8px"
             }}>
-              <span><strong>Role:</strong></span>
-              <span>{newUserData.role}</span>
+              <h4 style={{ margin: "0 0 12px 0", color: "var(--ion-color-primary)" }}>User Summary</h4>
+              <div className="summary-row" style={{
+                display: "flex",
+                justifyContent: "space-between",
+                marginBottom: "8px"
+              }}>
+                <span><strong>Name:</strong></span>
+                <span>{newUserData.name || "Not set"}</span>
+              </div>
+              <div className="summary-row" style={{
+                display: "flex",
+                justifyContent: "space-between",
+                marginBottom: "8px"
+              }}>
+                <span><strong>Email:</strong></span>
+                <span>{newUserData.email || "Not set"}</span>
+              </div>
+              <div className="summary-row" style={{
+                display: "flex",
+                justifyContent: "space-between",
+                marginBottom: "8px"
+              }}>
+                <span><strong>Role:</strong></span>
+                <span>{newUserData.role}</span>
+              </div>
+            </div>
+
+            <IonButton
+              expand="block"
+              onClick={handleCreateUser}
+              disabled={createUser.isPending || !newUserData.name || !newUserData.email || !newUserData.password}
+              style={{ marginTop: "20px" }}
+            >
+              {createUser.isPending
+                ? "Creating User..."
+                : "Create User"}
+            </IonButton>
+
+            <div className="create-user-note" style={{
+              marginTop: "16px",
+              textAlign: "center"
+            }}>
+              <p>
+                <small>
+                  Note: The user will be able to log in immediately with these credentials.
+                </small>
+              </p>
             </div>
           </div>
-
-          <IonButton
-            expand="block"
-            onClick={handleCreateUser}
-            disabled={createUser.isPending || !newUserData.name || !newUserData.email || !newUserData.password}
-            style={{ marginTop: "20px" }}
-          >
-            {createUser.isPending
-              ? "Creating User..."
-              : "Create User"}
-          </IonButton>
-
-          <div className="create-user-note" style={{
-            marginTop: "16px",
-            textAlign: "center"
-          }}>
-            <p>
-              <small>
-                Note: The user will be able to log in immediately with these credentials.
-              </small>
-            </p>
-          </div>
-        </div>
+        </IonContent>
       </SlideoutModal>
 
       {/* Edit User Modal */}

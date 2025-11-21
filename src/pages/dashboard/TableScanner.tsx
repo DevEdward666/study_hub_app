@@ -28,7 +28,6 @@ import { useConfirmation } from "../../hooks/useConfirmation";
 import { LoadingSpinner } from "../../components/common/LoadingSpinner";
 import { ConfirmToast } from "../../components/common/ConfirmToast";
 import { useNotifications } from "../../hooks/useNotifications";
-import { useHourlyRate } from "../../hooks/GlobalSettingsHooks";
 import "./TableScanner.css";
 import { Scanner } from "@yudiel/react-qr-scanner";
 const TableScanner: React.FC = () => {
@@ -41,10 +40,8 @@ const TableScanner: React.FC = () => {
   const [selectedHours, setSelectedHours] = useState<number>(1);
   const history = useHistory();
   const { credits } = useUser();
-  
-  // Get hourly rate from global settings
-  const { hourlyRate } = useHourlyRate();
-  
+
+
   // Confirmation hook
   const {
     isOpen: isConfirmOpen,
@@ -54,7 +51,7 @@ const TableScanner: React.FC = () => {
     handleCancel: cancelAction,
     handleDismiss: dismissConfirm
   } = useConfirmation();
-  
+
   // Notifications hook
   const {
     notifySessionStart,
@@ -64,11 +61,11 @@ const TableScanner: React.FC = () => {
     isSubscribed: isPushSubscribed,
     requestPermission,
   } = useNotifications();
-  
+
   // const { startScan, stopScan, isScanning, hasPermission, checkPermission } = useQRScanner();
   const { data: scannedTable, isLoading: isLoadingTable } =
     useTableByQR(scannedCode);
-const { startSession, activeSession,tables } = useTables();
+  const { startSession, activeSession, tables } = useTables();
 
   // Helper: parse ISO string to Date safely
   const parseDate = (v?: string | null) => (v ? new Date(v) : null);
@@ -152,8 +149,8 @@ const { startSession, activeSession,tables } = useTables();
   const handleStartSession = async () => {
     if (scannedTable && scannedCode) {
       // Show confirmation dialog
-      const totalCredits = hourlyRate * selectedHours;
-      
+      const totalCredits = selectedHours;
+
       showConfirmation({
         header: 'Start Study Session',
         message: `Start study session at Table ${scannedTable.tableNumber}?\n\n` +
@@ -168,10 +165,10 @@ const { startSession, activeSession,tables } = useTables();
         try {
           const endTime = new Date();
           endTime.setHours(endTime.getHours() + selectedHours);
-          
+
           // Calculate the amount based on hours and hourly rate
-          const amount = hourlyRate * selectedHours;
-          
+          const amount = selectedHours;
+
           await startSession.mutateAsync({
             tableId: scannedTable.id,
             qrCode: scannedCode,
@@ -179,7 +176,7 @@ const { startSession, activeSession,tables } = useTables();
             endTime: endTime.toISOString(),
             amount: amount,
           });
-          
+
           // Send session start notification
           if (isPushSupported && pushPermission === "granted") {
             try {
@@ -187,9 +184,9 @@ const { startSession, activeSession,tables } = useTables();
                 scannedTable.id, // Will be replaced with actual session ID by service
                 scannedTable.tableNumber,
                 scannedTable.location,
-                hourlyRate * selectedHours
+                selectedHours
               );
-              
+
               // Setup monitoring for 30-minute warning
               setupSessionMonitoring(
                 scannedTable.id, // Will be replaced with actual session ID 
@@ -201,7 +198,7 @@ const { startSession, activeSession,tables } = useTables();
               console.error("Failed to send notification:", notifError);
             }
           }
-          
+
           setShowConfirmAlert(false);
           setSelectedHours(1); // Reset to default
           history.push("/app/dashboard");
@@ -262,152 +259,152 @@ const { startSession, activeSession,tables } = useTables();
           <IonTitle>QR Scanner</IonTitle>
         </IonToolbar>
       </IonHeader>
-<IonContent>
-      {activeSession ? (
-         <IonContent fullscreen className="active-session-content">
-          <div className="active-session-wrapper">
-            <IonCard className="active-session-card">
-              <IonCardContent>
-                <div className="active-session-info">
-                  <div className="session-header">
-                    <h2>Active Study Session</h2>
-                    <div className="session-status-badge">
-                      <span className="status-dot"></span>
-                      In Progress
+      <IonContent>
+        {activeSession ? (
+          <IonContent fullscreen className="active-session-content">
+            <div className="active-session-wrapper">
+              <IonCard className="active-session-card">
+                <IonCardContent>
+                  <div className="active-session-info">
+                    <div className="session-header">
+                      <h2>Active Study Session</h2>
+                      <div className="session-status-badge">
+                        <span className="status-dot"></span>
+                        In Progress
+                      </div>
                     </div>
-                  </div>
-                  
-                  {/* Timer - Most Important Info */}
-                  <div className="session-timer-container">
-                    <div className="timer-label">
-                      {activeSession.endTime ? "⏱️ Time Remaining" : "⏱️ Time Elapsed"}
+
+                    {/* Timer - Most Important Info */}
+                    <div className="session-timer-container">
+                      <div className="timer-label">
+                        {activeSession.endTime ? "⏱️ Time Remaining" : "⏱️ Time Elapsed"}
+                      </div>
+                      <div className="timer-display">
+                        {formatMs(timeMs)}
+                      </div>
+                      {activeSession.endTime && timeMs > 0 && (
+                        <div className="timer-progress-bar">
+                          <div
+                            className="timer-progress-fill"
+                            style={{
+                              width: `${Math.max(0, Math.min(100, (timeMs / (parseDate(activeSession.endTime)!.getTime() - parseDate(activeSession.startTime)!.getTime())) * 100))}%`
+                            }}
+                          ></div>
+                        </div>
+                      )}
                     </div>
-                    <div className="timer-display">
-                      {formatMs(timeMs)}
-                    </div>
-                    {activeSession.endTime && timeMs > 0 && (
-                      <div className="timer-progress-bar">
-                        <div 
-                          className="timer-progress-fill"
-                          style={{
-                            width: `${Math.max(0, Math.min(100, (timeMs / (parseDate(activeSession.endTime)!.getTime() - parseDate(activeSession.startTime)!.getTime())) * 100))}%`
-                          }}
-                        ></div>
+
+                    {/* Table Information */}
+                    {activeSession.table && (
+                      <div className="session-table-info">
+                        <h3 className="section-title">📍 Table Details</h3>
+                        <div className="table-info-grid">
+                          <div className="info-item">
+                            <span className="info-icon">🪑</span>
+                            <div className="info-content">
+                              <span className="info-label">Table Number</span>
+                              <span className="info-value">{activeSession.table.tableNumber}</span>
+                            </div>
+                          </div>
+                          <div className="info-item">
+                            <span className="info-icon">📌</span>
+                            <div className="info-content">
+                              <span className="info-label">Location</span>
+                              <span className="info-value">{activeSession.table.location}</span>
+                            </div>
+                          </div>
+                        </div>
                       </div>
                     )}
-                  </div>
 
-                  {/* Table Information */}
-                  {activeSession.table && (
-                    <div className="session-table-info">
-                      <h3 className="section-title">📍 Table Details</h3>
-                      <div className="table-info-grid">
-                        <div className="info-item">
-                          <span className="info-icon">🪑</span>
-                          <div className="info-content">
-                            <span className="info-label">Table Number</span>
-                            <span className="info-value">{activeSession.table.tableNumber}</span>
-                          </div>
-                        </div>
-                        <div className="info-item">
-                          <span className="info-icon">📌</span>
-                          <div className="info-content">
-                            <span className="info-label">Location</span>
-                            <span className="info-value">{activeSession.table.location}</span>
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-                  )}
-                  
-                  {/* Session Timeline */}
-                  <div className="session-timeline">
-                    <h3 className="section-title">🕐 Session Timeline</h3>
-                    <div className="timeline-item">
-                      <div className="timeline-dot timeline-dot-start"></div>
-                      <div className="timeline-content">
-                        <span className="timeline-label">Started</span>
-                        <span className="timeline-value">
-                          {activeSession.startTime 
-                            ? new Date(activeSession.startTime).toLocaleString('en-US', {
+                    {/* Session Timeline */}
+                    <div className="session-timeline">
+                      <h3 className="section-title">🕐 Session Timeline</h3>
+                      <div className="timeline-item">
+                        <div className="timeline-dot timeline-dot-start"></div>
+                        <div className="timeline-content">
+                          <span className="timeline-label">Started</span>
+                          <span className="timeline-value">
+                            {activeSession.startTime
+                              ? new Date(activeSession.startTime).toLocaleString('en-US', {
                                 weekday: 'short',
                                 month: 'short',
                                 day: 'numeric',
                                 hour: '2-digit',
                                 minute: '2-digit'
                               })
-                            : "-"}
-                        </span>
-                      </div>
-                    </div>
-                    
-                    {activeSession.endTime && (
-                      <div className="timeline-item">
-                        <div className="timeline-dot timeline-dot-end"></div>
-                        <div className="timeline-content">
-                          <span className="timeline-label">Scheduled End</span>
-                          <span className="timeline-value">
-                            {new Date(activeSession.endTime).toLocaleString('en-US', {
-                              weekday: 'short',
-                              month: 'short',
-                              day: 'numeric',
-                              hour: '2-digit',
-                              minute: '2-digit'
-                            })}
+                              : "-"}
                           </span>
                         </div>
                       </div>
-                    )}
-                  </div>
 
-                  {/* Action Button */}
-                  <IonButton 
-                    expand="block" 
-                    fill="outline" 
-                    className="view-dashboard-button"
-                    onClick={() => history.push('/app/dashboard')}
-                  >
-                    View Dashboard
-                  </IonButton>
-                </div>
-              </IonCardContent>
-            </IonCard>
-          </div>
-        </IonContent>
-      ) : (
-          <IonContent fullscreen className="scanner-content">
-        <div className="scanner-container">
-          {!isScanning && !scannedCode && (
-          <div className="scanner-idle">
-              <IonCard className="scanner-card">
-                <IonCardContent>
-                  <div className="scanner-idle-content">
-                    <IonIcon icon={qrCodeOutline} className="scanner-icon" />
-                  <h2>Scan Table QR Code</h2>
-                    <p>
-                      Point your camera at a table QR code to start a study
-                      session
-                    </p>
+                      {activeSession.endTime && (
+                        <div className="timeline-item">
+                          <div className="timeline-dot timeline-dot-end"></div>
+                          <div className="timeline-content">
+                            <span className="timeline-label">Scheduled End</span>
+                            <span className="timeline-value">
+                              {new Date(activeSession.endTime).toLocaleString('en-US', {
+                                weekday: 'short',
+                                month: 'short',
+                                day: 'numeric',
+                                hour: '2-digit',
+                                minute: '2-digit'
+                              })}
+                            </span>
+                          </div>
+                        </div>
+                      )}
+                    </div>
 
+                    {/* Action Button */}
                     <IonButton
                       expand="block"
-                      size="large"
-                      onClick={handleStartScan}
-                      className="scan-button"
+                      fill="outline"
+                      className="view-dashboard-button"
+                      onClick={() => history.push('/app/dashboard')}
                     >
-                      <IonIcon icon={cameraOutline} slot="start" />
-                      Start Scanning
+                      View Dashboard
                     </IonButton>
                   </div>
                 </IonCardContent>
               </IonCard>
             </div>
-          )}
+          </IonContent>
+        ) : (
+          <IonContent fullscreen className="scanner-content">
+            <div className="scanner-container">
+              {!isScanning && !scannedCode && (
+                <div className="scanner-idle">
+                  <IonCard className="scanner-card">
+                    <IonCardContent>
+                      <div className="scanner-idle-content">
+                        <IonIcon icon={qrCodeOutline} className="scanner-icon" />
+                        <h2>Scan Table QR Code</h2>
+                        <p>
+                          Point your camera at a table QR code to start a study
+                          session
+                        </p>
 
-          {isScanning && (
-            <div className="scanner-active">
-              <div className="scanner-overlay">
-                {/* <div className="scanner-frame">
+                        <IonButton
+                          expand="block"
+                          size="large"
+                          onClick={handleStartScan}
+                          className="scan-button"
+                        >
+                          <IonIcon icon={cameraOutline} slot="start" />
+                          Start Scanning
+                        </IonButton>
+                      </div>
+                    </IonCardContent>
+                  </IonCard>
+                </div>
+              )}
+
+              {isScanning && (
+                <div className="scanner-active">
+                  <div className="scanner-overlay">
+                    {/* <div className="scanner-frame">
                   <div className="scanner-corners">
                     <div className="corner top-left"></div>
                     <div className="corner top-right"></div>
@@ -416,30 +413,30 @@ const { startSession, activeSession,tables } = useTables();
                   </div>
                 </div> */}
 
-                <div className="scanner-instructions">
-                  <Scanner onScan={(result) => handleScanResult(result)} />
+                    <div className="scanner-instructions">
+                      <Scanner onScan={(result) => handleScanResult(result)} />
+                    </div>
+
+                    <IonButton
+                      fill="clear"
+                      color="light"
+                      onClick={handleStopScan}
+                      className="stop-scan-button"
+                    >
+                      <IonIcon icon={closeOutline} />
+                      Cancel
+                    </IonButton>
+                  </div>
                 </div>
+              )}
 
-                <IonButton
-                  fill="clear"
-                  color="light"
-                  onClick={handleStopScan}
-                  className="stop-scan-button"
-                >
-                  <IonIcon icon={closeOutline} />
-                  Cancel
-                </IonButton>
-              </div>
+              {scannedCode && isLoadingTable && (
+                <LoadingSpinner message="Verifying table..." />
+              )}
             </div>
-          )}
+          </IonContent>
+        )}
 
-          {scannedCode && isLoadingTable && (
-            <LoadingSpinner message="Verifying table..." />
-          )}
-        </div>
-      </IonContent>
-      )}
-    
 
         <IonToast
           isOpen={showToast}
@@ -465,122 +462,122 @@ const { startSession, activeSession,tables } = useTables();
               <IonTitle>Start Study Session</IonTitle>
             </IonToolbar>
           </IonHeader>
-            {scannedTable ? (
-              <div className="modal-content">
-                <div className="table-info-section">
-                  <h2 className="table-number">Table {scannedTable.tableNumber}</h2>
-                  <div className="table-details">
-                    <IonItem lines="none">
-                      <IonLabel>
-                        <p className="detail-label">Location</p>
-                        <h3 className="detail-value">{scannedTable.location}</h3>
-                      </IonLabel>
-                    </IonItem>
-                    <IonItem lines="none">
-                      <IonLabel>
-                        <p className="detail-label">Capacity</p>
-                        <h3 className="detail-value">{scannedTable.capacity} person(s)</h3>
-                      </IonLabel>
-                    </IonItem>
-                    <IonItem lines="none">
-                      <IonLabel>
-                        <p className="detail-label">Rate per Hour</p>
-                        <h3 className="detail-value">{hourlyRate} credits/hour</h3>
-                      </IonLabel>
-                    </IonItem>
-                  </div>
-                </div>
-
-                <div className="hours-selection-section">
-                  <IonLabel className="section-label">
-                    <h3>Select Duration</h3>
-                  </IonLabel>
-                  <div className="hours-selector">
-                    <div className="hours-display">
-                      <span className="hours-number">{selectedHours}</span>
-                      <span className="hours-text">{selectedHours === 1 ? 'Hour' : 'Hours'}</span>
-                    </div>
-                    <IonRange
-                      min={1}
-                      max={12}
-                      step={1}
-                      value={selectedHours}
-                      onIonChange={(e) => setSelectedHours(e.detail.value as number)}
-                      pin={false}
-                      className="hours-range"
-                    />
-                    <div className="range-labels">
-                      <span>1h</span>
-                      <span>12h</span>
-                    </div>
-                  </div>
-                </div>
-
-                <div className="credits-summary">
-                  <div className="summary-row">
-                    <span className="summary-label">Duration:</span>
-                    <span className="summary-value">{selectedHours} {selectedHours === 1 ? 'hour' : 'hours'}</span>
-                  </div>
-                  <div className="summary-row">
-                    <span className="summary-label">Rate:</span>
-                    <span className="summary-value">{hourlyRate} credits/hour</span>
-                  </div>
-                  <div className="summary-row total">
-                    <span className="summary-label">Total Credits:</span>
-                    <span className="summary-value highlight">{hourlyRate * selectedHours} credits</span>
-                  </div>
-                  <div className="summary-row">
-                    <span className="summary-label">End Time:</span>
-                    <span className="summary-value">
-                      {new Date(new Date().getTime() + selectedHours * 60 * 60 * 1000).toLocaleString('en-US', {
-                        month: 'short',
-                        day: 'numeric',
-                        hour: '2-digit',
-                        minute: '2-digit'
-                      })}
-                    </span>
-                  </div>
-                </div>
-
-                <div className="modal-buttons">
-                  <IonButton
-                    expand="block"
-                    fill="clear"
-                    onClick={() => {
-                      setShowConfirmAlert(false);
-                      setScannedCode(null);
-                      setSelectedHours(1);
-                    }}
-                  >
-                    Cancel
-                  </IonButton>
-                  <IonButton
-                    expand="block"
-                    onClick={handleStartSession}
-                    className="start-session-btn"
-                  >
-                    Start Session
-                  </IonButton>
+          {scannedTable ? (
+            <div className="modal-content">
+              <div className="table-info-section">
+                <h2 className="table-number">Table {scannedTable.tableNumber}</h2>
+                <div className="table-details">
+                  <IonItem lines="none">
+                    <IonLabel>
+                      <p className="detail-label">Location</p>
+                      <h3 className="detail-value">{scannedTable.location}</h3>
+                    </IonLabel>
+                  </IonItem>
+                  <IonItem lines="none">
+                    <IonLabel>
+                      <p className="detail-label">Capacity</p>
+                      <h3 className="detail-value">{scannedTable.capacity} person(s)</h3>
+                    </IonLabel>
+                  </IonItem>
+                  <IonItem lines="none">
+                    <IonLabel>
+                      <p className="detail-label">Rate per Hour</p>
+                      <h3 className="detail-value"> credits/hour</h3>
+                    </IonLabel>
+                  </IonItem>
                 </div>
               </div>
-            ) : (
-              <div className="modal-content">
-                <div className="error-content">
-                  <IonIcon icon={closeOutline} className="error-icon" />
-                  <h2>Invalid QR Code</h2>
-                  <p>The scanned QR code is not associated with any table.</p>
-                  <IonButton
-                    expand="block"
-                    onClick={() => {
-                      setShowConfirmAlert(false);
-                      setScannedCode(null);
-                    }}
-                  >
-                    OK
-                  </IonButton>
+
+              <div className="hours-selection-section">
+                <IonLabel className="section-label">
+                  <h3>Select Duration</h3>
+                </IonLabel>
+                <div className="hours-selector">
+                  <div className="hours-display">
+                    <span className="hours-number">{selectedHours}</span>
+                    <span className="hours-text">{selectedHours === 1 ? 'Hour' : 'Hours'}</span>
+                  </div>
+                  <IonRange
+                    min={1}
+                    max={12}
+                    step={1}
+                    value={selectedHours}
+                    onIonChange={(e) => setSelectedHours(e.detail.value as number)}
+                    pin={false}
+                    className="hours-range"
+                  />
+                  <div className="range-labels">
+                    <span>1h</span>
+                    <span>12h</span>
+                  </div>
                 </div>
               </div>
-            )}
+
+              <div className="credits-summary">
+                <div className="summary-row">
+                  <span className="summary-label">Duration:</span>
+                  <span className="summary-value">{selectedHours} {selectedHours === 1 ? 'hour' : 'hours'}</span>
+                </div>
+                <div className="summary-row">
+                  <span className="summary-label">Rate:</span>
+                  <span className="summary-value"> credits/hour</span>
+                </div>
+                <div className="summary-row total">
+                  <span className="summary-label">Total Credits:</span>
+                  <span className="summary-value highlight">{selectedHours} credits</span>
+                </div>
+                <div className="summary-row">
+                  <span className="summary-label">End Time:</span>
+                  <span className="summary-value">
+                    {new Date(new Date().getTime() + selectedHours * 60 * 60 * 1000).toLocaleString('en-US', {
+                      month: 'short',
+                      day: 'numeric',
+                      hour: '2-digit',
+                      minute: '2-digit'
+                    })}
+                  </span>
+                </div>
+              </div>
+
+              <div className="modal-buttons">
+                <IonButton
+                  expand="block"
+                  fill="clear"
+                  onClick={() => {
+                    setShowConfirmAlert(false);
+                    setScannedCode(null);
+                    setSelectedHours(1);
+                  }}
+                >
+                  Cancel
+                </IonButton>
+                <IonButton
+                  expand="block"
+                  onClick={handleStartSession}
+                  className="start-session-btn"
+                >
+                  Start Session
+                </IonButton>
+              </div>
+            </div>
+          ) : (
+            <div className="modal-content">
+              <div className="error-content">
+                <IonIcon icon={closeOutline} className="error-icon" />
+                <h2>Invalid QR Code</h2>
+                <p>The scanned QR code is not associated with any table.</p>
+                <IonButton
+                  expand="block"
+                  onClick={() => {
+                    setShowConfirmAlert(false);
+                    setScannedCode(null);
+                  }}
+                >
+                  OK
+                </IonButton>
+              </div>
+            </div>
+          )}
         </IonModal>
 
         {/* Confirmation Toast */}
@@ -594,8 +591,8 @@ const { startSession, activeSession,tables } = useTables();
           confirmText={confirmOptions.confirmText}
           cancelText={confirmOptions.cancelText}
         />
-        </IonContent>
-  
+      </IonContent>
+
     </IonPage>
   );
 };

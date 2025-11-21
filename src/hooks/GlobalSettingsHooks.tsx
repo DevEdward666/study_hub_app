@@ -15,22 +15,6 @@ export const useGlobalSetting = (key: string) => {
   });
 };
 
-/**
- * Hook to fetch the hourly rate from global settings
- */
-export const useHourlyRate = () => {
-  const { data, isLoading, error } = useGlobalSetting("tables.default_hourly_rate");
-  
-  // Parse the value as number, fallback to 50 if not found or invalid
-  const rate = data && typeof data === 'string' ? parseFloat(data) : 50;
-  
-  return {
-    hourlyRate: isNaN(rate) ? 50 : rate,
-    isLoading,
-    error,
-    rawValue: data,
-  };
-};
 
 /**
  * Hook to fetch all global settings

@@ -1,0 +1,172 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>SignalR Connection Test</title>
+    <style>
+        body {
+            font-family: monospace;
+            padding: 20px;
+            background: #1e1e1e;
+            color: #d4d4d4;
+        }
+        .log {
+            padding: 5px;
+            margin: 2px 0;
+            border-left: 3px solid #007acc;
+            background: #2d2d2d;
+        }
+        .error { border-left-color: #f44336; }
+        .success { border-left-color: #4caf50; }
+        .warning { border-left-color: #ff9800; }
+        button {
+            padding: 10px 20px;
+            margin: 5px;
+            font-size: 16px;
+            cursor: pointer;
+        }
+        #status {
+            padding: 10px;
+            margin: 10px 0;
+            background: #2d2d2d;
+            border-radius: 5px;
+        }
+    </style>
+</head>
+<body>
+    <h1>🔍 SignalR Connection Tester</h1>
+    <div id="status">Status: Not connected</div>
+    
+    <button onclick="testConnection()">Test SignalR Connection</button>
+    <button onclick="testAuth()">Check Auth Token</button>
+    <button onclick="clearLogs()">Clear Logs</button>
+    <button onclick="location.reload()">Refresh Page</button>
+    
+    <h2>Console Logs:</h2>
+    <div id="logs"></div>
+
+    <script src="https://cdn.jsdelivr.net/npm/@microsoft/signalr@7.0.0/dist/browser/signalr.min.js"></script>
+    <script>
+        const logs = document.getElementById('logs');
+        const statusDiv = document.getElementById('status');
+
+        function log(message, type = 'log') {
+            const entry = document.createElement('div');
+            entry.className = `log ${type}`;
+            entry.textContent = `[${new Date().toLocaleTimeString()}] ${message}`;
+            logs.appendChild(entry);
+            logs.scrollTop = logs.scrollHeight;
+            console.log(message);
+        }
+
+        function clearLogs() {
+            logs.innerHTML = '';
+        }
+
+        function testAuth() {
+            const token = localStorage.getItem('auth_token');
+            if (token) {
+                log('✅ Auth token exists', 'success');
+                try {
+                    const payload = JSON.parse(atob(token.split('.')[1]));
+                    log(`User ID: ${payload.nameid}`, 'log');
+                    log(`Role: ${payload.role}`, 'log');
+                    log(`Expires: ${new Date(payload.exp * 1000).toLocaleString()}`, 'log');
+                    const expired = Date.now() > payload.exp * 1000;
+                    log(`Expired: ${expired ? '❌ YES' : '✅ NO'}`, expired ? 'error' : 'success');
+                } catch (e) {
+                    log('❌ Failed to decode token: ' + e.message, 'error');
+                }
+            } else {
+                log('❌ No auth token found - please login first', 'error');
+            }
+        }
+
+        async function testConnection() {
+            log('🔌 Starting SignalR connection test...', 'log');
+            
+            const token = localStorage.getItem('auth_token');
+            if (!token) {
+                log('❌ No auth token - cannot connect', 'error');
+                statusDiv.textContent = 'Status: ❌ No auth token';
+                return;
+            }
+
+            const apiUrl = 'https://3qrbqpcx-5212.asse.devtunnels.ms';
+            const hubUrl = `${apiUrl}/hubs/notifications`;
+            
+            log(`📡 Connecting to: ${hubUrl}`, 'log');
+            statusDiv.textContent = 'Status: 🔄 Connecting...';
+
+            try {
+                const connection = new signalR.HubConnectionBuilder()
+                    .withUrl(hubUrl, {
+                        accessTokenFactory: () => token,
+                        withCredentials: true,
+                        transport: signalR.HttpTransportType.WebSockets | signalR.HttpTransportType.LongPolling
+                    })
+                    .withAutomaticReconnect()
+                    .configureLogging(signalR.LogLevel.Debug)
+                    .build();
+
+                // Set up event handler BEFORE connecting
+                connection.on("SessionEnded", (notification) => {
+                    log('📨 SessionEnded event received!', 'success');
+                    log(JSON.stringify(notification, null, 2), 'success');
+                    alert('🔔 Session Ended Notification Received!\n\nTable: ' + notification.tableNumber + '\nUser: ' + notification.userName);
+                });
+
+                connection.onclose((error) => {
+                    log('❌ Connection closed: ' + (error || 'No error'), 'error');
+                    statusDiv.textContent = 'Status: ❌ Disconnected';
+                });
+
+                connection.onreconnecting((error) => {
+                    log('⚠️ Reconnecting: ' + (error || 'No error'), 'warning');
+                    statusDiv.textContent = 'Status: 🔄 Reconnecting...';
+                });
+
+                connection.onreconnected((connectionId) => {
+                    log('✅ Reconnected: ' + connectionId, 'success');
+                    statusDiv.textContent = 'Status: ✅ Connected (reconnected)';
+                });
+
+                // Connect
+                await connection.start();
+                log('✅ SignalR connected successfully!', 'success');
+                log(`Connection ID: ${connection.connectionId}`, 'success');
+                statusDiv.textContent = 'Status: ✅ Connected';
+
+                // Join admins group
+                log('📡 Joining admins group...', 'log');
+                try {
+                    await connection.invoke("JoinAdmins");
+                    log('✅ Joined admins group successfully!', 'success');
+                    statusDiv.textContent = 'Status: ✅ Connected & In Admins Group';
+                } catch (err) {
+                    log('❌ Failed to join admins group: ' + err, 'error');
+                    statusDiv.textContent = 'Status: ⚠️ Connected but not in admins group';
+                }
+
+                // Keep connection alive
+                window.signalRConnection = connection;
+                log('ℹ️ Connection stored in window.signalRConnection', 'log');
+                log('ℹ️ Waiting for SessionEnded notifications...', 'log');
+                log('ℹ️ Create a session and wait for it to expire to test', 'log');
+
+            } catch (error) {
+                log('❌ Connection failed: ' + error.message, 'error');
+                log('Error details: ' + JSON.stringify(error, null, 2), 'error');
+                statusDiv.textContent = 'Status: ❌ Connection failed';
+            }
+        }
+
+        // Auto-run auth check on load
+        window.addEventListener('load', () => {
+            log('🔍 Page loaded - checking authentication...', 'log');
+            testAuth();
+            log('ℹ️ Click "Test SignalR Connection" to connect', 'log');
+        });
+    </script>
+</body>
+</html>
+

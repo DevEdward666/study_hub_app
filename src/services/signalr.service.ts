@@ -84,18 +84,26 @@ export class SignalRService {
     console.log(`Device detection: isMobile=${isMobile}, isAndroid=${isAndroid}`);
 
     // For Android, prefer LongPolling over WebSockets due to Chrome issues
-    // For other platforms, prefer WebSockets
+    // For other platforms, prefer WebSockets first
+    // Note: ServerSentEvents can have CORS issues, so we prioritize WebSockets and LongPolling
     const transportOrder = isAndroid
-      ? signalR.HttpTransportType.LongPolling | signalR.HttpTransportType.ServerSentEvents | signalR.HttpTransportType.WebSockets
-      : signalR.HttpTransportType.WebSockets | signalR.HttpTransportType.ServerSentEvents | signalR.HttpTransportType.LongPolling;
+      ? signalR.HttpTransportType.LongPolling | signalR.HttpTransportType.WebSockets
+      : signalR.HttpTransportType.WebSockets | signalR.HttpTransportType.LongPolling;
+
+    // Get auth token from localStorage
+    const getAuthToken = () => {
+      return localStorage.getItem('auth_token');
+    };
 
     this.connection = new signalR.HubConnectionBuilder()
       .withUrl(`${this.baseUrl}/hubs/notifications`, {
         skipNegotiation: false,
         transport: transportOrder,
-        withCredentials: false,
-        headers: {
-          // Add any auth headers if needed
+        withCredentials: true, // Enable credentials for CORS
+        accessTokenFactory: () => {
+          const token = getAuthToken();
+          console.log('SignalR: Getting auth token for connection:', token ? 'Token exists' : 'No token found');
+          return token || '';
         },
         // Timeout settings optimized for mobile
         timeout: 30000, // 30 seconds (default is 15s, mobile needs more time)
@@ -130,12 +138,21 @@ export class SignalRService {
   private setupEventHandlers() {
     if (!this.connection) return;
 
+    console.log('📡 Setting up SignalR event handlers...');
+
     this.connection.on("SessionEnded", (notification: SessionEndedNotification) => {
-      console.log("Session ended notification received:", notification);
+      console.log("📨 SignalR event 'SessionEnded' received from server:", notification);
       if (this.onSessionEndedCallback) {
+        console.log("✅ Calling registered SessionEnded callback");
         this.onSessionEndedCallback(notification);
+      } else {
+        console.warn("⚠️ SessionEnded event received but no callback registered!");
+        console.warn("Make sure onSessionEnded() is called before the event fires");
       }
     });
+
+    console.log('✅ SignalR event handlers registered');
+
 
     this.connection.onreconnecting((error?: Error) => {
       this.reconnectAttempts++;
@@ -278,7 +295,18 @@ export class SignalRService {
   }
 
   onSessionEnded(callback: (notification: SessionEndedNotification) => void) {
+    console.log('📝 Registering SessionEnded handler');
     this.onSessionEndedCallback = callback;
+    
+    // If connection already exists and has event handlers set up,
+    // we need to ensure the handler is active
+    // The event listener was already registered in setupEventHandlers(),
+    // this just updates the callback that gets called
+    if (this.connection) {
+      console.log('✅ SessionEnded handler registered (connection exists)');
+    } else {
+      console.log('ℹ️ SessionEnded handler registered (connection will be created)');
+    }
   }
 
   getConnectionState(): signalR.HubConnectionState | null {
@@ -295,10 +323,27 @@ export class SignalRService {
 }
 
 // Create singleton instance
-const apiBaseUrl = import.meta.env.VITE_API_URL || "https://3qrbqpcx-5173.asse.devtunnels.ms/api";
-// Remove /api suffix to get base URL for SignalR hub
-const baseUrl = apiBaseUrl.endsWith("/api")
-  ? apiBaseUrl.substring(0, apiBaseUrl.length - 4)
-  : apiBaseUrl.replace("/api/", "");
+const apiBaseUrl = import.meta.env.VITE_API_URL || "https://3qrbqpcx-5212.asse.devtunnels.ms/api";
+
+// Validate and construct base URL for SignalR hub
+let baseUrl: string;
+try {
+  // Remove /api suffix to get base URL for SignalR hub
+  if (apiBaseUrl.endsWith("/api")) {
+    baseUrl = apiBaseUrl.substring(0, apiBaseUrl.length - 4);
+  } else if (apiBaseUrl.includes("/api/")) {
+    baseUrl = apiBaseUrl.replace("/api/", "/");
+  } else {
+    baseUrl = apiBaseUrl;
+  }
+  
+  // Validate the URL
+  new URL(baseUrl); // This will throw if invalid
+  console.log("SignalR base URL:", baseUrl);
+} catch (error) {
+  console.error("Invalid base URL, using default:", error);
+  baseUrl = "https://3qrbqpcx-5212.asse.devtunnels.ms";
+}
+
 export const signalRService = new SignalRService(baseUrl);
 
