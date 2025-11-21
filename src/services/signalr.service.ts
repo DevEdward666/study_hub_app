@@ -1,4 +1,6 @@
 import * as signalR from "@microsoft/signalr";
+import { env } from "process";
+import { en } from "zod/v4/locales";
 
 export interface SessionEndedNotification {
   id: string;
@@ -342,7 +344,7 @@ try {
   console.log("SignalR base URL:", baseUrl);
 } catch (error) {
   console.error("Invalid base URL, using default:", error);
-  baseUrl = "https://3qrbqpcx-5212.asse.devtunnels.ms";
+  baseUrl = import.meta.env.VITE_API_URL || "https://studyhubapi-i0o7.onrender.com/api";
 }
 
 export const signalRService = new SignalRService(baseUrl);
