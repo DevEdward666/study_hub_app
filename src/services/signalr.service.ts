@@ -325,7 +325,7 @@ export class SignalRService {
 }
 
 // Create singleton instance
-const apiBaseUrl = import.meta.env.VITE_API_URL || "https://studyhubapi-i0o7.onrender.com/api";
+const apiBaseUrl = import.meta.env.VITE_BASE_URL || "https://studyhubapi-i0o7.onrender.com/api";
 
 // Validate and construct base URL for SignalR hub
 let baseUrl: string;
@@ -344,7 +344,7 @@ try {
   console.log("SignalR base URL:", baseUrl);
 } catch (error) {
   console.error("Invalid base URL, using default:", error);
-  baseUrl = import.meta.env.VITE_API_URL || "https://studyhubapi-i0o7.onrender.com/api";
+  baseUrl = import.meta.env.VITE_BASE_URL || "https://studyhubapi-i0o7.onrender.com/api";
 }
 
 export const signalRService = new SignalRService(baseUrl);
