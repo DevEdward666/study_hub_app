@@ -407,6 +407,12 @@ const UserSubscriptionManagement: React.FC = () => {
                         <p style={{ margin: "4px 0", fontSize: "12px", color: "#999" }}>
                           Purchased: {new Date(sub.purchaseDate).toLocaleDateString()}
                         </p>
+                        {sub.expiryDate && (
+                          <p style={{ margin: "4px 0", fontSize: "12px", color: new Date(sub.expiryDate) < new Date() ? "#d32f2f" : "#1976d2" }}>
+                            {new Date(sub.expiryDate) < new Date() ? "Expired on: " : "Expires on: "}
+                            {new Date(sub.expiryDate).toLocaleDateString()} {new Date(sub.expiryDate).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                          </p>
+                        )}
                       </div>
                     </div>
                     <div style={{ minWidth: "200px" }}>

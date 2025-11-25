@@ -142,19 +142,28 @@ export class SignalRService {
 
     console.log('📡 Setting up SignalR event handlers...');
 
+    // Remove any existing handlers first to avoid duplicates
+    this.connection.off("SessionEnded");
+
     this.connection.on("SessionEnded", (notification: SessionEndedNotification) => {
       console.log("📨 SignalR event 'SessionEnded' received from server:", notification);
+      console.log("📊 Notification details:", JSON.stringify(notification, null, 2));
+
       if (this.onSessionEndedCallback) {
         console.log("✅ Calling registered SessionEnded callback");
-        this.onSessionEndedCallback(notification);
+        try {
+          this.onSessionEndedCallback(notification);
+          console.log("✅ Callback executed successfully");
+        } catch (error) {
+          console.error("❌ Error in SessionEnded callback:", error);
+        }
       } else {
         console.warn("⚠️ SessionEnded event received but no callback registered!");
         console.warn("Make sure onSessionEnded() is called before the event fires");
       }
     });
 
-    console.log('✅ SignalR event handlers registered');
-
+    console.log('✅ SignalR event handlers registered for "SessionEnded"');
 
     this.connection.onreconnecting((error?: Error) => {
       this.reconnectAttempts++;
@@ -285,20 +294,42 @@ export class SignalRService {
 
   private async joinAdminsGroup() {
     if (!this.connection || this.connection.state !== signalR.HubConnectionState.Connected) {
-      return;
+      console.log("⚠️ Cannot join admins group - connection not established");
+      return false;
     }
 
     try {
-      await this.connection.invoke("JoinAdmins");
-      console.log("Joined admins group");
+      console.log("🔐 Attempting to join 'admins' group...");
+      const result = await this.connection.invoke("JoinAdmins");
+      console.log("📊 JoinAdmins result:", result);
+
+      if (result) {
+        console.log("✅ Successfully joined 'admins' group - will receive SessionEnded notifications");
+        return true;
+      } else {
+        console.error("❌ Failed to join admins group - user may not have admin role");
+        console.error("You will NOT receive SessionEnded notifications!");
+        return false;
+      }
     } catch (err) {
-      console.error("Error joining admins group:", err);
+      console.error("❌ Error joining admins group:", err);
+      console.error("This means you won't receive SessionEnded notifications!");
+      return false;
     }
   }
 
   onSessionEnded(callback: (notification: SessionEndedNotification) => void) {
-    console.log('📝 Registering SessionEnded handler');
+    console.log('📝 Registering SessionEnded handler callback');
+    console.log('🔍 Current callback status:', this.onSessionEndedCallback ? 'Already exists (will be replaced)' : 'New callback');
     this.onSessionEndedCallback = callback;
+    console.log('✅ SessionEnded callback registered successfully');
+
+    // If connection already exists, make sure the event handler is set up
+    if (this.connection) {
+      console.log('🔄 Re-setting up event handlers to ensure callback is active');
+      this.setupEventHandlers();
+    }
+
 
     // If connection already exists and has event handlers set up,
     // we need to ensure the handler is active

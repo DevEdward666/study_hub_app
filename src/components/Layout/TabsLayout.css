@@ -526,27 +526,47 @@
    SESSION ENDED MODAL
    ============================================ */
 .session-ended-modal {
-  --width: 90%;
-  --max-width: 500px;
+  --width: 95%;
+  --max-width: 550px;
   --height: auto;
-  --border-radius: 16px;
+  --border-radius: 20px;
+  --box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
 }
 
 .session-ended-modal ion-modal {
-  --backdrop-opacity: 0.7;
+  --backdrop-opacity: 0.8;
+}
+
+.session-ended-modal ion-content {
+  --background: #f8f9fa;
 }
 
 @keyframes pulse {
   0%,
   100% {
     transform: scale(1);
-    box-shadow: 0 0 0 0 rgba(255, 107, 107, 0.7);
+    box-shadow: 0 8px 24px rgba(255, 107, 107, 0.3);
   }
 
   50% {
-    transform: scale(1.05);
-    box-shadow: 0 0 0 20px rgba(255, 107, 107, 0);
+    transform: scale(1.08);
+    box-shadow: 0 12px 32px rgba(255, 107, 107, 0.5);
   }
+}
+
+@keyframes slideInUp {
+  from {
+    opacity: 0;
+    transform: translateY(30px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.session-ended-modal ion-card {
+  animation: slideInUp 0.4s ease-out;
 }
 
 /* Tablet/Desktop - Larger modal */
@@ -556,3 +576,15 @@
     --max-width: 600px;
   }
 }
+
+/* Mobile - Full width modal */
+@media (max-width: 576px) {
+  .session-ended-modal {
+    --width: 100%;
+    --max-width: 100%;
+    --height: auto;
+    --border-radius: 20px 20px 0 0;
+  }
+}
+
+

@@ -183,11 +183,11 @@ const UserSessionManagement: React.FC = () => {
       <IonContent style={{ height: '100vh', background: '#f5f5f5' }}>
         <div style={{ padding: '20px', minHeight: '100%' }}>
           <div style={{ marginBottom: '16px' }}>
-            <h2 style={{ color: 'var(--ion-color-primary)', margin: '0 0 4px 0', fontSize: '28px', display: 'flex', alignItems: 'center', gap: '12px' }}>
+            <h2 style={{ color: 'var(--ion-color-primary)', margin: '0 0 4px 0', fontSize: '14px', display: 'flex', alignItems: 'center', gap: '8px', fontWeight: 'bold' }}>
               <IonIcon icon={desktopOutline} />
               User & Session Management
             </h2>
-            <p style={{ color: 'black', margin: '0', fontSize: '16px' }}>Assign tables to users, pause/resume sessions, track hours</p>
+            <p style={{ color: 'black', margin: '0', fontSize: '12px', opacity: 0.7 }}>Assign tables to users, pause/resume sessions, track hours</p>
           </div>
           <LoadingSpinner message="Loading users and sessions..." />
         </div>
@@ -201,11 +201,12 @@ const UserSessionManagement: React.FC = () => {
         <div className="page-header">
           <div className="header-content">
             <div className="header-text">
-              <h2 style={{ color: 'var(--ion-color-primary)' }}> <IonIcon icon={desktopOutline} />
-                User & Session Management</h2>
-              <p>   Assign tables to users, pause/resume sessions, track hours</p>
+              <h2 style={{ color: 'var(--ion-color-primary)', fontSize: '14px', fontWeight: 'bold', display: 'flex', alignItems: 'center', gap: '8px' }}> 
+                <IonIcon icon={desktopOutline} />
+                User & Session Management
+              </h2>
+              <p style={{ color: 'black', fontSize: '12px', opacity: 0.7 }}>Assign tables to users, pause/resume sessions, track hours</p>
             </div>
-
           </div>
         </div>
 
@@ -213,38 +214,38 @@ const UserSessionManagement: React.FC = () => {
         <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(200px, 1fr))", gap: "12px", marginBottom: "20px" }}>
           <IonCard>
             <IonCardContent style={{ textAlign: "center", padding: "16px" }}>
-              <IonIcon icon={personOutline} style={{ fontSize: "32px", color: "var(--ion-color-primary)" }} />
-              <h3 style={{ margin: "8px 0 4px", fontSize: "24px", fontWeight: "bold" }}>
+              <IonIcon icon={personOutline} style={{ fontSize: "24px", color: "var(--ion-color-primary)" }} />
+              <h3 style={{ margin: "8px 0 4px", fontSize: "14px", fontWeight: "bold", color: "var(--ion-color-primary)" }}>
                 {activeSubscriptions.length}
               </h3>
-              <p style={{ margin: 0, fontSize: "12px", color: "#666" }}>Active Users</p>
+              <p style={{ margin: 0, fontSize: "12px", color: "black", opacity: 0.7 }}>Active Users</p>
             </IonCardContent>
           </IonCard>
           <IonCard>
             <IonCardContent style={{ textAlign: "center", padding: "16px" }}>
-              <IonIcon icon={playOutline} style={{ fontSize: "32px", color: "var(--ion-color-success)" }} />
-              <h3 style={{ margin: "8px 0 4px", fontSize: "24px", fontWeight: "bold" }}>
+              <IonIcon icon={playOutline} style={{ fontSize: "24px", color: "var(--ion-color-primary)" }} />
+              <h3 style={{ margin: "8px 0 4px", fontSize: "14px", fontWeight: "bold", color: "var(--ion-color-primary)" }}>
                 {activeSessions.length}
               </h3>
-              <p style={{ margin: 0, fontSize: "12px", color: "#666" }}>In Session</p>
+              <p style={{ margin: 0, fontSize: "12px", color: "black", opacity: 0.7 }}>In Session</p>
             </IonCardContent>
           </IonCard>
           <IonCard>
             <IonCardContent style={{ textAlign: "center", padding: "16px" }}>
-              <IonIcon icon={desktopOutline} style={{ fontSize: "32px", color: "var(--ion-color-warning)" }} />
-              <h3 style={{ margin: "8px 0 4px", fontSize: "24px", fontWeight: "bold" }}>
+              <IonIcon icon={desktopOutline} style={{ fontSize: "24px", color: "var(--ion-color-primary)" }} />
+              <h3 style={{ margin: "8px 0 4px", fontSize: "14px", fontWeight: "bold", color: "var(--ion-color-primary)" }}>
                 {availableTables.length}
               </h3>
-              <p style={{ margin: 0, fontSize: "12px", color: "#666" }}>Tables Available</p>
+              <p style={{ margin: 0, fontSize: "12px", color: "black", opacity: 0.7 }}>Tables Available</p>
             </IonCardContent>
           </IonCard>
           <IonCard>
             <IonCardContent style={{ textAlign: "center", padding: "16px" }}>
-              <IonIcon icon={timeOutline} style={{ fontSize: "32px", color: "var(--ion-color-tertiary)" }} />
-              <h3 style={{ margin: "8px 0 4px", fontSize: "24px", fontWeight: "bold" }}>
+              <IonIcon icon={timeOutline} style={{ fontSize: "24px", color: "var(--ion-color-primary)" }} />
+              <h3 style={{ margin: "8px 0 4px", fontSize: "14px", fontWeight: "bold", color: "var(--ion-color-primary)" }}>
                 {activeSubscriptions.reduce((sum, s) => sum + s.remainingHours, 0).toFixed(0)}
               </h3>
-              <p style={{ margin: 0, fontSize: "12px", color: "#666" }}>Total Hours Available</p>
+              <p style={{ margin: 0, fontSize: "12px", color: "black", opacity: 0.7 }}>Total Hours Available</p>
             </IonCardContent>
           </IonCard>
         </div>
@@ -252,7 +253,7 @@ const UserSessionManagement: React.FC = () => {
         {/* Active Sessions Section */}
         {activeSessions.length > 0 && (
           <div style={{ marginBottom: "30px" }}>
-            <h2 style={{ fontSize: "18px", fontWeight: "bold", marginBottom: "12px", color: "var(--ion-color-success)" }}>
+            <h2 style={{ fontSize: "14px", fontWeight: "bold", marginBottom: "12px", color: "var(--ion-color-primary)" }}>
               🟢 Active Sessions
             </h2>
             <IonList>
@@ -263,25 +264,43 @@ const UserSessionManagement: React.FC = () => {
                 const userName = userSubscription?.user?.name || sessionData?.customerName || 'User';
 
                 return (
-                  <IonCard key={sessionData?.id} style={{ marginBottom: "12px", border: "2px solid var(--ion-color-success)" }}>
+                  <IonCard key={sessionData?.id} style={{ marginBottom: "12px", border: "2px solid var(--ion-color-primary)" }}>
                     <IonCardContent>
                       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", flexWrap: "wrap", gap: "12px" }}>
                         <div style={{ flex: 1, minWidth: "250px" }}>
                           <div style={{ display: "flex", alignItems: "center", gap: "8px", marginBottom: "12px" }}>
-                            <h3 style={{ margin: 0, fontSize: "18px", fontWeight: "bold" }}>
+                            <h3 style={{ margin: 0, fontSize: "14px", fontWeight: "bold", color: "var(--ion-color-primary)" }}>
                               {userName}
                             </h3>
                           </div>
                           <div style={{ marginLeft: "8px" }}>
-                            <p style={{ margin: "4px 0", fontSize: "14px" }}>
+                            <p style={{ margin: "4px 0", fontSize: "13px", color: "black" }}>
                               📍 <strong>Table {table?.tableNumber}</strong>
                             </p>
-                            <p style={{ margin: "4px 0", fontSize: "14px", color: "#666" }}>
+                            <p style={{ margin: "4px 0", fontSize: "13px", color: "black", opacity: 0.8 }}>
                               💰 {sessionData?.subscription?.packageName || userSubscription?.packageName || 'Subscription'}
                             </p>
-                            <p style={{ margin: "4px 0", fontSize: "14px", color: "#666" }}>
+                            <p style={{ margin: "4px 0", fontSize: "12px", color: "black", opacity: 0.7 }}>
                               🕐 Started: {sessionData?.startTime ? new Date(sessionData.startTime).toLocaleString() : 'N/A'}
                             </p>
+                            {userSubscription?.expiryDate && (
+                              <p style={{ 
+                                margin: "4px 0", 
+                                fontSize: "12px", 
+                                color: "black",
+                                fontWeight: "500",
+                                opacity: new Date(userSubscription.expiryDate) < new Date() ? 1 : 0.8
+                              }}>
+                                {new Date(userSubscription.expiryDate) < new Date() ? "⏰ Expired: " : "⏰ Expires: "}
+                                {new Date(userSubscription.expiryDate).toLocaleString([], { 
+                                  month: 'short', 
+                                  day: 'numeric', 
+                                  year: 'numeric',
+                                  hour: '2-digit', 
+                                  minute: '2-digit' 
+                                })}
+                              </p>
+                            )}
                           </div>
                         </div>
                         <div style={{ display: "flex", flexDirection: "column", gap: "12px", alignItems: "flex-end" }}>
@@ -333,15 +352,15 @@ const UserSessionManagement: React.FC = () => {
 
         {/* Available Users Section */}
         <div>
-          <h2 style={{ fontSize: "18px", fontWeight: "bold", marginBottom: "12px" }}>
+          <h2 style={{ fontSize: "14px", fontWeight: "bold", marginBottom: "12px", color: "var(--ion-color-primary)" }}>
             Users with Active Hours
           </h2>
           {filteredSubscriptions.length === 0 ? (
             <IonCard>
               <IonCardContent style={{ textAlign: "center", padding: "40px" }}>
-                <IonIcon icon={personOutline} style={{ fontSize: "64px", color: "#ccc", marginBottom: "16px" }} />
-                <IonText color="medium">
-                  <p>No users found with active subscriptions.</p>
+                <IonIcon icon={personOutline} style={{ fontSize: "48px", color: "var(--ion-color-primary)", opacity: 0.3, marginBottom: "16px" }} />
+                <IonText color="primary">
+                  <p style={{ fontSize: "12px", margin: 0 }}>No users found with active subscriptions.</p>
                 </IonText>
               </IonCardContent>
             </IonCard>
@@ -361,25 +380,43 @@ const UserSessionManagement: React.FC = () => {
                       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: "16px" }}>
                         <div style={{ flex: 1, minWidth: "250px" }}>
                           <div style={{ display: "flex", alignItems: "center", gap: "8px", marginBottom: "8px" }}>
-                            <IonIcon icon={personOutline} style={{ fontSize: "24px", color: "var(--ion-color-primary)" }} />
+                            <IonIcon icon={personOutline} style={{ fontSize: "20px", color: "var(--ion-color-primary)" }} />
                             <div>
-                              <h3 style={{ margin: 0, fontSize: "18px", fontWeight: "bold" }}>
+                              <h3 style={{ margin: 0, fontSize: "14px", fontWeight: "bold", color: "var(--ion-color-primary)" }}>
                                 {sub.user?.name || sub.user?.email}
                               </h3>
-                              <p style={{ margin: "2px 0 0 0", fontSize: "12px", color: "#666" }}>
+                              <p style={{ margin: "2px 0 0 0", fontSize: "12px", color: "black", opacity: 0.7 }}>
                                 {sub.user?.email}
                               </p>
                             </div>
                             {isInSession && (
-                              <IonBadge color="success">In Session</IonBadge>
+                              <IonBadge color="primary">In Session</IonBadge>
                             )}
                           </div>
-                          <div style={{ marginLeft: "32px" }}>
-                            <p style={{ margin: "4px 0", fontSize: "14px", fontWeight: "600", color: "var(--ion-color-primary)" }}>
+                          <div style={{ marginLeft: "28px" }}>
+                            <p style={{ margin: "4px 0", fontSize: "13px", fontWeight: "600", color: "var(--ion-color-primary)" }}>
                               📦 {sub.packageName}
                             </p>
+                            {sub.expiryDate && (
+                              <p style={{ 
+                                margin: "4px 0", 
+                                fontSize: "12px", 
+                                color: "black",
+                                fontWeight: "500",
+                                opacity: new Date(sub.expiryDate) < new Date() ? 1 : 0.8
+                              }}>
+                                {new Date(sub.expiryDate) < new Date() ? "⏰ Expired: " : "⏰ Expires: "}
+                                {new Date(sub.expiryDate).toLocaleString([], { 
+                                  month: 'short', 
+                                  day: 'numeric', 
+                                  year: 'numeric',
+                                  hour: '2-digit', 
+                                  minute: '2-digit' 
+                                })}
+                              </p>
+                            )}
                             <div style={{ marginTop: "8px" }}>
-                              <div style={{ display: "flex", justifyContent: "space-between", fontSize: "12px", marginBottom: "4px" }}>
+                              <div style={{ display: "flex", justifyContent: "space-between", fontSize: "12px", marginBottom: "4px", color: "black" }}>
                                 <span>Remaining:</span>
                                 <span>
                                   <strong>
@@ -393,13 +430,13 @@ const UserSessionManagement: React.FC = () => {
                                   </strong>
                                 </span>
                               </div>
-                              <div style={{ display: "flex", justifyContent: "space-between", fontSize: "11px", marginBottom: "4px", color: "#666" }}>
+                              <div style={{ display: "flex", justifyContent: "space-between", fontSize: "12px", marginBottom: "4px", color: "black", opacity: 0.7 }}>
                                 <span>Total:</span>
                                 <span>{sub.totalHours.toFixed(0)}h</span>
                               </div>
                               <IonProgressBar
                                 value={sub.remainingHours / sub.totalHours}
-                                color={sub.percentageUsed > 80 ? "danger" : "success"}
+                                color="primary"
                               />
                             </div>
                           </div>
@@ -448,11 +485,13 @@ const UserSessionManagement: React.FC = () => {
             {selectedSubscription && (
               <>
                 <div style={{ marginBottom: "24px", padding: "16px", background: "#f5f5f5", borderRadius: "8px" }}>
-                  <h3 style={{ margin: "0 0 8px 0" }}>{selectedSubscription.user?.name || selectedSubscription.user?.email}</h3>
-                  <p style={{ margin: "4px 0", fontSize: "14px" }}>
+                  <h3 style={{ margin: "0 0 8px 0", fontSize: "14px", fontWeight: "bold", color: "var(--ion-color-primary)" }}>
+                    {selectedSubscription.user?.name || selectedSubscription.user?.email}
+                  </h3>
+                  <p style={{ margin: "4px 0", fontSize: "13px", color: "black" }}>
                     📦 {selectedSubscription.packageName}
                   </p>
-                  <p style={{ margin: "4px 0", fontSize: "14px", fontWeight: "bold", color: "var(--ion-color-success)" }}>
+                  <p style={{ margin: "4px 0", fontSize: "13px", fontWeight: "bold", color: "var(--ion-color-primary)" }}>
                     ⏱️ {selectedSubscription.remainingHours.toFixed(1)} hours remaining
                   </p>
                 </div>
@@ -473,8 +512,8 @@ const UserSessionManagement: React.FC = () => {
                 </IonItem>
 
                 {availableTables.length === 0 && (
-                  <IonText color="warning">
-                    <p style={{ fontSize: "14px", marginTop: "12px" }}>
+                  <IonText color="primary">
+                    <p style={{ fontSize: "12px", marginTop: "12px", opacity: 0.8 }}>
                       ⚠️ No tables available. Please wait for a table to become free.
                     </p>
                   </IonText>

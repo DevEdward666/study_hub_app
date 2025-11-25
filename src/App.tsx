@@ -65,6 +65,9 @@ import UserSubscriptionManagement from "./pages/UserSubscriptionManagement";
 import MySubscriptions from "./pages/MySubscriptions";
 import UserSessionManagement from "./pages/UserSessionManagement";
 
+/* Test Pages */
+import SignalRTest from "./pages/SignalRTest";
+
 /* Providers */
 import { NotificationProvider } from "./contexts/NotificationContext";
 
@@ -112,6 +115,7 @@ const App: React.FC = () => (
                   <Route exact path="/app/admin/user-subscriptions" component={UserSubscriptionManagement} />
                   <Route exact path="/app/admin/user-sessions" component={UserSessionManagement} />
                   <Route exact path="/app/admin/profile" component={Profile} />
+                  <Route exact path="/app/admin/signalr-test" component={SignalRTest} />
 
                   {/* User Subscription Route */}
                   <Route exact path="/app/subscriptions" component={MySubscriptions} />
