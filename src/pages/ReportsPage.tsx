@@ -40,7 +40,8 @@ import {
   pieChartOutline,
   analyticsOutline,
   starOutline,
-  refreshOutline
+  refreshOutline,
+  documentTextOutline
 } from 'ionicons/icons';
 import { useQuery } from '@tanstack/react-query';
 import { z } from 'zod';
@@ -151,7 +152,9 @@ const ReportsPage: React.FC = () => {
       }
 
       // Use the export endpoint
-      const response = await fetch(`${import.meta.env.VITE_API_BASE_URL || 'https://3qrbqpcx-5212.asse.devtunnels.ms/'}api/report/transactions/export`, {
+      const baseUrl = import.meta.env.VITE_API_BASE_URL || 'https://3qrbqpcx-5212.asse.devtunnels.ms/api';
+      const apiUrl = baseUrl.endsWith('/') ? baseUrl : `${baseUrl}/`;
+      const response = await fetch(`${apiUrl}report/transactions/export`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -161,17 +164,22 @@ const ReportsPage: React.FC = () => {
       });
 
       if (!response.ok) {
-        throw new Error(`Export failed: ${response.statusText}`);
+        const errorText = await response.text();
+        throw new Error(`Export failed: ${response.statusText} - ${errorText}`);
       }
+
+      const timestamp = new Date().toISOString().split('T')[0];
 
       if (format === 'csv') {
         const csvText = await response.text();
-        const blob = new Blob([csvText], { type: 'text/csv' });
+        const blob = new Blob([csvText], { type: 'text/csv;charset=utf-8;' });
         const url = window.URL.createObjectURL(blob);
         const link = document.createElement('a');
         link.href = url;
-        link.download = `transaction_report_${selectedPeriod}_${new Date().toISOString().split('T')[0]}.csv`;
+        link.download = `transaction_report_${selectedPeriod}_${timestamp}.csv`;
+        document.body.appendChild(link);
         link.click();
+        document.body.removeChild(link);
         window.URL.revokeObjectURL(url);
       } else {
         const jsonData = await response.json();
@@ -179,15 +187,169 @@ const ReportsPage: React.FC = () => {
         const url = window.URL.createObjectURL(blob);
         const link = document.createElement('a');
         link.href = url;
-        link.download = `transaction_report_${selectedPeriod}_${new Date().toISOString().split('T')[0]}.json`;
+        link.download = `transaction_report_${selectedPeriod}_${timestamp}.json`;
+        document.body.appendChild(link);
         link.click();
+        document.body.removeChild(link);
         window.URL.revokeObjectURL(url);
       }
 
-      showMessage(`Report exported as ${format.toUpperCase()}`, 'success');
+      showMessage(`✅ Report exported as ${format.toUpperCase()}`, 'success');
     } catch (error) {
       console.error('Export error:', error);
-      showMessage('Export failed', 'danger');
+      showMessage(`❌ Export failed: ${error instanceof Error ? error.message : 'Unknown error'}`, 'danger');
+    } finally {
+      setIsExporting(false);
+    }
+  };
+
+  const handleExportSalesReportPdf = async () => {
+    try {
+      setIsExporting(true);
+
+      const baseUrl = import.meta.env.VITE_API_BASE_URL || 'https://3qrbqpcx-5212.asse.devtunnels.ms/api';
+      const apiUrl = baseUrl.endsWith('/') ? baseUrl : `${baseUrl}/`;
+
+      let endpoint = '';
+      let params: any = {};
+
+      if (selectedPeriod === 'Daily') {
+        // Use the dedicated daily endpoint
+        endpoint = `${apiUrl}report/sales/export-pdf`;
+        params = { date: selectedDate };
+      } else {
+        // Use the period endpoint for Weekly/Monthly
+        endpoint = `${apiUrl}report/sales/export-period-pdf`;
+
+        if (selectedPeriod === 'Weekly') {
+          const startDate = new Date(selectedDate);
+          const endDate = new Date(startDate);
+          endDate.setDate(startDate.getDate() + 6);
+          params = {
+            period: selectedPeriod,
+            startDate: selectedDate,
+            endDate: endDate.toISOString().split('T')[0]
+          };
+        } else if (selectedPeriod === 'Monthly') {
+          const startDate = new Date(selectedYear, selectedMonth - 1, 1);
+          const endDate = new Date(selectedYear, selectedMonth, 0);
+          params = {
+            period: selectedPeriod,
+            startDate: startDate.toISOString().split('T')[0],
+            endDate: endDate.toISOString().split('T')[0]
+          };
+        }
+      }
+
+      const response = await fetch(endpoint, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${localStorage.getItem('auth_token') || ''}`
+        },
+        body: JSON.stringify(params)
+      });
+
+      if (!response.ok) {
+        const errorText = await response.text();
+        throw new Error(`Export failed: ${response.statusText} - ${errorText}`);
+      }
+
+      const htmlBlob = await response.blob();
+      const url = window.URL.createObjectURL(htmlBlob);
+
+      // Open in new window for printing
+      const printWindow = window.open(url, '_blank');
+      if (printWindow) {
+        printWindow.onload = () => {
+          // Auto-trigger print dialog after a short delay
+          setTimeout(() => {
+            printWindow.print();
+          }, 500);
+        };
+      }
+
+      window.URL.revokeObjectURL(url);
+
+      showMessage('✅ Sales Report opened for printing', 'success');
+    } catch (error) {
+      console.error('Sales report PDF export error:', error);
+      showMessage(`❌ Failed to export sales report: ${error instanceof Error ? error.message : 'Unknown error'}`, 'danger');
+    } finally {
+      setIsExporting(false);
+    }
+  };
+
+  const handleExportSalesReportCsv = async () => {
+    try {
+      setIsExporting(true);
+
+      const baseUrl = import.meta.env.VITE_API_BASE_URL || 'https://3qrbqpcx-5212.asse.devtunnels.ms/api';
+      const apiUrl = baseUrl.endsWith('/') ? baseUrl : `${baseUrl}/`;
+
+      let endpoint = '';
+      let params: any = {};
+
+      if (selectedPeriod === 'Daily') {
+        // Use the dedicated daily endpoint
+        endpoint = `${apiUrl}report/sales/export`;
+        params = { date: selectedDate };
+      } else {
+        // Use the period endpoint for Weekly/Monthly
+        endpoint = `${apiUrl}report/sales/export-period`;
+
+        if (selectedPeriod === 'Weekly') {
+          const startDate = new Date(selectedDate);
+          const endDate = new Date(startDate);
+          endDate.setDate(startDate.getDate() + 6);
+          params = {
+            period: selectedPeriod,
+            startDate: selectedDate,
+            endDate: endDate.toISOString().split('T')[0]
+          };
+        } else if (selectedPeriod === 'Monthly') {
+          const startDate = new Date(selectedYear, selectedMonth - 1, 1);
+          const endDate = new Date(selectedYear, selectedMonth, 0);
+          params = {
+            period: selectedPeriod,
+            startDate: startDate.toISOString().split('T')[0],
+            endDate: endDate.toISOString().split('T')[0]
+          };
+        }
+      }
+
+      const response = await fetch(endpoint, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${localStorage.getItem('auth_token') || ''}`
+        },
+        body: JSON.stringify(params)
+      });
+
+      if (!response.ok) {
+        const errorText = await response.text();
+        throw new Error(`Export failed: ${response.statusText} - ${errorText}`);
+      }
+
+      const csvText = await response.text();
+      const blob = new Blob([csvText], { type: 'text/csv;charset=utf-8;' });
+      const url = window.URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      const fileName = selectedPeriod === 'Daily'
+        ? `sales_report_daily_${selectedDate.replace(/-/g, '')}.csv`
+        : `sales_report_${selectedPeriod.toLowerCase()}_${Date.now()}.csv`;
+      link.download = fileName;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      window.URL.revokeObjectURL(url);
+
+      showMessage('✅ Sales Report (CSV) exported successfully', 'success');
+    } catch (error) {
+      console.error('Sales report CSV export error:', error);
+      showMessage(`❌ Failed to export sales report CSV: ${error instanceof Error ? error.message : 'Unknown error'}`, 'danger');
     } finally {
       setIsExporting(false);
     }
@@ -531,7 +693,7 @@ const ReportsPage: React.FC = () => {
               <IonCardContent style={{ padding: '20px' }}>
                 <IonGrid>
                   <IonRow>
-                    <IonCol size="6">
+                    <IonCol size="12" sizeMd="4">
                       <IonButton
                         expand="block"
                         fill="outline"
@@ -542,15 +704,26 @@ const ReportsPage: React.FC = () => {
                         {isExporting ? 'Exporting...' : 'Export CSV'}
                       </IonButton>
                     </IonCol>
-                    <IonCol size="6">
+                    <IonCol size="12" sizeMd="4">
                       <IonButton
                         expand="block"
                         fill="outline"
-                        onClick={() => handleExport('json')}
+                        onClick={handleExportSalesReportPdf}
                         disabled={isExporting}
                       >
-                        <IonIcon icon={downloadOutline} slot="start" />
-                        {isExporting ? 'Exporting...' : 'Export JSON'}
+                        <IonIcon icon={documentTextOutline} slot="start" />
+                        {isExporting ? 'Exporting...' : 'Sales Report (PDF)'}
+                      </IonButton>
+                    </IonCol>
+                    <IonCol size="12" sizeMd="4">
+                      <IonButton
+                        expand="block"
+                        fill="outline"
+                        onClick={handleExportSalesReportCsv}
+                        disabled={isExporting}
+                      >
+                        <IonIcon icon={barChartOutline} slot="start" />
+                        {isExporting ? 'Exporting...' : 'Sales Report (CSV)'}
                       </IonButton>
                     </IonCol>
                   </IonRow>
@@ -764,3 +937,6 @@ const ReportsPage: React.FC = () => {
   );
 }
 export default ReportsPage;
+
+
+

@@ -255,12 +255,12 @@ const SubscriptionPackageManagement: React.FC = () => {
                     <div style={{ display: "flex", alignItems: "center", gap: "12px", marginBottom: "12px" }}>
                       <div style={{ flex: 1 }}>
                         <div style={{ display: "flex", alignItems: "center", gap: "8px", marginBottom: "4px" }}>
-                          <h3 style={{ margin: 0, fontSize: "20px", fontWeight: 700, color: "#000" }}>
+                          <h3 style={{ margin: 0, fontSize: "14px", fontWeight: 700, color: "#000" }}>
                             {pkg.name}
                           </h3>
                           <IonBadge
                             color={pkg.isActive ? "success" : "medium"}
-                            style={{ fontSize: "11px", padding: "4px 8px" }}
+                            style={{ fontSize: "12px", padding: "4px 8px" }}
                           >
                             {pkg.isActive ? "Active" : "Inactive"}
                           </IonBadge>
@@ -268,7 +268,7 @@ const SubscriptionPackageManagement: React.FC = () => {
 
                         {/* Price */}
                         <div style={{ display: "flex", alignItems: "baseline", gap: "8px", marginTop: "8px" }}>
-                          <span style={{ fontSize: "28px", fontWeight: 700, color: "#2196F3" }}>
+                          <span style={{ fontSize: "14px", fontWeight: 700, color: "var(--ion-color-primary)" }}>
                             ₱{pkg.price.toFixed(2)}
                           </span>
                         </div>
@@ -285,7 +285,7 @@ const SubscriptionPackageManagement: React.FC = () => {
                       borderTop: "1px solid #f0f0f0"
                     }}>
                       <div style={{ display: "flex", flexDirection: "column" }}>
-                        <span style={{ fontSize: "11px", color: "#999", textTransform: "uppercase", fontWeight: 500 }}>
+                        <span style={{ fontSize: "12px", color: "#999", textTransform: "uppercase", fontWeight: 500 }}>
                           Duration
                         </span>
                         <span style={{ fontSize: "14px", color: "#333", fontWeight: 600, marginTop: "4px" }}>
@@ -293,19 +293,19 @@ const SubscriptionPackageManagement: React.FC = () => {
                         </span>
                       </div>
                       <div style={{ display: "flex", flexDirection: "column" }}>
-                        <span style={{ fontSize: "11px", color: "#999", textTransform: "uppercase", fontWeight: 500 }}>
+                        <span style={{ fontSize: "12px", color: "#999", textTransform: "uppercase", fontWeight: 500 }}>
                           Total Hours
                         </span>
-                        <span style={{ fontSize: "14px", color: "#333", fontWeight: 600, marginTop: "4px" }}>
+                        <span style={{ fontSize: "12px", color: "#333", fontWeight: 600, marginTop: "4px" }}>
                           {pkg.totalHours} hrs
                         </span>
                       </div>
                       {pkg.description && (
                         <div style={{ display: "flex", flexDirection: "column", flex: "1 1 100%" }}>
-                          <span style={{ fontSize: "11px", color: "#999", textTransform: "uppercase", fontWeight: 500 }}>
+                          <span style={{ fontSize: "12px", color: "#999", textTransform: "uppercase", fontWeight: 500 }}>
                             Description
                           </span>
-                          <span style={{ fontSize: "13px", color: "#666", marginTop: "4px", lineHeight: "1.5" }}>
+                          <span style={{ fontSize: "12px", color: "#666", marginTop: "4px", lineHeight: "1.5" }}>
                             {pkg.description}
                           </span>
                         </div>
@@ -322,7 +322,7 @@ const SubscriptionPackageManagement: React.FC = () => {
                       color="medium"
                       style={{ margin: 0 }}
                     >
-                      <IonIcon icon={createOutline} slot="start" style={{ fontSize: "16px" }} />
+                      <IonIcon icon={createOutline} slot="start" style={{ fontSize: "14px" }} />
                       Edit
                     </IonButton>
                     <IonButton
@@ -332,7 +332,7 @@ const SubscriptionPackageManagement: React.FC = () => {
                       onClick={() => handleDelete(pkg)}
                       style={{ margin: 0 }}
                     >
-                      <IonIcon icon={trashOutline} slot="start" style={{ fontSize: "16px" }} />
+                      <IonIcon icon={trashOutline} slot="start" style={{ fontSize: "14px" }} />
                       Delete
                     </IonButton>
                   </div>

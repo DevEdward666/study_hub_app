@@ -39,11 +39,12 @@ import {
   arrowDownOutline,
   addCircleOutline,
   personAddOutline,
-  pencilOutline
+  pencilOutline,
+  keyOutline
 } from "ionicons/icons";
 
 const UsersManagement: React.FC = () => {
-  const { users, isLoading, error, toggleAdmin, addCredits, createUser, updateUser, refetch } =
+  const { users, isLoading, error, toggleAdmin, addCredits, createUser, updateUser, changePassword, refetch } =
     useUsersManagement();
   const { refetch: refetchAdminStatus, isAdmin } = useAdminStatus();
   const [filterType, setFilterType] = useState<"all" | "admin" | "user">("all");
@@ -76,6 +77,16 @@ const UsersManagement: React.FC = () => {
     role: "User"
   });
   const [editFormErrors, setEditFormErrors] = useState<{ [key: string]: string }>({});
+
+  // Change Password Modal State
+  const [isChangePasswordModalOpen, setIsChangePasswordModalOpen] = useState(false);
+  const [changePasswordData, setChangePasswordData] = useState({
+    userId: "",
+    userName: "",
+    newPassword: "",
+    confirmPassword: "",
+  });
+  const [passwordFormErrors, setPasswordFormErrors] = useState<{ [key: string]: string }>({});
 
   const [showToast, setShowToast] = useState(false);
   const [toastMessage, setToastMessage] = useState("");
@@ -345,6 +356,78 @@ const UsersManagement: React.FC = () => {
     }
   };
 
+  // Change Password Functions
+  const openChangePasswordModal = (userId: string, userName: string) => {
+    setChangePasswordData({
+      userId: userId,
+      userName: userName,
+      newPassword: "",
+      confirmPassword: ""
+    });
+    setPasswordFormErrors({});
+    setIsChangePasswordModalOpen(true);
+  };
+
+  const validatePasswordForm = (): boolean => {
+    const errors: { [key: string]: string } = {};
+
+    if (!changePasswordData.newPassword || changePasswordData.newPassword.trim().length === 0) {
+      errors.newPassword = "New password is required";
+    }
+
+    if (changePasswordData.newPassword !== changePasswordData.confirmPassword) {
+      errors.confirmPassword = "Passwords do not match";
+    }
+
+    setPasswordFormErrors(errors);
+    return Object.keys(errors).length === 0;
+  };
+
+  const handleChangePassword = async () => {
+    if (!validatePasswordForm()) {
+      return;
+    }
+
+    showConfirmation({
+      header: 'Change Password',
+      message: `Are you sure you want to change the password for ${changePasswordData.userName}?\n\nThis will log out the user from all devices and they will need to use the new password to log in.`,
+      confirmText: 'Change Password',
+      cancelText: 'Cancel'
+    }, async () => {
+      await performChangePassword();
+    });
+  };
+
+  const performChangePassword = async () => {
+    try {
+      await changePassword.mutateAsync({
+        userId: changePasswordData.userId,
+        newPassword: changePasswordData.newPassword
+      });
+
+      setToastMessage(`Password successfully changed for ${changePasswordData.userName}`);
+      setToastColor("success");
+      setShowToast(true);
+      setIsChangePasswordModalOpen(false);
+
+      // Reset form
+      setChangePasswordData({
+        userId: "",
+        userName: "",
+        newPassword: "",
+        confirmPassword: ""
+      });
+      setPasswordFormErrors({});
+
+      refetch();
+    } catch (error) {
+      const message = error instanceof Error ? error.message : "Failed to change password";
+      setToastMessage(message);
+      setToastColor("danger");
+      setShowToast(true);
+    }
+  };
+
   const creditPackages = [
     { type: "basic", label: "Basic Credits", rates: [50, 100, 250, 500] },
     { type: "premium", label: "Premium Credits", rates: [25, 50, 100, 200] },
@@ -461,6 +544,16 @@ const UsersManagement: React.FC = () => {
             title="Add Credits"
           >
             <IonIcon slot="icon-only" icon={addCircleOutline} />
+          </IonButton>
+          <IonButton
+            size="small"
+            fill="clear"
+            color="tertiary"
+            onClick={() => openChangePasswordModal(value, row.name || row.email)}
+            disabled={changePassword.isPending}
+            title="Change Password"
+          >
+            <IonIcon slot="icon-only" icon={keyOutline} />
           </IonButton>
         </div>
       ),
@@ -986,6 +1079,94 @@ const UsersManagement: React.FC = () => {
           </div>
         </div>
       </SlideoutModal>
+
+      {/* Change Password Modal */}
+      <IonModal
+        isOpen={isChangePasswordModalOpen}
+        onDidDismiss={() => setIsChangePasswordModalOpen(false)}
+      >
+        <IonHeader>
+          <IonToolbar>
+            <IonTitle>Change Password</IonTitle>
+            <IonButton
+              slot="end"
+              fill="clear"
+              onClick={() => setIsChangePasswordModalOpen(false)}
+            >
+              Close
+            </IonButton>
+          </IonToolbar>
+        </IonHeader>
+
+        <IonContent className="change-password-modal-content">
+          <div className="change-password-form">
+            <IonCard>
+              <IonCardHeader>
+                <IonCardTitle>Change Password for {changePasswordData.userName}</IonCardTitle>
+              </IonCardHeader>
+              <IonCardContent>
+                <div className="form-section">
+                  <IonItem className={passwordFormErrors.newPassword ? 'ion-invalid' : ''}>
+                    <IonLabel position="stacked">New Password *</IonLabel>
+                    <IonInput
+                      type="password"
+                      value={changePasswordData.newPassword}
+                      placeholder="Enter new password"
+                      onIonInput={(e) => setChangePasswordData({ ...changePasswordData, newPassword: e.detail.value! })}
+                      required
+                    />
+                  </IonItem>
+                  {passwordFormErrors.newPassword && (
+                    <IonText color="danger" className="error-text">
+                      {passwordFormErrors.newPassword}
+                    </IonText>
+                  )}
+                </div>
+
+                <div className="form-section">
+                  <IonItem className={passwordFormErrors.confirmPassword ? 'ion-invalid' : ''}>
+                    <IonLabel position="stacked">Confirm Password *</IonLabel>
+                    <IonInput
+                      type="password"
+                      value={changePasswordData.confirmPassword}
+                      placeholder="Confirm new password"
+                      onIonInput={(e) => setChangePasswordData({ ...changePasswordData, confirmPassword: e.detail.value! })}
+                      required
+                    />
+                  </IonItem>
+                  {passwordFormErrors.confirmPassword && (
+                    <IonText color="danger" className="error-text">
+                      {passwordFormErrors.confirmPassword}
+                    </IonText>
+                  )}
+                </div>
+
+                <IonButton
+                  expand="block"
+                  onClick={handleChangePassword}
+                  disabled={changePassword.isPending || !changePasswordData.newPassword || !changePasswordData.confirmPassword}
+                  style={{ marginTop: "20px" }}
+                >
+                  {changePassword.isPending
+                    ? "Changing Password..."
+                    : "Change Password"}
+                </IonButton>
+
+                <div className="change-password-note" style={{
+                  marginTop: "16px",
+                  textAlign: "center"
+                }}>
+                  <p>
+                    <small>
+                      Note: The user will be logged out from all devices after the password is changed.
+                    </small>
+                  </p>
+                </div>
+              </IonCardContent>
+            </IonCard>
+          </div>
+        </IonContent>
+      </IonModal>
 
       {/* Toast for notifications */}
       <IonToast

@@ -85,6 +85,22 @@ export const useUsersManagement = () => {
     },
   });
 
+  const changePasswordMutation = useMutation({
+    mutationFn: ({ userId, newPassword }: { userId: string; newPassword: string }) =>
+      apiClient.post(
+        "/admin/users/change-password",
+        ApiResponseSchema(z.object({
+          userId: z.string(),
+          email: z.string(),
+          message: z.string(),
+        })),
+        { userId, newPassword }
+      ),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["admin", "users"] });
+    },
+  });
+
   return {
     users: usersQuery.data || [],
     isLoading: usersQuery.isLoading,
@@ -93,6 +109,7 @@ export const useUsersManagement = () => {
     addCredits: addCreditsMutation,
     createUser: createUserMutation,
     updateUser: updateUserMutation,
+    changePassword: changePasswordMutation,
     refetch: usersQuery.refetch,
   };
 };

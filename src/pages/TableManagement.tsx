@@ -123,6 +123,7 @@ const TablesManagement: React.FC = () => {
     tableNumber: "",
     location: "",
     capacity: "",
+    hourlyRate: "", // Add hourlyRate to form data
   });
   const [showToast, setShowToast] = useState(false);
   const [toastMessage, setToastMessage] = useState("");
@@ -281,6 +282,7 @@ const TablesManagement: React.FC = () => {
           tableNumber: formData.tableNumber,
           location: formData.location,
           capacity: parseInt(formData.capacity),
+          hourlyRate: 0.01, // Automatically set to 0.01 (minimum required by backend)
         });
 
         // Send notification to admin about table update
@@ -299,6 +301,7 @@ const TablesManagement: React.FC = () => {
           tableNumber: "",
           location: "",
           capacity: "",
+          hourlyRate: "",
         });
         setShowEditModal(false);
         setEditingTable(null);
@@ -312,6 +315,23 @@ const TablesManagement: React.FC = () => {
   };
   const handleCreateTable = async (e: React.FormEvent) => {
     e.preventDefault();
+
+    // Basic validation first
+    if (!formData.tableNumber || !formData.location || !formData.capacity) {
+      setToastMessage("❌ All fields are required.");
+      setToastColor("danger");
+      setShowToast(true);
+      return;
+    }
+
+    const capacityNum = parseInt(formData.capacity);
+
+    if (isNaN(capacityNum) || capacityNum <= 0) {
+      setToastMessage("❌ Please enter a valid capacity greater than 0.");
+      setToastColor("danger");
+      setShowToast(true);
+      return;
+    }
 
     // Show confirmation dialog
     showConfirmation({
@@ -328,34 +348,51 @@ const TablesManagement: React.FC = () => {
         await createTable.mutateAsync({
           tableNumber: formData.tableNumber,
           location: formData.location,
-          capacity: parseInt(formData.capacity),
+          capacity: capacityNum,
+          hourlyRate: 0.01, // Automatically set to 0.01 (minimum required by backend)
         });
 
         // Send notification to admin about new table creation
         console.log("New table created notification");
 
         RefetchTable();
+        
+        // Show success message
+        setToastMessage("✅ Table created successfully!");
+        setToastColor("success");
+        setShowToast(true);
+
         // Reset form
         setFormData({
           tableID: "",
           tableNumber: "",
           location: "",
           capacity: "",
+          hourlyRate: "",
         });
         setShowCreateForm(false);
-      } catch (error) {
+      } catch (error: any) {
         console.error("Failed to create table:", error);
+        // Display Zod error if available
+        const errorMessage = error.response?.data?.errors?.[0]?.message || error.message || "Unknown error";
+        setToastMessage(`❌ Failed to create table: ${errorMessage}`);
+        setToastColor("danger");
+        setShowToast(true);
       }
     });
   };
 
-  const handleInputChange = (
-    e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>
-  ) => {
-    setFormData({
-      ...formData,
-      [e.target.name]: e.target.value,
-    });
+  const handleInputChange = (e: any) => {
+    const target = e.target as HTMLIonInputElement;
+    const name = target.name;
+    const value = e.detail?.value ?? e.target.value;
+    
+    if (name) {
+      setFormData((prev) => ({
+        ...prev,
+        [name]: value,
+      }));
+    }
   };
 
   if (isLoading) {
@@ -380,16 +417,6 @@ const TablesManagement: React.FC = () => {
       label: "Capacity",
       sortable: true,
       render: (value) => value,
-    },
-    {
-      key: "hourlyRate",
-      label: "Fixed Rate",
-      sortable: false,
-      render: (value, row) => (
-        <span style={{ color: '#28a745', fontWeight: '600' }}>
-          ₱ <small style={{ color: '#666', fontWeight: 'normal' }}>(Global)</small>
-        </span>
-      ),
     },
     {
       key: "currentSession",
@@ -524,6 +551,7 @@ const TablesManagement: React.FC = () => {
         tableNumber: selectedTable.data?.tableNumber!,
         location: selectedTable.data?.location!,
         capacity: selectedTable.data?.capacity.toString()!,
+        hourlyRate: selectedTable.data?.hourlyRate.toString()!,
       });
       setShowEditModal(true);
     } catch (error) {
@@ -677,6 +705,7 @@ const TablesManagement: React.FC = () => {
                   tableNumber: "",
                   location: "",
                   capacity: "",
+                  hourlyRate: "", // Reset hourlyRate
                 });
               }}
             >
@@ -687,92 +716,57 @@ const TablesManagement: React.FC = () => {
 
         {/* Create Table Form */}
         {showCreateForm && (
-          <div className="create-form-section">
-            <form
-              onSubmit={
-                formData.tableID?.length > 0
-                  ? handleUpdateTable
-                  : handleCreateTable
-              }
-              className="create-table-form"
-            >
-              <h3>
-                {formData.tableID?.length > 0
-                  ? "Update Table"
-                  : "Create New Table"}
-              </h3>
-
-              <div className="form-grid">
-                <div className="form-group">
-                  <label htmlFor="tableNumber">Table Number</label>
-                  <input
-                    type="text"
-                    id="tableNumber"
-                    name="tableNumber"
-                    value={formData.tableNumber}
-                    onChange={handleInputChange}
-                    placeholder="e.g., A1, B2, C3"
-                    required
-                  />
-                </div>
-
-                <div className="form-group">
-                  <label htmlFor="location">Location</label>
-                  <input
-                    type="text"
-                    id="location"
-                    name="location"
-                    value={formData.location}
-                    onChange={handleInputChange}
-                    placeholder="e.g., Ground Floor, Second Floor"
-                    required
-                  />
-                </div>
-
-                <div className="form-group">
-                  <label htmlFor="capacity">Capacity (People)</label>
-                  <input
-                    type="number"
-                    id="capacity"
-                    name="capacity"
-                    value={formData.capacity}
-                    onChange={handleInputChange}
-                    placeholder="e.g., 1, 2, 4"
-                    min="1"
-                    required
-                  />
-                </div>
-              </div>
-
-              <div className="form-actions">
-                <button
-                  type="button"
-                  className="btn btn-secondary"
-                  onClick={() => setShowCreateForm(false)}
-                >
-                  Cancel
-                </button>
-                {formData.tableID?.length > 0 ? (
-                  <button
+          <SlideoutModal
+            isOpen={showCreateForm}
+            onClose={() => setShowCreateForm(false)}
+            title="Create New Table"
+          >
+            <form onSubmit={handleCreateTable} style={{ padding: '20px' }}>
+              <IonItem>
+                <IonLabel position="stacked">Table Number</IonLabel>
+                <IonInput
+                  value={formData.tableNumber}
+                  onIonInput={(e) => setFormData(prev => ({ ...prev, tableNumber: e.detail.value || '' }))}
+                  required
+                />
+              </IonItem>
+              <IonItem>
+                <IonLabel position="stacked">Location</IonLabel>
+                <IonInput
+                  value={formData.location}
+                  onIonInput={(e) => setFormData(prev => ({ ...prev, location: e.detail.value || '' }))}
+                  required
+                />
+              </IonItem>
+              <IonItem>
+                <IonLabel position="stacked">Capacity</IonLabel>
+                <IonInput
+                  type="number"
+                  value={formData.capacity}
+                  onIonInput={(e) => setFormData(prev => ({ ...prev, capacity: e.detail.value || '' }))}
+                  required
+                />
+              </IonItem>
+            </form>
+            <IonFooter>
+              <IonToolbar>
+                <IonButtons slot="end">
+                  <IonButton onClick={() => setShowCreateForm(false)}>Cancel</IonButton>
+                  <IonButton
                     type="submit"
-                    className="btn btn-success"
-                    disabled={updateTable.isPending}
-                  >
-                    {updateTable.isPending ? "Updating..." : "Update Table"}
-                  </button>
-                ) : (
-                  <button
-                    type="submit"
-                    className="btn btn-success"
+                    color="primary"
+                    fill="solid"
+                    onClick={handleCreateTable}
                     disabled={createTable.isPending}
                   >
                     {createTable.isPending ? "Creating..." : "Create Table"}
-                  </button>
-                )}
-              </div>
-            </form>
-          </div>
+                  </IonButton>
+                </IonButtons>
+              </IonToolbar>
+            </IonFooter>
+          </SlideoutModal>
         )}
+
         <DynamicTable
           columns={columns}
           data={data?.data ? sortTableData(data.data, tableState.sortBy, tableState.sortOrder) : undefined}
@@ -919,6 +913,7 @@ const TablesManagement: React.FC = () => {
             tableNumber: "",
             location: "",
             capacity: "",
+            hourlyRate: "",
           });
         }}
         title="Edit Table"

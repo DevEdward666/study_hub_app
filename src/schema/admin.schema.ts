@@ -39,6 +39,17 @@ export const UpdateUserResponseSchema = z.object({
   phone: z.string().optional(),
 });
 
+export const ChangeUserPasswordRequestSchema = z.object({
+  userId: z.string(),
+  newPassword: z.string().min(6, "Password must be at least 6 characters"),
+});
+
+export const ChangeUserPasswordResponseSchema = z.object({
+  userId: z.string(),
+  email: z.string(),
+  message: z.string(),
+});
+
 export const TransactionWithUserSchema = z.object({
   user: UserSchema.optional().nullable(),
   tables:StudyTableSchema.optional().nullable(),
