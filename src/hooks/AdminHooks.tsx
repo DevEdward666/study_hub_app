@@ -12,10 +12,10 @@ export const useAdminStatus = () => {
     staleTime: 5 * 60 * 1000, // Consider fresh for 5 minutes
   });
 
-  console.log("useAdminStatus query result:", query.data);
+  console.log("useAdminStatus query result:", query);
 
   return {
-    isAdmin: query.data , // apiClient.get already unwraps ApiResponse and returns boolean directly
+    isAdmin: query.data, // apiClient.get already unwraps ApiResponse and returns boolean directly
     isLoading: query.isLoading,
     error: query.error,
     refetch: query.refetch,

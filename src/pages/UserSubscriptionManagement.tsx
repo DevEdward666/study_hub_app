@@ -23,6 +23,8 @@ import {
   IonTextarea,
   IonSearchbar,
   IonFooter,
+  IonSegment,
+  IonSegmentButton,
 } from "@ionic/react";
 import {
   addOutline,
@@ -64,6 +66,7 @@ const UserSubscriptionManagement: React.FC = () => {
   const [searchText, setSearchText] = useState("");
   const [statusFilter, setStatusFilter] = useState("All");
   const [pendingSubscriptionId, setPendingSubscriptionId] = useState("");
+  const [selectedSegment, setSelectedSegment] = useState<"active" | "expired">("active");
 
   // Search modal states
   const [showCustomerSearchModal, setShowCustomerSearchModal] = useState(false);
@@ -262,16 +265,22 @@ const UserSubscriptionManagement: React.FC = () => {
     }
   };
 
-  // Filter subscriptions
+  // Filter and segregate subscriptions based on segment
   const filteredSubscriptions = subscriptions?.filter((sub) => {
-    const matchesStatus = statusFilter === "All" || sub.status === statusFilter;
     const matchesSearch =
       !searchText ||
       sub.user?.name?.toLowerCase().includes(searchText.toLowerCase()) ||
       sub.user?.email?.toLowerCase().includes(searchText.toLowerCase()) ||
       sub.packageName?.toLowerCase().includes(searchText.toLowerCase());
-    return matchesStatus && matchesSearch;
+    return matchesSearch;
   });
+
+  // Segregate into active and expired based on segment
+  const activeSubscriptions = filteredSubscriptions?.filter((sub) => sub.status === "Active") || [];
+  const expiredSubscriptions = filteredSubscriptions?.filter((sub) => sub.status === "Expired" || sub.status === "Cancelled") || [];
+
+  // Get the subscriptions to display based on selected segment
+  const displaySubscriptions = selectedSegment === "active" ? activeSubscriptions : expiredSubscriptions;
 
   const handleConfirmPrint = async () => {
     if (!wifiPassword) {
@@ -331,31 +340,50 @@ const UserSubscriptionManagement: React.FC = () => {
         </div>
 
         {/* Filters */}
-        <div style={{ marginBottom: "20px", display: "flex", gap: "12px", flexWrap: "wrap" }}>
+        <div style={{ marginBottom: "20px" }}>
           <IonSearchbar
             value={searchText}
             onIonInput={(e) => setSearchText(e.detail.value || "")}
             placeholder="Search by user or package..."
-            style={{ flex: 1, minWidth: "250px" }}
+            style={{ marginBottom: "12px" }}
           />
-          <IonSelect
-            value={statusFilter}
-            onIonChange={(e) => setStatusFilter(e.detail.value)}
-            placeholder="Filter by status"
-            style={{ minWidth: "150px" }}
-          >
-            <IonSelectOption value="All">All Status</IonSelectOption>
-            <IonSelectOption value="Active">Active</IonSelectOption>
-            <IonSelectOption value="Expired">Expired</IonSelectOption>
-            <IonSelectOption value="Cancelled">Cancelled</IonSelectOption>
-          </IonSelect>
         </div>
+
+        {/* Segment for Active/Expired */}
+        <IonSegment
+          value={selectedSegment}
+          onIonChange={(e) => setSelectedSegment(e.detail.value as "active" | "expired")}
+          style={{ marginBottom: "20px" }}
+        >
+          <IonSegmentButton value="active">
+            <IonLabel>
+              <div style={{ display: "flex", alignItems: "center", gap: "8px", justifyContent: "center" }}>
+                <IonIcon icon={checkmarkCircleOutline} />
+                <span>Active</span>
+                <IonBadge color="success">
+                  {subscriptions?.filter((s) => s.status === "Active").length || 0}
+                </IonBadge>
+              </div>
+            </IonLabel>
+          </IonSegmentButton>
+          <IonSegmentButton value="expired">
+            <IonLabel>
+              <div style={{ display: "flex", alignItems: "center", gap: "8px", justifyContent: "center" }}>
+                <IonIcon icon={timeOutline} />
+                <span>Expired/Cancelled</span>
+                <IonBadge color="danger">
+                  {subscriptions?.filter((s) => s.status === "Expired" || s.status === "Cancelled").length || 0}
+                </IonBadge>
+              </div>
+            </IonLabel>
+          </IonSegmentButton>
+        </IonSegment>
 
         {/* Stats Cards */}
         <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(200px, 1fr))", gap: "12px", marginBottom: "20px" }}>
           <IonCard>
             <IonCardContent style={{ textAlign: "center", padding: "16px" }}>
-              <IonIcon icon={statsChartOutline} style={{ fontSize: "32px", color: "var(--ion-color-success)" }} />
+              <IonIcon icon={checkmarkCircleOutline} style={{ fontSize: "32px", color: "var(--ion-color-success)" }} />
               <h3 style={{ margin: "8px 0 4px", fontSize: "24px", fontWeight: "bold" }}>
                 {subscriptions?.filter((s) => s.status === "Active").length || 0}
               </h3>
@@ -364,51 +392,96 @@ const UserSubscriptionManagement: React.FC = () => {
           </IonCard>
           <IonCard>
             <IonCardContent style={{ textAlign: "center", padding: "16px" }}>
-              <IonIcon icon={timeOutline} style={{ fontSize: "32px", color: "var(--ion-color-primary)" }} />
+              <IonIcon icon={timeOutline} style={{ fontSize: "32px", color: "var(--ion-color-danger)" }} />
               <h3 style={{ margin: "8px 0 4px", fontSize: "24px", fontWeight: "bold" }}>
-                {subscriptions?.reduce((sum, s) => sum + s.remainingHours, 0).toFixed(0) || 0}
+                {subscriptions?.filter((s) => s.status === "Expired" || s.status === "Cancelled").length || 0}
               </h3>
-              <p style={{ margin: 0, fontSize: "12px", color: "#666" }}>Total Remaining Hours</p>
+              <p style={{ margin: 0, fontSize: "12px", color: "#666" }}>Expired/Cancelled</p>
+            </IonCardContent>
+          </IonCard>
+          <IonCard>
+            <IonCardContent style={{ textAlign: "center", padding: "16px" }}>
+              <IonIcon icon={statsChartOutline} style={{ fontSize: "32px", color: "var(--ion-color-primary)" }} />
+              <h3 style={{ margin: "8px 0 4px", fontSize: "24px", fontWeight: "bold" }}>
+                {subscriptions?.reduce((sum, s) => sum + (s.status === "Active" ? s.remainingHours : 0), 0).toFixed(0) || 0}
+              </h3>
+              <p style={{ margin: 0, fontSize: "12px", color: "#666" }}>Total Active Hours</p>
             </IonCardContent>
           </IonCard>
         </div>
 
-        {/* Subscriptions List */}
-        {!filteredSubscriptions || filteredSubscriptions.length === 0 ? (
+        {/* Subscriptions List - Based on Selected Segment */}
+        {!displaySubscriptions || displaySubscriptions.length === 0 ? (
           <IonCard>
             <IonCardContent style={{ textAlign: "center", padding: "40px" }}>
               <IonIcon icon={cardOutline} style={{ fontSize: "64px", color: "#ccc", marginBottom: "16px" }} />
               <IonText color="medium">
-                <p>No subscriptions found.</p>
+                <p>No {selectedSegment === "active" ? "active" : "expired/cancelled"} subscriptions found.</p>
               </IonText>
             </IonCardContent>
           </IonCard>
         ) : (
           <IonList>
-            {filteredSubscriptions.map((sub) => (
-              <IonCard key={sub.id} style={{ marginBottom: "12px" }}>
+            {displaySubscriptions.map((sub) => (
+              <IonCard 
+                key={sub.id} 
+                style={{ 
+                  marginBottom: "12px", 
+                  borderLeft: `4px solid var(--ion-color-${selectedSegment === "active" ? "success" : "danger"})`,
+                  opacity: selectedSegment === "active" ? 1 : 0.85
+                }}
+              >
                 <IonCardContent>
                   <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", flexWrap: "wrap", gap: "16px" }}>
                     <div style={{ flex: 1, minWidth: "250px" }}>
                       <div style={{ display: "flex", alignItems: "center", gap: "8px", marginBottom: "8px" }}>
-                        <IonIcon icon={personOutline} style={{ fontSize: "20px", color: "var(--ion-color-primary)" }} />
-                        <h3 style={{ margin: 0, fontSize: "18px", fontWeight: "bold" }}>
+                        <IonIcon 
+                          icon={personOutline} 
+                          style={{ 
+                            fontSize: "20px", 
+                            color: selectedSegment === "active" ? "var(--ion-color-primary)" : "var(--ion-color-medium)" 
+                          }} 
+                        />
+                        <h3 style={{ 
+                          margin: 0, 
+                          fontSize: "18px", 
+                          fontWeight: "bold",
+                          color: selectedSegment === "active" ? "inherit" : "#666"
+                        }}>
                           {sub.user?.name || sub.user?.email}
                         </h3>
                         <IonBadge color={getStatusColor(sub.status)}>{sub.status}</IonBadge>
                       </div>
                       <div style={{ marginLeft: "28px" }}>
-                        <p style={{ margin: "4px 0", fontSize: "16px", fontWeight: "600", color: "var(--ion-color-success)" }}>
+                        <p style={{ 
+                          margin: "4px 0", 
+                          fontSize: "16px", 
+                          fontWeight: "600", 
+                          color: selectedSegment === "active" ? "var(--ion-color-success)" : "#999" 
+                        }}>
                           {sub.packageName}
                         </p>
-                        <p style={{ margin: "4px 0", fontSize: "14px", color: "#666" }}>
+                        <p style={{ 
+                          margin: "4px 0", 
+                          fontSize: "14px", 
+                          color: selectedSegment === "active" ? "#666" : "#999" 
+                        }}>
                           ₱{sub.purchaseAmount.toFixed(2)} • {sub.paymentMethod}
                         </p>
-                        <p style={{ margin: "4px 0", fontSize: "12px", color: "#999" }}>
+                        <p style={{ 
+                          margin: "4px 0", 
+                          fontSize: "12px", 
+                          color: "#999" 
+                        }}>
                           Purchased: {new Date(sub.purchaseDate).toLocaleDateString()}
                         </p>
                         {sub.expiryDate && (
-                          <p style={{ margin: "4px 0", fontSize: "12px", color: new Date(sub.expiryDate) < new Date() ? "#d32f2f" : "#1976d2" }}>
+                          <p style={{ 
+                            margin: "4px 0", 
+                            fontSize: "12px", 
+                            color: new Date(sub.expiryDate) < new Date() ? "#d32f2f" : "#1976d2",
+                            fontWeight: selectedSegment === "expired" ? "500" : "normal"
+                          }}>
                             {new Date(sub.expiryDate) < new Date() ? "Expired on: " : "Expires on: "}
                             {new Date(sub.expiryDate).toLocaleDateString()} {new Date(sub.expiryDate).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                           </p>
@@ -423,13 +496,26 @@ const UserSubscriptionManagement: React.FC = () => {
                             <strong>{sub.hoursUsed.toFixed(1)}</strong> / {sub.totalHours.toFixed(0)}
                           </span>
                         </div>
-                        <IonProgressBar value={sub.percentageUsed / 100} color={sub.percentageUsed > 80 ? "danger" : "success"} />
+                        <IonProgressBar 
+                          value={sub.percentageUsed / 100} 
+                          color={selectedSegment === "active" 
+                            ? (sub.percentageUsed > 80 ? "danger" : "success") 
+                            : "medium"
+                          } 
+                        />
                         <div style={{ fontSize: "10px", color: "#666", marginTop: "2px", textAlign: "right" }}>
                           {sub.percentageUsed.toFixed(1)}% used
                         </div>
                       </div>
-                      <div style={{ fontSize: "12px", color: "#666" }}>
-                        <div>Remaining: <strong style={{ color: "var(--ion-color-success)" }}>{sub.remainingHours.toFixed(1)} hours</strong></div>
+                      <div style={{ 
+                        fontSize: "12px", 
+                        color: selectedSegment === "active" ? "#666" : "#999" 
+                      }}>
+                        <div>
+                          Remaining: <strong style={{ 
+                            color: selectedSegment === "active" ? "var(--ion-color-success)" : "inherit" 
+                          }}>{sub.remainingHours.toFixed(1)} hours</strong>
+                        </div>
                       </div>
                     </div>
                   </div>

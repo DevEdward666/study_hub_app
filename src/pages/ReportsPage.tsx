@@ -121,7 +121,8 @@ const ReportsPage: React.FC = () => {
     queryFn: async () => {
       return await apiClient.get('report/transactions/quick-stats', ApiResponseSchema(QuickStatsSchema));
     },
-    refetchInterval: 30000, // Refresh every 30 seconds
+    enabled: true, // Auto-load on mount and when dependencies change
+    staleTime: 30000, // Consider data fresh for 30 seconds
   });
 
   const handleExport = async (format: 'csv' | 'json') => {
@@ -406,7 +407,10 @@ const ReportsPage: React.FC = () => {
       </IonContent>
     );
   }
-
+  const handleGenerateReport = () => {
+    reportQuery.refetch();
+    quickStatsQuery.refetch();
+  }
   return (
     <IonContent className="reports-page" style={{ '--background': '#f5f5f5' }}>
       <IonRefresher slot="fixed" onIonRefresh={(e) => {
@@ -632,7 +636,7 @@ const ReportsPage: React.FC = () => {
                   <div style={{ paddingTop: '26px' }}>
                     <IonButton
                       expand="block"
-                      onClick={() => reportQuery.refetch()}
+                      onClick={() => handleGenerateReport()}
                       disabled={isLoading}
                       color="primary"
                       style={{

@@ -2,7 +2,6 @@
 import React, { useState } from "react";
 import { useHistory } from "react-router-dom";
 import { useAuth } from "../hooks/AuthHooks";
-import { useAdminStatus } from "../hooks/AdminHooks";
 import { LoginRequestSchema } from "../schema/auth.schema";
 import { z } from "zod";
 import "./styles/admin-login.css";
@@ -16,7 +15,6 @@ export const AdminLogin: React.FC = () => {
   const [errorMessage, setErrorMessage] = useState("");
 
   const { signIn } = useAuth();
-  const { refetch: refetchAdminStatus } = useAdminStatus();
   const history = useHistory();
 
   const validateForm = (): boolean => {
@@ -46,19 +44,20 @@ export const AdminLogin: React.FC = () => {
     }
 
     try {
-      // Sign in first
-      await signIn.mutateAsync({ email, password });
+      // Sign in and get the response with user data
+      const signInResponse = await signIn.mutateAsync({ email, password });
 
-      // Force refetch admin status after successful login
-      const adminStatus = await refetchAdminStatus();
+      // Get user from the sign-in response
+      const userRole = signInResponse.user?.role;
       
-      if (adminStatus.data) {
+      // Check if user has admin privileges
+      if (userRole === 'Admin' || userRole === 'Super Admin' || userRole === 'Staff') {
         // Small delay to ensure state is updated
         setTimeout(() => {
           window.location.replace("/app/admin/dashboard");
         }, 100);
       } else {
-        setErrorMessage("Access denied. Admin privileges required.");
+        setErrorMessage("Access denied. Admin, Super Admin, or Staff privileges required.");
         setShowError(true);
         localStorage.removeItem("auth_token");
       }
@@ -76,7 +75,7 @@ export const AdminLogin: React.FC = () => {
           <div className="admin-login-card">
             <div className="admin-login-header">
               <div className="admin-logo">
-                <div className="logo-icon"><img src="/logo.png" alt="Sunny Side Logo" height={"400px"} width={"400px"}/></div>
+                <div className="logo-icon"><img src="/logo.png" alt="Sunny Side Logo" height={"400px"} width={"400px"} /></div>
                 <h1>Sunny Side Up Work + Study Admin</h1>
               </div>
               <p>Sign in to access the admin dashboard</p>
@@ -141,7 +140,7 @@ export const AdminLogin: React.FC = () => {
             <div className="admin-login-footer">
               <p>
                 <small>
-                  Only authorized administrators can access this panel.
+                  Only authorized administrators and staff can access this panel.
                   <br />
                   Contact your system administrator if you need access.
                 </small>

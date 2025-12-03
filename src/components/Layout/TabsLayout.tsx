@@ -53,12 +53,15 @@ import { useNotifications } from "@/hooks/useNotifications";
 import { GlobalToast, useToastManager } from "@/components/GlobalToast/GlobalToast";
 import { signalRService, SessionEndedNotification } from "@/services/signalr.service";
 import { useNotificationContext } from "@/contexts/NotificationContext";
+import { useAuth } from "@/hooks/AuthHooks";
 
 interface TabsLayoutProps {
   children: React.ReactNode;
 }
 
 export const TabsLayout: React.FC<TabsLayoutProps> = ({ children }) => {
+
+  const { user } = useAuth();
   const { refetch: refetchAdminStatus, isAdmin, isLoading: isAdminLoading } = useAdminStatus();
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const history = useHistory();
@@ -463,7 +466,7 @@ export const TabsLayout: React.FC<TabsLayoutProps> = ({ children }) => {
       </div>
     );
   }
-
+  console.log(`🌐 ${JSON.stringify(user?.role)}`);
   return (
     <div className={`app-layout ${isAdmin && isAdminPath ? 'admin-layout' : 'user-layout'} ${sidebarOpen ? 'sidebar-open' : ''}`}>
       {isAdmin && isAdminPath && (
@@ -502,6 +505,11 @@ export const TabsLayout: React.FC<TabsLayoutProps> = ({ children }) => {
               </IonButton>
             </div>
             <div className="sidebar-menu">
+
+
+              {/* PRIMARY WORKFLOW */}
+              {/* <p style={{ fontSize: '11px', margin: '0 0 4px 0', fontWeight: 'bold' }}>MAIN WORKSPACE</p> */}
+
               <button
                 onClick={() => navigateTo('/app/admin/dashboard')}
                 className={`sidebar-item ${isActiveRoute('/app/admin/dashboard') ? 'active' : ''}`}
@@ -509,9 +517,9 @@ export const TabsLayout: React.FC<TabsLayoutProps> = ({ children }) => {
                 <IonIcon icon={statsChartOutline} />
                 <span>Dashboard</span>
               </button>
-
-              {/* PRIMARY WORKFLOW */}
-              <p style={{ fontSize: '11px', margin: '0 0 4px 0', fontWeight: 'bold' }}>MAIN WORKSPACE</p>
+              <div style={{ margin: '16px 0 8px 0' }}>
+                <p style={{ fontSize: '11px', color: '#666', margin: '0 0 4px 8px', fontWeight: 'bold' }}>System Transaction</p>
+              </div>
               <button
                 onClick={() => navigateTo('/app/admin/user-sessions')}
                 className={`sidebar-item ${isActiveRoute('/app/admin/user-sessions') ? 'active' : ''}`}
@@ -522,9 +530,9 @@ export const TabsLayout: React.FC<TabsLayoutProps> = ({ children }) => {
               </button>
 
               {/* SUBSCRIPTION MANAGEMENT */}
-              <div style={{ margin: '16px 0 8px 0' }}>
+              {/* <div style={{ margin: '16px 0 8px 0' }}>
                 <p style={{ fontSize: '11px', color: '#666', margin: '0 0 4px 8px', fontWeight: 'bold' }}>SUBSCRIPTION SETUP</p>
-              </div>
+              </div> */}
 
               <button
                 onClick={() => navigateTo('/app/admin/subscription-packages')}
@@ -543,9 +551,9 @@ export const TabsLayout: React.FC<TabsLayoutProps> = ({ children }) => {
               </button>
 
               {/* SYSTEM MANAGEMENT */}
-              <div style={{ margin: '16px 0 8px 0' }}>
+              {/* <div style={{ margin: '16px 0 8px 0' }}>
                 <p style={{ fontSize: '11px', color: '#666', margin: '0 0 4px 8px', fontWeight: 'bold' }}>SYSTEM</p>
-              </div>
+              </div> */}
 
               <button
                 onClick={() => navigateTo('/app/admin/tables')}
@@ -562,7 +570,9 @@ export const TabsLayout: React.FC<TabsLayoutProps> = ({ children }) => {
                 <IonIcon icon={listOutline} />
                 <span>Transaction History</span>
               </button>
-
+              <div style={{ margin: '16px 0 8px 0' }}>
+                <p style={{ fontSize: '11px', color: '#666', margin: '0 0 4px 8px', fontWeight: 'bold' }}>Others</p>
+              </div>
               <button
                 onClick={() => navigateTo('/app/admin/users')}
                 className={`sidebar-item ${isActiveRoute('/app/admin/users') ? 'active' : ''}`}
@@ -600,13 +610,16 @@ export const TabsLayout: React.FC<TabsLayoutProps> = ({ children }) => {
                 <span>Settings</span>
               </button>
 
-              <button
-                onClick={() => navigateTo('/app/admin/signalr-test')}
-                className={`sidebar-item ${isActiveRoute('/app/admin/signalr-test') ? 'active' : ''}`}
-              >
-                <IonIcon icon={wifiOutline} />
-                <span>SignalR Test</span>
-              </button>
+              {/* Only show SignalR Test for admin users */}
+              {user?.role === "Admin" && (
+                <button
+                  onClick={() => navigateTo('/app/admin/signalr-test')}
+                  className={`sidebar-item ${isActiveRoute('/app/admin/signalr-test') ? 'active' : ''}`}
+                >
+                  <IonIcon icon={wifiOutline} />
+                  <span>SignalR Test</span>
+                </button>
+              )}
 
               <button
                 onClick={() => navigateTo('/app/admin/profile')}
@@ -708,185 +721,185 @@ export const TabsLayout: React.FC<TabsLayoutProps> = ({ children }) => {
           }}>
             {sessionEndedData ? (
               <>
-              {/* Animated Icon */}
-              <div style={{
-                width: '80px',
-                height: '80px',
-                borderRadius: '50%',
-                background: 'var(--ion-color-primary)',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                boxShadow: '0 4px 16px rgba(0, 0, 0, 0.2)',
-                animation: 'pulse 2s ease-in-out infinite'
-              }}>
-                <IonIcon
-                  icon={warningOutline}
-                  style={{ fontSize: '48px', color: 'white' }}
-                />
-              </div>
-
-              {/* Title Section */}
-              <div style={{ textAlign: 'center', width: '100%' }}>
-                <h1 style={{
-                  color: 'var(--ion-color-primary)',
-                  margin: '0 0 8px 0',
-                  fontSize: '14px',
-                  fontWeight: '700'
-                }}>
-                  Session Ended
-                </h1>
+                {/* Animated Icon */}
                 <div style={{
-                  fontSize: '14px',
-                  fontWeight: 'bold',
-                  margin: '8px 0',
-                  letterSpacing: '1px',
-                  color: 'var(--ion-color-primary)'
+                  width: '80px',
+                  height: '80px',
+                  borderRadius: '50%',
+                  background: 'var(--ion-color-primary)',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  boxShadow: '0 4px 16px rgba(0, 0, 0, 0.2)',
+                  animation: 'pulse 2s ease-in-out infinite'
                 }}>
-                  TABLE {sessionEndedData.tableNumber}
+                  <IonIcon
+                    icon={warningOutline}
+                    style={{ fontSize: '48px', color: 'white' }}
+                  />
                 </div>
-                <p style={{
-                  fontSize: '12px',
-                  color: 'black',
-                  margin: '8px 0 0 0',
-                  opacity: 0.7
-                }}>
-                  {sessionEndedData.message || 'The session has completed'}
-                </p>
-              </div>
 
-              {/* Details Card */}
-              <IonCard style={{ 
-                width: '100%', 
-                margin: 0,
-                boxShadow: '0 4px 12px rgba(0,0,0,0.1)',
-                borderRadius: '12px'
-              }}>
-                <IonCardContent style={{ padding: '20px' }}>
-                  {/* Customer Info */}
-                  <div style={{
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: '12px',
-                    padding: '14px',
-                    background: 'var(--ion-color-primary)',
-                    borderRadius: '8px',
-                    marginBottom: '16px',
-                    color: 'white'
-                  }}>
-                    <IonIcon icon={personOutline} style={{ fontSize: '24px' }} />
-                    <div style={{ flex: 1 }}>
-                      <div style={{ fontSize: '12px', opacity: 0.9 }}>Customer</div>
-                      <div style={{ fontSize: '14px', fontWeight: 'bold' }}>
-                        {sessionEndedData.userName}
-                      </div>
-                    </div>
-                  </div>
-
-                  {/* Session Details */}
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
-                    <div style={{
-                      display: 'flex',
-                      justifyContent: 'space-between',
-                      alignItems: 'center',
-                      padding: '12px 14px',
-                      background: '#f5f5f5',
-                      borderRadius: '8px',
-                      border: '1px solid var(--ion-color-primary)'
-                    }}>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                        <IonIcon icon={timeOutline} style={{ fontSize: '18px', color: 'var(--ion-color-primary)' }} />
-                        <span style={{ color: 'black', fontWeight: '500', fontSize: '13px' }}>Duration</span>
-                      </div>
-                      <strong style={{ fontSize: '14px', color: 'var(--ion-color-primary)' }}>
-                        {sessionEndedData.duration.toFixed(2)} hrs
-                      </strong>
-                    </div>
-
-                    <div style={{
-                      display: 'flex',
-                      justifyContent: 'space-between',
-                      alignItems: 'center',
-                      padding: '12px 14px',
-                      background: '#f5f5f5',
-                      borderRadius: '8px',
-                      border: '1px solid var(--ion-color-primary)'
-                    }}>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                        <IonIcon icon={cashOutline} style={{ fontSize: '18px', color: 'var(--ion-color-primary)' }} />
-                        <span style={{ color: 'black', fontWeight: '500', fontSize: '13px' }}>Amount</span>
-                      </div>
-                      <strong style={{ fontSize: '14px', color: 'var(--ion-color-primary)' }}>
-                        ₱{sessionEndedData.amount.toFixed(2)}
-                      </strong>
-                    </div>
-                  </div>
-
-                  {/* Action Required Notice */}
-                  <div style={{
-                    marginTop: '20px',
-                    background: '#fff9e6',
-                    borderRadius: '8px',
-                    padding: '14px',
-                    border: '2px solid var(--ion-color-primary)',
-                    textAlign: 'center'
-                  }}>
-                    <div style={{ 
-                      fontSize: '20px', 
-                      marginBottom: '6px' 
-                    }}>⚠️</div>
-                    <p style={{
-                      margin: 0,
-                      color: 'black',
-                      fontSize: '12px',
-                      fontWeight: '600',
-                      lineHeight: '1.5'
-                    }}>
-                      Please check on the customer and prepare the table for the next session
-                    </p>
-                  </div>
-                </IonCardContent>
-              </IonCard>
-
-              {/* Action Buttons */}
-              <div style={{ width: '100%', display: 'flex', flexDirection: 'column', gap: '12px' }}>
-                <IonButton
-                  expand="block"
-                  size="large"
-                  onClick={handleCloseSessionModal}
-                  color="primary"
-                  style={{
-                    fontWeight: 'bold',
+                {/* Title Section */}
+                <div style={{ textAlign: 'center', width: '100%' }}>
+                  <h1 style={{
+                    color: 'var(--ion-color-primary)',
+                    margin: '0 0 8px 0',
                     fontSize: '14px',
-                    height: '48px'
-                  }}
-                >
-                  <IonIcon icon={checkmarkCircleOutline} slot="start" />
-                  Acknowledged - Close Alert
-                </IonButton>
+                    fontWeight: '700'
+                  }}>
+                    Session Ended
+                  </h1>
+                  <div style={{
+                    fontSize: '14px',
+                    fontWeight: 'bold',
+                    margin: '8px 0',
+                    letterSpacing: '1px',
+                    color: 'var(--ion-color-primary)'
+                  }}>
+                    TABLE {sessionEndedData.tableNumber}
+                  </div>
+                  <p style={{
+                    fontSize: '12px',
+                    color: 'black',
+                    margin: '8px 0 0 0',
+                    opacity: 0.7
+                  }}>
+                    {sessionEndedData.message || 'The session has completed'}
+                  </p>
+                </div>
 
-                <IonButton
-                  fill="outline"
-                  expand="block"
-                  onClick={() => {
-                    handleCloseSessionModal();
-                    navigateTo('/app/admin/user-sessions');
-                  }}
-                  style={{ 
-                    height: '44px',
-                    fontWeight: '500',
-                    fontSize: '13px'
-                  }}
-                  color="primary"
-                >
-                  <IonIcon icon={desktopOutline} slot="start" />
-                  Go to Session Management
-                </IonButton>
-              </div>
-            </>
+                {/* Details Card */}
+                <IonCard style={{
+                  width: '100%',
+                  margin: 0,
+                  boxShadow: '0 4px 12px rgba(0,0,0,0.1)',
+                  borderRadius: '12px'
+                }}>
+                  <IonCardContent style={{ padding: '20px' }}>
+                    {/* Customer Info */}
+                    <div style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '12px',
+                      padding: '14px',
+                      background: 'var(--ion-color-primary)',
+                      borderRadius: '8px',
+                      marginBottom: '16px',
+                      color: 'white'
+                    }}>
+                      <IonIcon icon={personOutline} style={{ fontSize: '24px' }} />
+                      <div style={{ flex: 1 }}>
+                        <div style={{ fontSize: '12px', opacity: 0.9 }}>Customer</div>
+                        <div style={{ fontSize: '14px', fontWeight: 'bold' }}>
+                          {sessionEndedData.userName}
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Session Details */}
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+                      <div style={{
+                        display: 'flex',
+                        justifyContent: 'space-between',
+                        alignItems: 'center',
+                        padding: '12px 14px',
+                        background: '#f5f5f5',
+                        borderRadius: '8px',
+                        border: '1px solid var(--ion-color-primary)'
+                      }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                          <IonIcon icon={timeOutline} style={{ fontSize: '18px', color: 'var(--ion-color-primary)' }} />
+                          <span style={{ color: 'black', fontWeight: '500', fontSize: '13px' }}>Duration</span>
+                        </div>
+                        <strong style={{ fontSize: '14px', color: 'var(--ion-color-primary)' }}>
+                          {sessionEndedData.duration.toFixed(2)} hrs
+                        </strong>
+                      </div>
+
+                      <div style={{
+                        display: 'flex',
+                        justifyContent: 'space-between',
+                        alignItems: 'center',
+                        padding: '12px 14px',
+                        background: '#f5f5f5',
+                        borderRadius: '8px',
+                        border: '1px solid var(--ion-color-primary)'
+                      }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                          <IonIcon icon={cashOutline} style={{ fontSize: '18px', color: 'var(--ion-color-primary)' }} />
+                          <span style={{ color: 'black', fontWeight: '500', fontSize: '13px' }}>Amount</span>
+                        </div>
+                        <strong style={{ fontSize: '14px', color: 'var(--ion-color-primary)' }}>
+                          ₱{sessionEndedData.amount.toFixed(2)}
+                        </strong>
+                      </div>
+                    </div>
+
+                    {/* Action Required Notice */}
+                    <div style={{
+                      marginTop: '20px',
+                      background: '#fff9e6',
+                      borderRadius: '8px',
+                      padding: '14px',
+                      border: '2px solid var(--ion-color-primary)',
+                      textAlign: 'center'
+                    }}>
+                      <div style={{
+                        fontSize: '20px',
+                        marginBottom: '6px'
+                      }}>⚠️</div>
+                      <p style={{
+                        margin: 0,
+                        color: 'black',
+                        fontSize: '12px',
+                        fontWeight: '600',
+                        lineHeight: '1.5'
+                      }}>
+                        Please check on the customer and prepare the table for the next session
+                      </p>
+                    </div>
+                  </IonCardContent>
+                </IonCard>
+
+                {/* Action Buttons */}
+                <div style={{ width: '100%', display: 'flex', flexDirection: 'column', gap: '12px' }}>
+                  <IonButton
+                    expand="block"
+                    size="large"
+                    onClick={handleCloseSessionModal}
+                    color="primary"
+                    style={{
+                      fontWeight: 'bold',
+                      fontSize: '14px',
+                      height: '48px'
+                    }}
+                  >
+                    <IonIcon icon={checkmarkCircleOutline} slot="start" />
+                    Acknowledged - Close Alert
+                  </IonButton>
+
+                  <IonButton
+                    fill="outline"
+                    expand="block"
+                    onClick={() => {
+                      handleCloseSessionModal();
+                      navigateTo('/app/admin/user-sessions');
+                    }}
+                    style={{
+                      height: '44px',
+                      fontWeight: '500',
+                      fontSize: '13px'
+                    }}
+                    color="primary"
+                  >
+                    <IonIcon icon={desktopOutline} slot="start" />
+                    Go to Session Management
+                  </IonButton>
+                </div>
+              </>
             ) : (
-              <div style={{ 
-                padding: '60px 20px', 
+              <div style={{
+                padding: '60px 20px',
                 textAlign: 'center',
                 display: 'flex',
                 flexDirection: 'column',

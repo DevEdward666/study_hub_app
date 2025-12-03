@@ -29,8 +29,12 @@ import { apiClient } from "../services/api.client";
 import { z } from "zod";
 import { useMutation } from "@tanstack/react-query";
 import { ApiResponseSchema } from "@/schema/api.schema";
+import { useAdminStatus } from "@/hooks/AdminHooks";
+import { useHistory } from "react-router-dom";
 
 const SignalRTest: React.FC = () => {
+  const { isAdmin, isLoading: isAdminLoading } = useAdminStatus();
+  const history = useHistory();
   const [connectionState, setConnectionState] = useState<string>("Disconnected");
   const [isConnected, setIsConnected] = useState<boolean>(false);
   const [notifications, setNotifications] = useState<SessionEndedNotification[]>([]);
@@ -41,6 +45,14 @@ const SignalRTest: React.FC = () => {
   const [consoleLogs, setConsoleLogs] = useState<string[]>([]);
   const [isInAdminsGroup, setIsInAdminsGroup] = useState<boolean>(false);
 
+  // Redirect non-admin users
+  useEffect(() => {
+    if (!isAdminLoading && !isAdmin) {
+      console.log("🚫 Non-admin user attempting to access SignalR Test - redirecting...");
+      history.push("/app/dashboard");
+    }
+  }, [isAdmin, isAdminLoading, history]);
+
   // Add log helper
   const addLog = (message: string) => {
     const timestamp = new Date().toLocaleTimeString();
@@ -48,6 +60,11 @@ const SignalRTest: React.FC = () => {
     console.log(logMessage);
     setConsoleLogs((prev) => [logMessage, ...prev].slice(0, 50)); // Keep last 50 logs
   };
+
+  // Don't render anything if not admin
+  if (isAdminLoading || !isAdmin) {
+    return null;
+  }
 
   // Mutation to send test notification
   const sendTestMutation = useMutation({
