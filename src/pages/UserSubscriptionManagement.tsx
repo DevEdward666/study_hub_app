@@ -124,8 +124,8 @@ const UserSubscriptionManagement: React.FC = () => {
       });
 
       // Set the newly created user as selected
-      if (result?.data?.id) {
-        setFormData({ ...formData, userId: result.data.id });
+      if (result?.id) {
+        setFormData({ ...formData, userId: result.id });
       }
 
       setToastMessage(`✅ Customer "${newCustomerName}" created successfully! Email: ${email}`);
@@ -387,7 +387,7 @@ const UserSubscriptionManagement: React.FC = () => {
 
         {/* Actions */}
         <div style={{ marginBottom: "20px", display: "flex", gap: "12px", flexWrap: "wrap" }}>
-          <IonButton onClick={handlePurchase} color="success">
+          <IonButton onClick={handlePurchase} color="warning">
             <IonIcon icon={addOutline} slot="start" />
             Create Transaction
           </IonButton>
@@ -657,7 +657,7 @@ const UserSubscriptionManagement: React.FC = () => {
                 expand="block"
                 onClick={handleSavePurchase}
                 disabled={purchaseMutation.isPending}
-                color="primary"
+
                 style={{ flex: 1 }}
               >
                 {purchaseMutation.isPending ? "Processing..." : "Create Transaction"}
