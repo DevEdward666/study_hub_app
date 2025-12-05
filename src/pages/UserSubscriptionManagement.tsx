@@ -44,6 +44,7 @@ import {
   useAdminPurchaseSubscription,
 } from "../hooks/SubscriptionHooks";
 import { useUsersManagement, useTablesManagement } from "../hooks/AdminDataHooks";
+import { personAddOutline } from "ionicons/icons";
 import { AdminPurchaseSubscription } from "../schema/subscription.schema";
 import { tableService } from "../services/table.service";
 import SlideoutModal from "@/shared/SideOutModal/SideoutModalComponent";
@@ -53,7 +54,7 @@ import "../styles/side-modal.css";
 const UserSubscriptionManagement: React.FC = () => {
   const { data: subscriptions, isLoading, refetch: refetchSubs } = useAllUserSubscriptions();
   const { data: packages } = useSubscriptionPackages(true);
-  const { users } = useUsersManagement();
+  const { users, createUser, refetch: refetchUsers } = useUsersManagement();
   const { tables, refetch: refetchTables } = useTablesManagement();
   const purchaseMutation = useAdminPurchaseSubscription();
 
@@ -86,6 +87,11 @@ const UserSubscriptionManagement: React.FC = () => {
   const [selectedSessionId, setSelectedSessionId] = useState("");
   const [printReceiptMutation, setPrintReceiptMutation] = useState({ isPending: false });
 
+  // New customer modal states
+  const [showNewCustomerModal, setShowNewCustomerModal] = useState(false);
+  const [newCustomerName, setNewCustomerName] = useState("");
+  const [isCreatingCustomer, setIsCreatingCustomer] = useState(false);
+
   const [formData, setFormData] = useState<AdminPurchaseSubscription>({
     userId: "",
     packageId: "",
@@ -94,6 +100,54 @@ const UserSubscriptionManagement: React.FC = () => {
     change: 0,
     notes: "",
   });
+
+  // Function to create a new customer
+  const handleCreateNewCustomer = async () => {
+    if (!newCustomerName.trim()) {
+      setToastMessage("❌ Customer name is required");
+      setToastColor("danger");
+      setShowToast(true);
+      return;
+    }
+
+    // Generate email from customer name (lowercase, replace spaces with dots)
+    const email = `${newCustomerName.trim().toLowerCase().replace(/\s+/g, '.')}@gmail.com`;
+    const password = email; // Password is the same as email
+
+    setIsCreatingCustomer(true);
+    try {
+      const result = await createUser.mutateAsync({
+        name: newCustomerName.trim(),
+        email,
+        password,
+        role: "Customer"
+      });
+
+      // Set the newly created user as selected
+      if (result?.data?.id) {
+        setFormData({ ...formData, userId: result.data.id });
+      }
+
+      setToastMessage(`✅ Customer "${newCustomerName}" created successfully! Email: ${email}`);
+      setToastColor("success");
+      setShowToast(true);
+
+      // Close new customer modal and customer search modal
+      setShowNewCustomerModal(false);
+      setShowCustomerSearchModal(false);
+      setNewCustomerName("");
+      setCustomerSearchText("");
+
+      // Refresh users list
+      await refetchUsers();
+    } catch (error: any) {
+      setToastMessage(`❌ Failed to create customer: ${error.message}`);
+      setToastColor("danger");
+      setShowToast(true);
+    } finally {
+      setIsCreatingCustomer(false);
+    }
+  };
 
   const handlePurchase = () => {
     setFormData({
@@ -132,7 +186,7 @@ const UserSubscriptionManagement: React.FC = () => {
       setToastColor("success");
       setShowToast(true);
       setShowPurchaseModal(false);
-      
+
       // Show WiFi password modal for receipt printing
       if (result && result.id) {
         setSelectedSessionId(result.id);
@@ -296,14 +350,14 @@ const UserSubscriptionManagement: React.FC = () => {
       // Here you would call your print receipt API
       // For now, we'll just simulate success
       await new Promise(resolve => setTimeout(resolve, 1000));
-      
+
       setToastMessage("✅ Receipt printed successfully!");
       setToastColor("success");
       setShowToast(true);
       setShowPasswordModal(false);
       setWifiPassword("password1234");
       setSelectedSessionId("");
-      
+
       // Refresh subscriptions
       await refetchSubs();
     } catch (error: any) {
@@ -423,10 +477,10 @@ const UserSubscriptionManagement: React.FC = () => {
         ) : (
           <IonList>
             {displaySubscriptions.map((sub) => (
-              <IonCard 
-                key={sub.id} 
-                style={{ 
-                  marginBottom: "12px", 
+              <IonCard
+                key={sub.id}
+                style={{
+                  marginBottom: "12px",
                   borderLeft: `4px solid var(--ion-color-${selectedSegment === "active" ? "success" : "danger"})`,
                   opacity: selectedSegment === "active" ? 1 : 0.85
                 }}
@@ -435,16 +489,16 @@ const UserSubscriptionManagement: React.FC = () => {
                   <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", flexWrap: "wrap", gap: "16px" }}>
                     <div style={{ flex: 1, minWidth: "250px" }}>
                       <div style={{ display: "flex", alignItems: "center", gap: "8px", marginBottom: "8px" }}>
-                        <IonIcon 
-                          icon={personOutline} 
-                          style={{ 
-                            fontSize: "20px", 
-                            color: selectedSegment === "active" ? "var(--ion-color-primary)" : "var(--ion-color-medium)" 
-                          }} 
+                        <IonIcon
+                          icon={personOutline}
+                          style={{
+                            fontSize: "20px",
+                            color: selectedSegment === "active" ? "var(--ion-color-primary)" : "var(--ion-color-medium)"
+                          }}
                         />
-                        <h3 style={{ 
-                          margin: 0, 
-                          fontSize: "18px", 
+                        <h3 style={{
+                          margin: 0,
+                          fontSize: "18px",
                           fontWeight: "bold",
                           color: selectedSegment === "active" ? "inherit" : "#666"
                         }}>
@@ -453,32 +507,32 @@ const UserSubscriptionManagement: React.FC = () => {
                         <IonBadge color={getStatusColor(sub.status)}>{sub.status}</IonBadge>
                       </div>
                       <div style={{ marginLeft: "28px" }}>
-                        <p style={{ 
-                          margin: "4px 0", 
-                          fontSize: "16px", 
-                          fontWeight: "600", 
-                          color: selectedSegment === "active" ? "var(--ion-color-success)" : "#999" 
+                        <p style={{
+                          margin: "4px 0",
+                          fontSize: "16px",
+                          fontWeight: "600",
+                          color: selectedSegment === "active" ? "var(--ion-color-success)" : "#999"
                         }}>
                           {sub.packageName}
                         </p>
-                        <p style={{ 
-                          margin: "4px 0", 
-                          fontSize: "14px", 
-                          color: selectedSegment === "active" ? "#666" : "#999" 
+                        <p style={{
+                          margin: "4px 0",
+                          fontSize: "14px",
+                          color: selectedSegment === "active" ? "#666" : "#999"
                         }}>
                           ₱{sub.purchaseAmount.toFixed(2)} • {sub.paymentMethod}
                         </p>
-                        <p style={{ 
-                          margin: "4px 0", 
-                          fontSize: "12px", 
-                          color: "#999" 
+                        <p style={{
+                          margin: "4px 0",
+                          fontSize: "12px",
+                          color: "#999"
                         }}>
                           Purchased: {new Date(sub.purchaseDate).toLocaleDateString()}
                         </p>
                         {sub.expiryDate && (
-                          <p style={{ 
-                            margin: "4px 0", 
-                            fontSize: "12px", 
+                          <p style={{
+                            margin: "4px 0",
+                            fontSize: "12px",
                             color: new Date(sub.expiryDate) < new Date() ? "#d32f2f" : "#1976d2",
                             fontWeight: selectedSegment === "expired" ? "500" : "normal"
                           }}>
@@ -496,24 +550,24 @@ const UserSubscriptionManagement: React.FC = () => {
                             <strong>{sub.hoursUsed.toFixed(1)}</strong> / {sub.totalHours.toFixed(0)}
                           </span>
                         </div>
-                        <IonProgressBar 
-                          value={sub.percentageUsed / 100} 
-                          color={selectedSegment === "active" 
-                            ? (sub.percentageUsed > 80 ? "danger" : "success") 
+                        <IonProgressBar
+                          value={sub.percentageUsed / 100}
+                          color={selectedSegment === "active"
+                            ? (sub.percentageUsed > 80 ? "danger" : "success")
                             : "medium"
-                          } 
+                          }
                         />
                         <div style={{ fontSize: "10px", color: "#666", marginTop: "2px", textAlign: "right" }}>
                           {sub.percentageUsed.toFixed(1)}% used
                         </div>
                       </div>
-                      <div style={{ 
-                        fontSize: "12px", 
-                        color: selectedSegment === "active" ? "#666" : "#999" 
+                      <div style={{
+                        fontSize: "12px",
+                        color: selectedSegment === "active" ? "#666" : "#999"
                       }}>
                         <div>
-                          Remaining: <strong style={{ 
-                            color: selectedSegment === "active" ? "var(--ion-color-success)" : "inherit" 
+                          Remaining: <strong style={{
+                            color: selectedSegment === "active" ? "var(--ion-color-success)" : "inherit"
                           }}>{sub.remainingHours.toFixed(1)} hours</strong>
                         </div>
                       </div>
@@ -721,12 +775,22 @@ const UserSubscriptionManagement: React.FC = () => {
             </IonToolbar>
           </IonHeader>
           <IonContent className="ion-padding">
-            <IonSearchbar
-              value={customerSearchText}
-              onIonInput={(e) => setCustomerSearchText(e.detail.value || "")}
-              placeholder="Search customers by name or email..."
-              style={{ marginBottom: "16px" }}
-            />
+            <div style={{ display: "flex", gap: "12px", marginBottom: "16px", alignItems: "center" }}>
+              <IonSearchbar
+                value={customerSearchText}
+                onIonInput={(e) => setCustomerSearchText(e.detail.value || "")}
+                placeholder="Search customers by name or email..."
+                style={{ flex: 1 }}
+              />
+              <IonButton
+                onClick={() => setShowNewCustomerModal(true)}
+                color="success"
+                size="default"
+              >
+                <IonIcon icon={personAddOutline} slot="start" />
+                Add New
+              </IonButton>
+            </div>
             <IonList>
               {filteredCustomers.length > 0 ? (
                 filteredCustomers.map((user) => (
@@ -754,15 +818,104 @@ const UserSubscriptionManagement: React.FC = () => {
                   </IonItem>
                 ))
               ) : (
-                <IonItem>
-                  <IonLabel color="medium">
-                    <p style={{ textAlign: "center", padding: "20px" }}>
-                      No customers found
-                    </p>
-                  </IonLabel>
-                </IonItem>
+                <div style={{ textAlign: "center", padding: "40px 20px" }}>
+                  <IonIcon icon={personOutline} style={{ fontSize: "48px", color: "#ccc", marginBottom: "16px" }} />
+                  <p style={{ color: "#666", marginBottom: "16px" }}>No customers found</p>
+                  <IonButton
+                    onClick={() => setShowNewCustomerModal(true)}
+                    color="success"
+                  >
+                    <IonIcon icon={personAddOutline} slot="start" />
+                    Create New Customer
+                  </IonButton>
+                </div>
               )}
             </IonList>
+          </IonContent>
+        </IonModal>
+
+        {/* New Customer Modal */}
+        <IonModal
+          isOpen={showNewCustomerModal}
+          onDidDismiss={() => {
+            setShowNewCustomerModal(false);
+            setNewCustomerName("");
+          }}
+          breakpoints={[0, 0.5, 1]}
+          initialBreakpoint={0.5}
+          handle={true}
+          className="side-modal"
+        >
+          <IonHeader>
+            <IonToolbar>
+              <IonTitle>Add New Customer</IonTitle>
+              <IonButtons slot="end">
+                <IonButton onClick={() => {
+                  setShowNewCustomerModal(false);
+                  setNewCustomerName("");
+                }}>
+                  <IonIcon icon={closeOutline} />
+                </IonButton>
+              </IonButtons>
+            </IonToolbar>
+          </IonHeader>
+          <IonContent className="ion-padding">
+            <div style={{ padding: "16px 0" }}>
+              <IonItem>
+                <IonLabel position="stacked">Customer Name *</IonLabel>
+                <IonInput
+                  type="text"
+                  value={newCustomerName}
+                  placeholder="Enter customer name"
+                  onIonInput={(e) => setNewCustomerName(e.detail.value || "")}
+                />
+              </IonItem>
+
+              {/* {newCustomerName.trim() && (
+                <div style={{
+                  marginTop: "20px",
+                  padding: "16px",
+                  background: "#f5f5f5",
+                  borderRadius: "8px",
+                  border: "1px solid #e0e0e0"
+                }}>
+                  <p style={{ margin: "0 0 8px 0", fontSize: "14px", color: "#666" }}>
+                    <strong>Auto-generated credentials:</strong>
+                  </p>
+                  <p style={{ margin: "4px 0", fontSize: "14px" }}>
+                    Name: <strong>{newCustomerName}</strong>
+                  </p>
+                  <p style={{ margin: "4px 0", fontSize: "14px" }}>
+                    Type: <strong>Customer</strong>
+                  </p>
+                </div>
+              )} */}
+
+              <div style={{ marginTop: "24px", display: "flex", gap: "12px" }}>
+                <IonButton
+                  expand="block"
+                  onClick={() => {
+                    setShowNewCustomerModal(false);
+                    setNewCustomerName("");
+                  }}
+                  color="medium"
+                  fill="outline"
+                  style={{ flex: 1 }}
+                >
+                  Cancel
+                </IonButton>
+                <IonButton
+                  expand="block"
+                  onClick={handleCreateNewCustomer}
+                  disabled={isCreatingCustomer || !newCustomerName.trim()}
+                  color="success"
+                  style={{ flex: 1 }}
+                >
+                  <IonIcon icon={personAddOutline} slot="start" />
+                  {isCreatingCustomer ? "Creating..." : "Create Customer"}
+                </IonButton>
+              </div>
+            </div>
           </IonContent>
         </IonModal>
 
